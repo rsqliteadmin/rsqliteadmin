@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1589487335034.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "A431BB09",
+    "lastKnownWriteTime" : 1589487836,
+    "last_content_update" : 1589487836166,
+    "path" : "C:/Users/divya/Box Sync/Studies/rsqliteadmin/dev/01_start.R",
+    "project_path" : "dev/01_start.R",
+    "properties" : {
+        "cursorPosition" : "25,0",
+        "scrollLine" : "8"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
