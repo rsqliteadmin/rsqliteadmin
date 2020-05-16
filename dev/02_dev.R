@@ -2,8 +2,8 @@ usethis::use_package( "thinkr" )
 usethis::use_package( "RSQLite" )
 usethis::use_package( "DT" )
 
-golem::add_module( name = "name_of_module1" )
-golem::add_module( name = "name_of_module2" )
+golem::add_module( name = "create_databases" ) # Module to create/delete databases
+golem::add_module( name = "side_panel" )
 
 golem::add_fct( "helpers" ) 
 golem::add_utils( "helpers" )

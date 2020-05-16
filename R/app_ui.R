@@ -8,7 +8,14 @@ app_ui <- function(request) {
   tagList(
     golem_add_external_resources(),
     fluidPage(
-      h1("rsqliteadmin")
+      sidebarLayout(
+        mod_side_panel_ui("side_panel_ui_1"),
+        mainPanel(
+          tabsetPanel(
+            mod_create_databases_ui("create_databases_ui_1")
+          )
+        )
+      )
     )
   )
 }
