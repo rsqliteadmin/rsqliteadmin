@@ -19,11 +19,21 @@ mod_side_panel_ui <- function(id) {
 mod_side_panel_server <-
   function(input, output, session, button_clicked) {
     ns <- session$ns
-    observeEvent(button_clicked(), {
+    observe({
+      button_clicked$create
+      button_clicked$delete
       updateSelectInput(session,
                         inputId =  "active_db",
                         choices = db_list())
     })
+    conn<-reactiveValues()
+    observeEvent(input$active_db, {
+      if(!is.null(conn$active))
+        RSQLite::dbDisconnect(conn$active)
+      db_name <- paste0("./Databases/", input$active_db)
+      conn$active <- RSQLite::dbConnect(RSQLite::SQLite(), db_name)
+    })
+    return(conn)
   }
 
 ## To be copied in the UI

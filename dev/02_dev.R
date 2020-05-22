@@ -1,9 +1,11 @@
 usethis::use_package( "thinkr" )
 usethis::use_package( "RSQLite" )
 usethis::use_package( "DT" )
+usethis::use_package( "shinythemes" )
 
+golem::add_module( name = "side_panel" ) # Module for side panel
 golem::add_module( name = "create_databases" ) # Module to create/delete databases
-golem::add_module( name = "side_panel" )
+golem::add_module( name = "view_tables" ) #Module for viewing/editing tables
 
 golem::add_fct( "helpers" ) 
 golem::add_utils( "helpers" )

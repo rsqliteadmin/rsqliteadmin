@@ -36,7 +36,7 @@ mod_create_databases_ui <- function(id) {
 mod_create_databases_server <- function(input, output, session) {
   ns <- session$ns
   
-  button_clicked <- reactiveVal(1)
+  button_clicked <- reactiveValues()
   
   observeEvent(input$create_db, {
     if (input$db_name == "") {
@@ -55,8 +55,8 @@ mod_create_databases_server <- function(input, output, session) {
                       inputId =  "select_db",
                       label = "Choose a database",
                       choices = db_list())
+    button_clicked$create<-input$create_db
     
-    button_clicked(button_clicked() * (-1))
   })
   observeEvent(input$delete_db, {
     unlink(paste0("./Databases/", input$select_db))
@@ -72,7 +72,8 @@ mod_create_databases_server <- function(input, output, session) {
                       inputId =  "select_db",
                       label = "Choose a database",
                       choices = db_list())
-    button_clicked(button_clicked() * (-1))
+    button_clicked$delete<-input$delete_db
+    
   })
   return(button_clicked)
 }
