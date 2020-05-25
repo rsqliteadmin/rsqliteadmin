@@ -33,50 +33,45 @@ mod_create_databases_ui <- function(id) {
 #' create_databases Server Function
 #'
 #' @noRd
-mod_create_databases_server <- function(input, output, session) {
-  ns <- session$ns
-  
-  button_clicked <- reactiveValues()
-  
-  observeEvent(input$create_db, {
-    if (input$db_name == "") {
-      showModal(
-        modalDialog(title = "Database Name Empty",
-                    "Please input database name to create database.")
-      )
-    } else {
-      create_db(input$db_name)
-      showModal(
-        modalDialog(title = "Database Created",
-                    "The database was created successfully!")
-      )
-    }
-    updateSelectInput(session,
-                      inputId =  "select_db",
-                      label = "Choose a database",
-                      choices = db_list())
-    button_clicked$create<-input$create_db
+mod_create_databases_server <-
+  function(input, output, session, conn) {
+    ns <- session$ns
     
-  })
-  observeEvent(input$delete_db, {
-    unlink(paste0("./Databases/", input$select_db))
-    showModal(modalDialog(
-      title = "Database Deleted",
-      paste(
+    database_list <- reactiveValues(available = db_list())
+    
+    observeEvent(input$create_db, {
+      if (input$db_name == "") {
+        showNotification("Please input database name to create database.", duration = 3)
+      } else {
+        create_db(input$db_name)
+        showNotification("The database was created successfully!", duration = 3)
+      }
+      updateSelectInput(session,
+                        inputId =  "select_db",
+                        label = "Choose a database",
+                        choices = db_list())
+      database_list$available <- db_list()
+      
+    })
+    observeEvent(input$delete_db, {
+      if (conn$db_name == input$delete_db)
+        RSQLite::dbDisconnect(conn$active)
+      unlink(paste0("./Databases/", input$select_db))
+      showNotification(paste(
         "The database",
         input$select_db,
         "was deleted successfully!"
-      )
-    ))
-    updateSelectInput(session,
-                      inputId =  "select_db",
-                      label = "Choose a database",
-                      choices = db_list())
-    button_clicked$delete<-input$delete_db
-    
-  })
-  return(button_clicked)
-}
+      ),
+      duration = 3)
+      updateSelectInput(session,
+                        inputId =  "select_db",
+                        label = "Choose a database",
+                        choices = db_list())
+      database_list$available <- db_list()
+      
+    })
+    return(database_list)
+  }
 
 ## To be copied in the UI
 # mod_create_databases_ui("create_databases_ui_1")

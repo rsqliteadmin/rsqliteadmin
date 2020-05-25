@@ -9,29 +9,32 @@
 #' @importFrom shiny NS tagList
 mod_side_panel_ui <- function(id) {
   ns <- NS(id)
-  selectInput(ns("active_db"), "Select a database to work on",
-              choices = db_list())
+  uiOutput(ns("db_list_control"))
 }
 
 #' side_panel Server Function
 #'
 #' @noRd
 mod_side_panel_server <-
-  function(input, output, session, button_clicked) {
+  function(input, output, session, database_list) {
     ns <- session$ns
-    observe({
-      button_clicked$create
-      button_clicked$delete
-      updateSelectInput(session,
-                        inputId =  "active_db",
-                        choices = db_list())
+    
+    conn <- reactiveValues(active = NULL,
+                           db_name = NULL)
+    
+    output$db_list_control <- renderUI({
+      selectInput(ns("active_db"),
+                  "Select a database to work on",
+                  choices = database_list$available)
     })
-    conn<-reactiveValues()
+    
     observeEvent(input$active_db, {
-      if(!is.null(conn$active))
+      print("printing to console")
+      if (!is.null(conn$active))
         RSQLite::dbDisconnect(conn$active)
       db_name <- paste0("./Databases/", input$active_db)
       conn$active <- RSQLite::dbConnect(RSQLite::SQLite(), db_name)
+      conn$db_name <- input$active_db
     })
     return(conn)
   }
