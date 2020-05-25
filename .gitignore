@@ -6,5 +6,5 @@
 dev/**
 rsqliteadmin.Rproj
 inst/doc
-doc
-Meta
+Databases/**
+Databases
