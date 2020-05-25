@@ -25,7 +25,10 @@ mod_create_databases_ui <- function(id) {
                  label = "Choose a database to delete",
                  choices = db_list()
                ),
-               actionButton(ns("delete_db"), 'Delete Database')
+               actionButton(ns("delete_db"), 'Delete Database'),
+               p(
+                 "Warning : Deleting any database would cause any unsaved progress in currently active database to be lost. Make sure you have saved your work before deleting."
+               )
              )
            ))
 }
@@ -54,8 +57,7 @@ mod_create_databases_server <-
       
     })
     observeEvent(input$delete_db, {
-      if (conn$db_name == input$delete_db)
-        RSQLite::dbDisconnect(conn$active)
+      RSQLite::dbDisconnect(conn$active)
       unlink(paste0("./Databases/", input$select_db))
       showNotification(paste(
         "The database",
@@ -68,7 +70,6 @@ mod_create_databases_server <-
                         label = "Choose a database",
                         choices = db_list())
       database_list$available <- db_list()
-      
     })
     return(database_list)
   }

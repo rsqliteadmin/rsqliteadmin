@@ -29,12 +29,14 @@ mod_side_panel_server <-
     })
     
     observeEvent(input$active_db, {
-      print("printing to console")
       if (!is.null(conn$active))
         RSQLite::dbDisconnect(conn$active)
       db_name <- paste0("./Databases/", input$active_db)
       conn$active <- RSQLite::dbConnect(RSQLite::SQLite(), db_name)
       conn$db_name <- input$active_db
+      print("called")
+      print(conn$active)
+      print(conn$db_name)
     })
     return(conn)
   }
