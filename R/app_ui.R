@@ -10,7 +10,7 @@ app_ui <- function(request) {
             sidebarPanel(mod_side_panel_ui("side_panel"), width = 4),
             mainPanel(
               tabsetPanel(
-                mod_create_databases_ui("create_databases"),
+                mod_manage_databases_ui("manage_databases"),
                 mod_view_tables_ui("view_tables")
               )
             )

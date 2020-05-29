@@ -8,7 +8,7 @@ app_server <- function(input, output, session) {
   conn <-
     callModule(mod_side_panel_server, "side_panel")
   
-  callModule(mod_create_databases_server, "create_databases", conn)
+  callModule(mod_manage_databases_server, "manage_databases", conn)
   
   callModule(mod_view_tables_server, "view_tables", conn)
 }
