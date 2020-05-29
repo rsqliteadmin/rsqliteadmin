@@ -16,28 +16,100 @@ mod_side_panel_ui <- function(id) {
 #'
 #' @noRd
 mod_side_panel_server <-
-  function(input, output, session, database_list) {
+  function(input, output, session) {
     ns <- session$ns
     
-    conn <- reactiveValues(active = NULL,
-                           db_name = NULL)
+    conn <- reactiveValues(
+      active_db = NULL,
+      db_name = NULL,
+      active_table = NULL,
+      directory = NULL
+    )
     
     output$db_list_control <- renderUI({
-      selectInput(ns("active_db"),
-                  "Select a database to work on",
-                  choices = database_list$available)
+      fluidPage(fluidRow(
+        actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
+        br(),
+        br(),
+        selectInput(
+          ns("select_active_db"),
+          "Select a database to work on",
+          choices = NULL
+        ),
+        selectInput(
+          ns("select_active_table"),
+          "Select a table to work on.",
+          choices = NULL
+        )
+      ))
     })
     
-    observeEvent(input$active_db, {
-      if (!is.null(conn$active))
-        RSQLite::dbDisconnect(conn$active)
-      db_name <- paste0("./Databases/", input$active_db)
-      conn$active <- RSQLite::dbConnect(RSQLite::SQLite(), db_name)
-      conn$db_name <- input$active_db
-      print("called")
-      print(conn$active)
-      print(conn$db_name)
+    observeEvent(input$create_db, {
+      if (is.null(conn$directory))
+        showNotification(ui = "Please set a directory to store databases first.",
+                         duration = 3,
+                         type = "error")
+      else
+        showModal(modalDialog(easyClose = TRUE, fluidRow(
+          column(
+            width = 12,
+            offset = 1,
+            textInput(
+              inputId =  ns("new_db_name"),
+              label = "Create a new database",
+              placeholder = "Your database name here"
+            ),
+            actionButton(inputId = ns("confirm_db_name"), label = "Create Database")
+          )
+        )))
     })
+    
+    observeEvent(input$confirm_db_name, {
+      if (input$new_db_name == "") {
+        showNotification(
+          ui = "Please input database name to create database.",
+          duration = 3,
+          type = "error"
+        )
+      }
+      else if(paste0(input$new_db_name, ".db") %in% db_list(conn$directory)){
+        showNotification( ui =  "Database with this name already exists. Please specify another name.",
+                         duration = 5,
+                         type = "error")
+      }
+      else {
+        create_db(input$new_db_name, conn$directory)
+        showNotification(ui = "The database was created successfully!",
+                         duration = 3,
+                         type = "message")
+      }
+      updateSelectInput(session,
+                        inputId =  "select_active_db",
+                        label = "Choose a database",
+                        choices = db_list(conn$directory))
+    })
+    
+    observeEvent(input$select_active_db, {
+      if (!is.null(conn$directory)) {
+        if (!is.null(conn$active_db))
+          RSQLite::dbDisconnect(conn$active_db)
+        db_name <- paste0(directory, input$select_active_db)
+        conn$active_db <-
+          RSQLite::dbConnect(RSQLite::SQLite(), db_name)
+        conn$db_name <- input$select_active_db
+        if (!is.null(conn$active_db))
+          updateSelectInput(
+            session,
+            inputId =  "select_active_table",
+            choices = RSQLite::dbListTables(conn$active_db)
+          )
+      }
+    })
+    
+    observeEvent(input$select_active_table, {
+      conn$active_table <- input$select_active_table
+    })
+    
     return(conn)
   }
 

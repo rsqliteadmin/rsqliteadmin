@@ -7,16 +7,16 @@
 app_ui <- function(request) {
   tagList(golem_add_external_resources(),
           fluidPage(sidebarLayout(
-            sidebarPanel(
-              mod_side_panel_ui("side_panel")
-              # shinythemes::themeSelector()
-            ),
+            sidebarPanel(mod_side_panel_ui("side_panel"), width = 4),
             mainPanel(
-              tabsetPanel(mod_create_databases_ui("create_databases")),
-              # tabsetPanel(mod_view_tables_ui("view_tables_ui_1"))
+              tabsetPanel(
+                mod_create_databases_ui("create_databases"),
+                mod_view_tables_ui("view_tables")
+              )
             )
           )))
 }
+# shinythemes::themeSelector()
 #' Add external Resources to the Application
 #'
 #' This function is internally used to add external

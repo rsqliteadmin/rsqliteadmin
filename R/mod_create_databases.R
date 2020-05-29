@@ -14,23 +14,18 @@ mod_create_databases_ui <- function(id) {
            fluidRow(
              column(
                5,
-               textInput(ns("db_name"), "Create a new database",
-                         placeholder = "Your Database Name Here"),
-               actionButton(ns("create_db"), 'Create Database')
-             ),
-             column(
-               5,
                selectInput(
                  inputId = ns("select_db"),
                  label = "Choose a database to delete",
-                 choices = db_list()
+                 choices = NULL
                ),
                actionButton(ns("delete_db"), 'Delete Database'),
                p(
                  "Warning : Deleting any database would cause any unsaved progress in currently active database to be lost. Make sure you have saved your work before deleting."
                )
              )
-           ))
+           )
+           )
 }
 
 #' create_databases Server Function
@@ -40,24 +35,8 @@ mod_create_databases_server <-
   function(input, output, session, conn) {
     ns <- session$ns
     
-    database_list <- reactiveValues(available = db_list())
-    
-    observeEvent(input$create_db, {
-      if (input$db_name == "") {
-        showNotification("Please input database name to create database.", duration = 3)
-      } else {
-        create_db(input$db_name)
-        showNotification("The database was created successfully!", duration = 3)
-      }
-      updateSelectInput(session,
-                        inputId =  "select_db",
-                        label = "Choose a database",
-                        choices = db_list())
-      database_list$available <- db_list()
-      
-    })
     observeEvent(input$delete_db, {
-      RSQLite::dbDisconnect(conn$active)
+      RSQLite::dbDisconnect(conn$active_db)
       unlink(paste0("./Databases/", input$select_db))
       showNotification(paste(
         "The database",
@@ -68,10 +47,8 @@ mod_create_databases_server <-
       updateSelectInput(session,
                         inputId =  "select_db",
                         label = "Choose a database",
-                        choices = db_list())
-      database_list$available <- db_list()
+                        choices = db_list(conn$directory))
     })
-    return(database_list)
   }
 
 ## To be copied in the UI

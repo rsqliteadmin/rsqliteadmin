@@ -9,11 +9,9 @@
 #' @importFrom shiny NS tagList
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
-  # tabPanel(title = "View/Edit Tables",
-  #          br(),
-  #          fluidRow(selectInput(
-  #            ns("select_table"), "Select a table to view", choices = NULL
-  #          )))
+  tabPanel(title = "View/Edit Tables",
+           br(),
+           fluidRow())
 }
 
 #' view_tables Server Function
@@ -21,11 +19,7 @@ mod_view_tables_ui <- function(id) {
 #' @noRd
 mod_view_tables_server <- function(input, output, session, conn) {
   ns <- session$ns
-  # observe({
-  #   updateSelectInput(session,
-  #                     inputId = "select_table",
-  #                     choices = RSQLite::dbListTables(conn$active))
-  # })
+  
   
 }
 
