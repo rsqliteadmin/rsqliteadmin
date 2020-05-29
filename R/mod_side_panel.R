@@ -23,7 +23,7 @@ mod_side_panel_server <-
       active_db = NULL,
       db_name = NULL,
       active_table = NULL,
-      directory = NULL
+      directory = "./Databases/"
     )
     
     output$db_list_control <- renderUI({
@@ -34,7 +34,7 @@ mod_side_panel_server <-
         selectInput(
           ns("select_active_db"),
           "Select a database to work on",
-          choices = NULL
+          choices = db_list(directory = conn$directory)
         ),
         selectInput(
           ns("select_active_table"),
@@ -66,14 +66,12 @@ mod_side_panel_server <-
     
     observeEvent(input$confirm_db_name, {
       if (input$new_db_name == "") {
-        showNotification(
-          ui = "Please input database name to create database.",
-          duration = 3,
-          type = "error"
-        )
+        showNotification(ui = "Please input database name to create database.",
+                         duration = 3,
+                         type = "error")
       }
-      else if(paste0(input$new_db_name, ".db") %in% db_list(conn$directory)){
-        showNotification( ui =  "Database with this name already exists. Please specify another name.",
+      else if (paste0(input$new_db_name, ".db") %in% db_list(conn$directory)) {
+        showNotification(ui =  "Database with this name already exists. Please specify another name.",
                          duration = 5,
                          type = "error")
       }
@@ -83,26 +81,30 @@ mod_side_panel_server <-
                          duration = 3,
                          type = "message")
       }
-      updateSelectInput(session,
-                        inputId =  "select_active_db",
-                        label = "Choose a database",
-                        choices = db_list(conn$directory))
+      updateSelectInput(
+        session,
+        inputId =  "select_active_db",
+        label = "Choose a database",
+        choices = db_list(conn$directory)
+      )
     })
     
     observeEvent(input$select_active_db, {
       if (!is.null(conn$directory)) {
-        if (!is.null(conn$active_db))
+        if (!is.null(conn$active_db)) {
           RSQLite::dbDisconnect(conn$active_db)
-        db_name <- paste0(directory, input$select_active_db)
+        }
         conn$active_db <-
-          RSQLite::dbConnect(RSQLite::SQLite(), db_name)
+          RSQLite::dbConnect(RSQLite::SQLite(),
+                             paste0(conn$directory, input$select_active_db))
         conn$db_name <- input$select_active_db
-        if (!is.null(conn$active_db))
+        if (!is.null(conn$active_db)) {
           updateSelectInput(
-            session,
+            session =  session,
             inputId =  "select_active_table",
             choices = RSQLite::dbListTables(conn$active_db)
           )
+        }
       }
     })
     

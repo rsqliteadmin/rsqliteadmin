@@ -2,6 +2,8 @@
 
 # Returns the list of databases in folder "Databases"
 db_list <- function(directory = NULL) {
+  if (is.null(directory))
+    return(NULL)
   return(list.files(path = directory, pattern = ".db$"))
 }
 

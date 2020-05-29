@@ -13,15 +13,8 @@ mod_manage_databases_ui <- function(id) {
            br(),
            fluidRow(column(
              5,
-             selectInput(
-               inputId = ns("select_db"),
-               label = "Choose a database to delete",
-               choices = NULL
-             ),
+             p("Delete currently active database"),
              actionButton(ns("delete_db"), 'Delete Database'),
-             p(
-               "Warning : Deleting any database would cause any unsaved progress in currently active database to be lost. Make sure you have saved your work before deleting."
-             )
            )))
 }
 
@@ -33,20 +26,19 @@ mod_manage_databases_server <-
     ns <- session$ns
     
     observeEvent(input$delete_db, {
-      RSQLite::dbDisconnect(conn$active_db)
-      unlink(paste0("./Databases/", input$select_db))
-      showNotification(paste(
-        "The database",
-        input$select_db,
-        "was deleted successfully!"
-      ),
-      duration = 3)
-      updateSelectInput(
-        session,
-        inputId =  "select_db",
-        label = "Choose a database",
-        choices = db_list(conn$directory)
-      )
+      if (is.null(conn$active_db)) {
+        showNotification(ui = "No database selected.",
+                         duration = 3,
+                         type = "error")
+      }
+      else{
+        RSQLite::dbDisconnect(conn$active_db)
+        unlink(paste0(conn$directory, conn$db_name))
+        showNotification(paste("The database",
+                               conn$db_name,
+                               "was deleted successfully!"),
+                         duration = 3)
+      }
     })
   }
 
