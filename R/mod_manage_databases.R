@@ -25,6 +25,8 @@ mod_manage_databases_server <-
   function(input, output, session, conn) {
     ns <- session$ns
     
+    action <- reactiveValues(deleted_db = NULL)
+    
     observeEvent(input$delete_db, {
       if (is.null(conn$active_db)) {
         showNotification(ui = "No database selected.",
@@ -38,8 +40,11 @@ mod_manage_databases_server <-
                                conn$db_name,
                                "was deleted successfully!"),
                          duration = 3)
+        action$deleted_db <- input$delete_db
       }
     })
+    
+    return(action)
   }
 
 ## To be copied in the UI

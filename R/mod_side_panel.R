@@ -16,14 +16,14 @@ mod_side_panel_ui <- function(id) {
 #'
 #' @noRd
 mod_side_panel_server <-
-  function(input, output, session) {
+  function(input, output, session, action) {
     ns <- session$ns
     
     conn <- reactiveValues(
       active_db = NULL,
       db_name = NULL,
       active_table = NULL,
-      directory = "./Databases/"
+      directory = NULL
     )
     
     output$db_list_control <- renderUI({
@@ -110,6 +110,15 @@ mod_side_panel_server <-
     
     observeEvent(input$select_active_table, {
       conn$active_table <- input$select_active_table
+    })
+    
+    observeEvent(action$deleted_db, {
+      updateSelectInput(
+        session,
+        inputId =  "select_active_db",
+        label = "Choose a database",
+        choices = db_list(conn$directory)
+      )
     })
     
     return(conn)
