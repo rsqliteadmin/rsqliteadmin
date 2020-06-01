@@ -14,7 +14,19 @@ mod_view_tables_ui <- function(id) {
            fluidRow(column(width = 11,
                            DT::dataTableOutput(
                              ns("display_table")
-                           ))))
+                           ))),
+           fluidRow(
+             column(
+               width = 3,
+               actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows"),
+               br(),
+               br()
+             ),
+             column(width = 3,
+                    actionButton(
+                      inputId = ns("delete_all_rows"), label = "Delete All Rows"
+                    ))
+           ))
 }
 
 #' view_tables Server Function
@@ -57,8 +69,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
         data = table_info$data[,-c(1:2)],
         editable = "cell",
         rownames = FALSE,
-        selection = list(mode = "multiple", target =
-                           'cell'),
+        selection = "multiple",
         options = list(displayStart = table_info$page)
       )
     })
@@ -105,7 +116,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
       error = function(err) {
         showNotification(
           ui =  paste0(err, ". Changes not saved."),
-          duration = 10,
+          duration = 30,
           type = "error"
         )
         # print(err)
@@ -113,6 +124,57 @@ mod_view_tables_server <- function(input, output, session, conn) {
       }
     )
   })
+  
+  observeEvent(input$delete_rows, {
+    if (is.null(input$display_table_rows_selected)) {
+      showNotification(ui =  "No rows selected.",
+                       duration = 3,
+                       type = "error")
+    }
+    else{
+      info <- input$display_table_rows_selected
+      print(input$display_table_rows_selected[1])
+      for (i in info) {
+        delete_query <-
+          paste0("DELETE FROM ",
+                 conn$active_table,
+                 " WHERE rowid = ",
+                 table_info$data$row_id[table_info$data$row_number == i])
+        RSQLite::dbExecute(conn$active_db, delete_query)
+      }
+      data_fetch_query <-
+        paste0(
+          "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+          conn$active_table
+        )
+      table_info$data <-
+        RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+      showNotification(ui =  "Selected rows deleted successfully.",
+                       duration = 3,
+                       type = "message")
+    }
+  })
+  
+  observeEvent(input$delete_all_rows, {
+    delete_query <-
+      paste0("DELETE FROM ",
+             conn$active_table)
+    RSQLite::dbExecute(conn$active_db, delete_query)
+    
+    data_fetch_query <-
+      paste0(
+        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+        conn$active_table
+      )
+    
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+    showNotification(ui =  "All rows deleted successfully.",
+                     duration = 3,
+                     type = "message")
+    
+  })
+  
 }
 
 ## To be copied in the UI
