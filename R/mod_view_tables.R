@@ -15,14 +15,17 @@ mod_view_tables_ui <- function(id) {
                            DT::dataTableOutput(
                              ns("display_table")
                            ))),
+           br(),
            fluidRow(
+             column(width = 2,
+                    actionButton(
+                      inputId = ns("insert_rows"), label = "Insert new rows"
+                    )),
              column(
-               width = 3,
-               actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows"),
-               br(),
-               br()
+               width = 2,
+               actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows")
              ),
-             column(width = 3,
+             column(width = 2,
                     actionButton(
                       inputId = ns("delete_all_rows"), label = "Delete All Rows"
                     ))
@@ -66,7 +69,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
   output$display_table <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = table_info$data[,-c(1:2)],
+        data = table_info$data[, -c(1:2)],
         editable = "cell",
         rownames = FALSE,
         selection = "multiple",
@@ -74,6 +77,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
       )
     })
   
+  #Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
   observeEvent(input$display_table_cell_edit, {
     table_info$page <- input$display_table_rows_current[1] - 1
     table_info$edit_info = input$display_table_cell_edit
@@ -133,7 +137,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
     }
     else{
       info <- input$display_table_rows_selected
-      print(input$display_table_rows_selected[1])
+      # print(input$display_table_rows_selected[1])
       for (i in info) {
         delete_query <-
           paste0("DELETE FROM ",
@@ -175,6 +179,70 @@ mod_view_tables_server <- function(input, output, session, conn) {
     
   })
   
+  output$insert_row_ui <- renderUI({
+    number_of_columns <- nrow(table_info$column_names)
+    lapply(1:number_of_columns, function(i) {
+      textInput(inputId = ns(paste0("col", i)),
+                label = h4(strong(table_info$column_names[i, 1])))
+    })
+  })
+  
+  observeEvent(input$insert_rows, {
+    showModal(modalDialog(easyClose = TRUE,
+                          fluidRow(
+                            column(
+                              width = 12,
+                              offset = 1,
+                              p("Warning : Take care of data types while inserting data."),
+                              uiOutput(ns("insert_row_ui"))
+                            ),
+                            column(
+                              width = 4,
+                              offset = 1,
+                              actionButton(
+                                inputId = ns("insert_row_button"),
+                                label = "Insert New Row"
+                              )
+                            )
+                          )))
+  })
+  
+  observeEvent(input$insert_row_button, {
+    insert_query_values <- "("
+    for (i in 1:nrow(table_info$column_names)) {
+      value <- input[[paste0("col", i)]]
+      # Warning occurs here because of conversion into numeric type in if statement.
+      if (!is.na(as.numeric(value))) {
+        if (i != nrow(table_info$column_names))
+          insert_query_values <-
+            paste0(insert_query_values, value, ",")
+        else
+          insert_query_values <-
+            paste0(insert_query_values, value, ")")
+      }
+      else{
+        if (i != nrow(table_info$column_names))
+          insert_query_values <-
+            paste0(insert_query_values, '"', value, '",')
+        else
+          insert_query_values <-
+            paste0(insert_query_values, '"', value, '")')
+      }
+    }
+    insert_query <-
+      paste0("INSERT INTO ",
+             conn$active_table,
+             " VALUES ",
+             insert_query_values)
+    RSQLite::dbExecute(conn$active_db, insert_query)
+    data_fetch_query <-
+      paste0(
+        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+        conn$active_table
+      )
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+  })
 }
 
 ## To be copied in the UI
