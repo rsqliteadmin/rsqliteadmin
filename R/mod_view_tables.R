@@ -9,12 +9,16 @@
 #' @importFrom shiny NS tagList
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
+  
   tabPanel(title = "View/Edit Tables",
            br(),
-           fluidRow(column(width = 11,
-                           DT::dataTableOutput(
-                             ns("display_table")
-                           ))),
+           fluidRow(
+             column(
+               width = 11,
+               DT::dataTableOutput(ns("display_table")),
+               style = "height:500px;overflow-y: scroll;overflow-x: scroll;"
+             )
+           ),
            br(),
            fluidRow(
              column(width = 2,
@@ -46,6 +50,19 @@ mod_view_tables_server <- function(input, output, session, conn) {
     page = NULL
   )
   
+  output$display_table <-
+    DT::renderDT(expr = {
+      DT::datatable(
+        data = table_info$data[, -c(1:2)],
+        editable = "cell",
+        rownames = FALSE,
+        selection = "multiple",
+        options = list(displayStart = table_info$page,
+                       stateSave = TRUE)
+      )
+    })
+  
+  
   observeEvent(conn$active_table, {
     if (conn$active_table != "") {
       column_names_query <-
@@ -66,23 +83,12 @@ mod_view_tables_server <- function(input, output, session, conn) {
     }
   })
   
-  output$display_table <-
-    DT::renderDT(expr = {
-      DT::datatable(
-        data = table_info$data[, -c(1:2)],
-        editable = "cell",
-        rownames = FALSE,
-        selection = "multiple",
-        options = list(displayStart = table_info$page)
-      )
-    })
-  
-  #Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
+  # Reference here - https://stackoverflow.com/questions/13638377/test-for-numeric-elements-in-a-character-string
+  # Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
   observeEvent(input$display_table_cell_edit, {
     table_info$page <- input$display_table_rows_current[1] - 1
     table_info$edit_info = input$display_table_cell_edit
     # print(str(table_info$edit_info))
-    # Reference here - https://stackoverflow.com/questions/13638377/test-for-numeric-elements-in-a-character-string
     if (!is.na(as.numeric(table_info$edit_info$value))) {
       update_query <-
         paste0(
@@ -120,11 +126,16 @@ mod_view_tables_server <- function(input, output, session, conn) {
       error = function(err) {
         showNotification(
           ui =  paste0(err, ". Changes not saved."),
-          duration = 30,
+          duration = 15,
           type = "error"
         )
-        # print(err)
-        table_info$data <- input$display_table
+        data_fetch_query <-
+          paste0(
+            "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+            conn$active_table
+          )
+        table_info$data <-
+          RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
       }
     )
   })
@@ -136,6 +147,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
                        type = "error")
     }
     else{
+      table_info$page <- input$display_table_rows_current[1] - 1
       info <- input$display_table_rows_selected
       # print(input$display_table_rows_selected[1])
       for (i in info) {
@@ -157,6 +169,11 @@ mod_view_tables_server <- function(input, output, session, conn) {
                        duration = 3,
                        type = "message")
     }
+  })
+  
+  observeEvent(input$display_table_rows_selected,{
+    print(input$display_table_rows_selected)
+    # table_info$page <- input$display_table_rows_current[1] - 1
   })
   
   observeEvent(input$delete_all_rows, {
@@ -208,6 +225,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$insert_row_button, {
+    table_info$page <- input$display_table_rows_current[1] - 1
     insert_query_values <- "("
     for (i in 1:nrow(table_info$column_names)) {
       value <- input[[paste0("col", i)]]
