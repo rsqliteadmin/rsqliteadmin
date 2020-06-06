@@ -22,25 +22,65 @@ mod_side_panel_server <- function(input, output, session, action) {
     active_db = NULL,
     db_name = NULL,
     active_table = NULL,
-    directory = NULL
+    directory = "./Databases/"
   )
   
   output$db_list_control <- renderUI({
-    fluidPage(fluidRow(
-      actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
-      br(),
-      br(),
-      selectInput(
-        ns("select_active_db"),
-        "Select a database to work on",
-        choices = db_list(directory = conn$directory)
-      ),
-      selectInput(
-        ns("select_active_table"),
-        "Select a table to work on.",
-        choices = NULL
+    fluidPage(
+      fluidRow(
+        actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
+        br(),
+        br(),
+        shinyFiles::shinyDirButton(
+          id = ns("set_directory"),
+          label = "Set database directory",
+          title = "Select a folder"
+        ),
+        br(),
+        br(),
+        selectInput(
+          ns("select_active_db"),
+          "Select a database to work on",
+          choices = db_list(directory = conn$directory)
+        ),
+        selectInput(
+          ns("select_active_table"),
+          "Select a table to work on.",
+          choices = NULL
+        )
       )
-    ))
+    )
+  })
+  
+  if (file.exists("./data/directory.rds")) {
+    conn$directory <- readRDS("./data/directory.rds")
+  }
+  else{
+    conn$directory <- "./"
+    current_directory_path <- "./"
+    saveRDS(current_directory_path, "./data/directory.rds")
+  }
+  roots = c(
+    shinyFiles::getVolumes()(),
+    "Current Working Directory" = '.',
+    "Home" = fs::path_home()
+  )
+  
+  shinyFiles::shinyDirChoose(input = input,
+                             id = "set_directory",
+                             roots = roots)
+  
+  # parseDirPath returns character(0) on its first click.
+  observeEvent(input$set_directory, {
+    path <- shinyFiles::parseDirPath(roots = roots, input$set_directory)
+    if (!(identical(path, character(0)))) {
+      path <- paste0(path, "/")
+      conn$directory <- path
+      print(conn$active_db)
+      saveRDS(path, "./data/directory.rds")
+      # print(conn$directory)
+    }
+    # print(readRDS("./data/directory.rds"))
   })
   
   observeEvent(input$create_db, {
@@ -90,20 +130,33 @@ mod_side_panel_server <- function(input, output, session, action) {
   
   observeEvent(input$select_active_db, {
     if (!is.null(conn$directory)) {
-      if (!is.null(conn$active_db)) {
-        RSQLite::dbDisconnect(conn$active_db)
-      }
-      conn$active_db <-
-        RSQLite::dbConnect(RSQLite::SQLite(),
-                           paste0(conn$directory, input$select_active_db))
-      conn$db_name <- input$select_active_db
-      if (!is.null(conn$active_db)) {
-        updateSelectInput(
-          session =  session,
-          inputId =  "select_active_table",
-          choices = RSQLite::dbListTables(conn$active_db)
+      tryCatch({
+        if (!is.null(conn$active_db)) {
+          RSQLite::dbDisconnect(conn$active_db)
+          conn$active_db <- NULL
+          conn$db_name <- NULL
+        }
+        conn$active_db <-
+          RSQLite::dbConnect(RSQLite::SQLite(),
+                             paste0(conn$directory, input$select_active_db))
+        conn$db_name <- input$select_active_db
+        
+        if (!is.null(conn$active_db)) {
+          updateSelectInput(
+            session =  session,
+            inputId =  "select_active_table",
+            choices = RSQLite::dbListTables(conn$active_db)
+          )
+        }
+      },
+      error = function(err) {
+        showNotification(
+          ui =  paste0("No databases in this folder. Create or import one."),
+          duration = 3,
+          type = "warning"
         )
-      }
+      })
+      print(conn$active_table)
     }
   })
   
