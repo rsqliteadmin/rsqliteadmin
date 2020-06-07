@@ -42,6 +42,11 @@ mod_view_tables_ui <- function(id) {
 mod_view_tables_server <- function(input, output, session, conn) {
   ns <- session$ns
   
+  # tableinfo - stores all the info about currently active table.
+  # tableinfo$column_names - column names of the currently active table.
+  # table_info$data - data fetched from sqlite db for the currently active table.
+  # tableinfo$edit_info - data about the cell edited
+  # tableinfo$page - page starting info about the table
   
   table_info <- reactiveValues(
     column_names = NULL,
@@ -62,10 +67,10 @@ mod_view_tables_server <- function(input, output, session, conn) {
       )
     })
   
+  # Fetch data for active table.
   
   observeEvent(conn$active_table, {
-    print("working")
-    print(conn$active_table)
+    
     if (conn$active_table != "") {
       column_names_query <-
         paste0("SELECT name FROM PRAGMA_TABLE_INFO('",
@@ -73,7 +78,6 @@ mod_view_tables_server <- function(input, output, session, conn) {
                "');")
       table_info$column_names <-
         RSQLite::dbGetQuery(conn$active_db, column_names_query)
-      # print(str(table_info$column_names))
       
       data_fetch_query <-
         paste0(
@@ -87,12 +91,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
       table_info$data <- NULL
   })
   
+  # Edit table cells.
   # Reference here - https://stackoverflow.com/questions/13638377/test-for-numeric-elements-in-a-character-string
   # Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
+  
   observeEvent(input$display_table_cell_edit, {
     table_info$page <- input$display_table_rows_current[1] - 1
     table_info$edit_info = input$display_table_cell_edit
-    # print(str(table_info$edit_info))
+    
     if (!is.na(as.numeric(table_info$edit_info$value))) {
       update_query <-
         paste0(
@@ -119,8 +125,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
           table_info$data$row_id[table_info$data$row_number == table_info$edit_info$row]
         )
     }
-    # print(update_query)
-    # print(class(table_info$edit_info$value))
+    
     tryCatch(
       expr = {
         RSQLite::dbExecute(conn$active_db, update_query)
@@ -143,6 +148,8 @@ mod_view_tables_server <- function(input, output, session, conn) {
       }
     )
   })
+  
+  # Delete user selected rows.
   
   observeEvent(input$delete_rows, {
     if (is.null(input$display_table_rows_selected)) {
@@ -188,10 +195,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
                      type = "message")
   })
   
-  observeEvent(input$display_table_rows_selected, {
-    # print(input$display_table_rows_selected)
-    # table_info$page <- input$display_table_rows_current[1] - 1
-  })
+  # Delete all rows from the active table.
   
   observeEvent(input$delete_all_rows, {
     if (conn$active_table != "") {
@@ -231,13 +235,9 @@ mod_view_tables_server <- function(input, output, session, conn) {
                      type = "message")
   })
   
-  output$insert_row_ui <- renderUI({
-    number_of_columns <- nrow(table_info$column_names)
-    lapply(1:number_of_columns, function(i) {
-      textInput(inputId = ns(paste0("col", i)),
-                label = h4(strong(table_info$column_names[i, 1])))
-    })
-  })
+  # Insert row into the active table.
+  
+  # When insert row button on the main panel is clicked.
   
   observeEvent(input$insert_rows, {
     if (conn$active_table != "") {
@@ -265,12 +265,16 @@ mod_view_tables_server <- function(input, output, session, conn) {
                        type = "error")
   })
   
+  # When the insert row button inside modal dialog box is clicked.
+  
   observeEvent(input$insert_row_button, {
     table_info$page <- input$display_table_rows_current[1] - 1
     insert_query_values <- "("
     for (i in 1:nrow(table_info$column_names)) {
       value <- input[[paste0("col", i)]]
+      
       # Warning occurs here because of conversion into numeric type in if statement.
+      
       if (!is.na(as.numeric(value))) {
         if (i != nrow(table_info$column_names))
           insert_query_values <-
@@ -302,6 +306,8 @@ mod_view_tables_server <- function(input, output, session, conn) {
     table_info$data <-
       RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
   })
+  
+  # UI for modal box when insert row button on main panel is clicked.
   
   output$insert_row_ui <- renderUI({
     number_of_columns <- nrow(table_info$column_names)
@@ -311,63 +317,6 @@ mod_view_tables_server <- function(input, output, session, conn) {
     })
   })
   
-  observeEvent(input$insert_rows, {
-    showModal(modalDialog(easyClose = TRUE,
-                          fluidRow(
-                            column(
-                              width = 12,
-                              offset = 1,
-                              p("Warning : Take care of data types while inserting data."),
-                              uiOutput(ns("insert_row_ui"))
-                            ),
-                            column(
-                              width = 4,
-                              offset = 1,
-                              actionButton(
-                                inputId = ns("insert_row_button"),
-                                label = "Insert New Row"
-                              )
-                            )
-                          )))
-  })
-  
-  observeEvent(input$insert_row_button, {
-    table_info$page <- input$display_table_rows_current[1] - 1
-    insert_query_values <- "("
-    for (i in 1:nrow(table_info$column_names)) {
-      value <- input[[paste0("col", i)]]
-      # Warning occurs here because of conversion into numeric type in if statement.
-      if (!is.na(as.numeric(value))) {
-        if (i != nrow(table_info$column_names))
-          insert_query_values <-
-            paste0(insert_query_values, value, ",")
-        else
-          insert_query_values <-
-            paste0(insert_query_values, value, ")")
-      }
-      else{
-        if (i != nrow(table_info$column_names))
-          insert_query_values <-
-            paste0(insert_query_values, '"', value, '",')
-        else
-          insert_query_values <-
-            paste0(insert_query_values, '"', value, '")')
-      }
-    }
-    insert_query <-
-      paste0("INSERT INTO ",
-             conn$active_table,
-             " VALUES ",
-             insert_query_values)
-    RSQLite::dbExecute(conn$active_db, insert_query)
-    data_fetch_query <-
-      paste0(
-        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-        conn$active_table
-      )
-    table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
-  })
 }
 
 ## To be copied in the UI

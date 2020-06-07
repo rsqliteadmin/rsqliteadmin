@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList
 mod_side_panel_ui <- function(id) {
   ns <- NS(id)
-  uiOutput(ns("db_list_control"))
+  uiOutput(ns("side_panel_ui"))
 }
 
 #' side_panel Server Function
@@ -18,14 +18,7 @@ mod_side_panel_ui <- function(id) {
 mod_side_panel_server <- function(input, output, session, action) {
   ns <- session$ns
   
-  conn <- reactiveValues(
-    active_db = NULL,
-    db_name = NULL,
-    active_table = NULL,
-    directory = "./Databases/"
-  )
-  
-  output$db_list_control <- renderUI({
+  output$side_panel_ui <- renderUI({
     fluidPage(
       fluidRow(
         actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
@@ -52,6 +45,23 @@ mod_side_panel_server <- function(input, output, session, action) {
     )
   })
   
+  # conn - stores the information about database
+  # conn$active_db - the current active database selected by the user.
+  # conn$db_name - string containing the name of current active database.
+  # conn$active_table - the current active table selected by user.
+  # conn$directory - string containing path to the current directory where databases are saved and imported.
+  
+  conn <- reactiveValues(
+    active_db = NULL,
+    db_name = NULL,
+    active_table = NULL,
+    directory = NULL
+  )
+  
+  # Select directory to save and import databases
+  # Current user selected directory is store in directory.rds
+  # Default directory when the first time app is opened is the current working directory.
+  
   if (file.exists("./data/directory.rds")) {
     conn$directory <- readRDS("./data/directory.rds")
   }
@@ -71,6 +81,7 @@ mod_side_panel_server <- function(input, output, session, action) {
                              roots = roots)
   
   # parseDirPath returns character(0) on its first click.
+  
   observeEvent(input$set_directory, {
     path <- shinyFiles::parseDirPath(roots = roots, input$set_directory)
     if (!(identical(path, character(0)))) {
@@ -78,10 +89,11 @@ mod_side_panel_server <- function(input, output, session, action) {
       conn$directory <- path
       print(conn$active_db)
       saveRDS(path, "./data/directory.rds")
-      # print(conn$directory)
     }
-    # print(readRDS("./data/directory.rds"))
   })
+  
+  # Create a new database
+  # Check that the database with the same name does not already exist.
   
   observeEvent(input$create_db, {
     if (is.null(conn$directory))
@@ -128,6 +140,8 @@ mod_side_panel_server <- function(input, output, session, action) {
     )
   })
   
+  # Select active database and establish an RSQLite connection.
+  
   observeEvent(input$select_active_db, {
     if (!is.null(conn$directory)) {
       tryCatch({
@@ -156,13 +170,17 @@ mod_side_panel_server <- function(input, output, session, action) {
           type = "warning"
         )
       })
-      print(conn$active_table)
     }
   })
+  
+  
+  # Select active table and set that value to conn$active_table
   
   observeEvent(input$select_active_table, {
     conn$active_table <- input$select_active_table
   })
+  
+  # Update database list when a database is deleted
   
   observeEvent(action$deleted_db, {
     updateSelectInput(
@@ -172,6 +190,8 @@ mod_side_panel_server <- function(input, output, session, action) {
       choices = db_list(conn$directory)
     )
   })
+  
+  # Return the conn reactive values
   
   return(conn)
 }

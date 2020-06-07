@@ -25,10 +25,14 @@ mod_manage_databases_server <-
   function(input, output, session, conn) {
     ns <- session$ns
     
+    # action - reactive value storing what button has been pressed.
+    # action$deleted_db - updated when a database is deleted.
+    
     action <- reactiveValues(deleted_db = NULL)
     
+    # Delete currently active database after asking for user confirmation.
+    
     observeEvent(input$delete_db, {
-      
       if (is.null(conn$active_db)) {
         showNotification(ui = "No database selected.",
                          duration = 3,
@@ -36,12 +40,16 @@ mod_manage_databases_server <-
       }
       else{
         showModal(modalDialog(
-          tagList(
-            p(h4(paste0("Are you sure you want to delete "), conn$db_name, "?"))
-          ), 
-          title="Confirm Delete Database",
-          footer = tagList(actionButton(inputId =  ns("confirm_delete"), label =  "Delete"),
-                           modalButton("Cancel")
+          tagList(p(h4(
+            paste0("Are you sure you want to delete "), conn$db_name, "?"
+          ))),
+          title = "Confirm Delete Database",
+          footer = tagList(
+            actionButton(
+              inputId =  ns("confirm_delete"),
+              label =  "Delete"
+            ),
+            modalButton("Cancel")
           )
         ))
       }
@@ -57,6 +65,8 @@ mod_manage_databases_server <-
                        duration = 3)
       action$deleted_db <- input$delete_db
     })
+    
+    # Return action reactiveValues for other panels to know when an action has been taken.
     
     return(action)
   }

@@ -1,6 +1,6 @@
 ## Functions for module create_databases
 
-# Returns the list of databases in folder "Databases"
+# Returns the list of databases in folder "directory"
 db_list <- function(directory = NULL) {
   if (is.null(directory))
     return(NULL)
