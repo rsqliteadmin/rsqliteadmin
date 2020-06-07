@@ -151,28 +151,41 @@ mod_view_tables_server <- function(input, output, session, conn) {
                        type = "error")
     }
     else{
-      table_info$page <- input$display_table_rows_current[1] - 1
-      info <- input$display_table_rows_selected
-      # print(input$display_table_rows_selected[1])
-      for (i in info) {
-        delete_query <-
-          paste0("DELETE FROM ",
-                 conn$active_table,
-                 " WHERE rowid = ",
-                 table_info$data$row_id[table_info$data$row_number == i])
-        RSQLite::dbExecute(conn$active_db, delete_query)
-      }
-      data_fetch_query <-
-        paste0(
-          "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-          conn$active_table
+      showModal(modalDialog(
+        tagList(
+          p(h4("Are you sure you want to delete the selected rows? "))
+        ), 
+        title="Confirm Deletion of Rows",
+        footer = tagList(actionButton(inputId =  ns("confirm_delete_selected_rows"), label =  "Delete"),
+                         modalButton("Cancel")
         )
-      table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
-      showNotification(ui =  "Selected rows deleted successfully.",
-                       duration = 3,
-                       type = "message")
+      ))
     }
+  })
+  
+  observeEvent(input$confirm_delete_selected_rows, {
+    removeModal()
+    table_info$page <- input$display_table_rows_current[1] - 1
+    info <- input$display_table_rows_selected
+    # print(input$display_table_rows_selected[1])
+    for (i in info) {
+      delete_query <-
+        paste0("DELETE FROM ",
+               conn$active_table,
+               " WHERE rowid = ",
+               table_info$data$row_id[table_info$data$row_number == i])
+      RSQLite::dbExecute(conn$active_db, delete_query)
+    }
+    data_fetch_query <-
+      paste0(
+        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+        conn$active_table
+      )
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+    showNotification(ui =  "Selected rows deleted successfully.",
+                     duration = 3,
+                     type = "message")
   })
   
   observeEvent(input$display_table_rows_selected, {
@@ -182,27 +195,40 @@ mod_view_tables_server <- function(input, output, session, conn) {
   
   observeEvent(input$delete_all_rows, {
     if (conn$active_table != "") {
-      delete_query <-
-        paste0("DELETE FROM ",
-               conn$active_table)
-      RSQLite::dbExecute(conn$active_db, delete_query)
-      
-      data_fetch_query <-
-        paste0(
-          "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-          conn$active_table
+      showModal(modalDialog(
+        tagList(
+          p(h4("Are you sure you want to delete all rows? "))
+        ), 
+        title="Confirm Deletion of Rows",
+        footer = tagList(actionButton(inputId =  ns("confirm_delete_all_rows"), label =  "Delete"),
+                         modalButton("Cancel")
         )
-      
-      table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
-      showNotification(ui =  "All rows deleted successfully.",
-                       duration = 3,
-                       type = "message")
+      ))
     }
     else
       showNotification(ui =  "Please select a table first.",
                        duration = 3,
                        type = "error")
+  })
+  
+  observeEvent(input$confirm_delete_all_rows, {
+    removeModal()
+    delete_query <-
+      paste0("DELETE FROM ",
+             conn$active_table)
+    RSQLite::dbExecute(conn$active_db, delete_query)
+    
+    data_fetch_query <-
+      paste0(
+        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+        conn$active_table
+      )
+    
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+    showNotification(ui =  "All rows deleted successfully.",
+                     duration = 3,
+                     type = "message")
   })
   
   output$insert_row_ui <- renderUI({

@@ -8,3 +8,5 @@ rsqliteadmin.Rproj
 inst/doc
 Databases/**
 Databases
+data/directory.rds
+.gitignore

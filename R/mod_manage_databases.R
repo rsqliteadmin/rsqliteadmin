@@ -28,20 +28,34 @@ mod_manage_databases_server <-
     action <- reactiveValues(deleted_db = NULL)
     
     observeEvent(input$delete_db, {
+      
       if (is.null(conn$active_db)) {
         showNotification(ui = "No database selected.",
                          duration = 3,
                          type = "error")
       }
       else{
-        RSQLite::dbDisconnect(conn$active_db)
-        unlink(paste0(conn$directory, conn$db_name))
-        showNotification(paste("The database",
-                               conn$db_name,
-                               "was deleted successfully!"),
-                         duration = 3)
-        action$deleted_db <- input$delete_db
+        showModal(modalDialog(
+          tagList(
+            p(h4(paste0("Are you sure you want to delete "), conn$db_name, "?"))
+          ), 
+          title="Confirm Delete Database",
+          footer = tagList(actionButton(inputId =  ns("confirm_delete"), label =  "Delete"),
+                           modalButton("Cancel")
+          )
+        ))
       }
+    })
+    
+    observeEvent(input$confirm_delete, {
+      RSQLite::dbDisconnect(conn$active_db)
+      unlink(paste0(conn$directory, conn$db_name))
+      removeModal()
+      showNotification(paste("The database",
+                             conn$db_name,
+                             "was deleted successfully!"),
+                       duration = 3)
+      action$deleted_db <- input$delete_db
     })
     
     return(action)
