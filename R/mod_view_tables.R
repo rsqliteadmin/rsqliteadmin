@@ -58,7 +58,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
   output$display_table <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = table_info$data[,-c(1:2)],
+        data = table_info$data[, -c(1:2)],
         editable = "cell",
         rownames = FALSE,
         selection = "multiple",
@@ -88,7 +88,6 @@ mod_view_tables_server <- function(input, output, session, conn) {
   observeEvent(input$display_table_cell_edit, {
     table_info$page <- input$display_table_rows_current[1] - 1
     table_info$edit_info = input$display_table_cell_edit
-    
     tryCatch(
       expr = {
         RSQLite::dbExecute(
@@ -228,16 +227,31 @@ mod_view_tables_server <- function(input, output, session, conn) {
   # When the insert row button inside modal dialog box is clicked.
   
   observeEvent(input$insert_row_button, {
-    table_info$page <- input$display_table_rows_current[1] - 1
-    values <- vector(length = nrow(table_info$column_names))
-    
-    for (i in 1:nrow(table_info$column_names)) {
-      values[i] <- input[[paste0("col", i)]]
-    }
-    
-    RSQLite::dbExecute(conn$active_db, insert_query(conn$active_table, values))
-    table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+    tryCatch({
+      table_info$page <- input$display_table_rows_current[1] - 1
+      values <- vector(length = nrow(table_info$column_names))
+      
+      for (i in 1:nrow(table_info$column_names)) {
+        values[i] <- input[[paste0("col", i)]]
+      }
+      
+      RSQLite::dbExecute(conn$active_db,
+                         insert_query(conn$active_table, values))
+      showNotification(
+        ui =  paste0("Data inserted successfully."),
+        duration = 3,
+        type = "message"
+      )
+      table_info$data <-
+        RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+    },
+    error = function(err) {
+      showNotification(
+        ui =  paste0(err, ". Data not inserted."),
+        duration = 10,
+        type = "error"
+      )
+    })
   })
   
   # UI for modal box when insert row button on main panel is clicked.
