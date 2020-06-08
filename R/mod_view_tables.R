@@ -58,7 +58,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
   output$display_table <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = table_info$data[, -c(1:2)],
+        data = table_info$data[,-c(1:2)],
         editable = "cell",
         rownames = FALSE,
         selection = "multiple",
@@ -70,22 +70,12 @@ mod_view_tables_server <- function(input, output, session, conn) {
   # Fetch data for active table.
   
   observeEvent(conn$active_table, {
-    
     if (conn$active_table != "") {
-      column_names_query <-
-        paste0("SELECT name FROM PRAGMA_TABLE_INFO('",
-               conn$active_table,
-               "');")
       table_info$column_names <-
-        RSQLite::dbGetQuery(conn$active_db, column_names_query)
+        RSQLite::dbGetQuery(conn$active_db, column_names_query(conn$active_table))
       
-      data_fetch_query <-
-        paste0(
-          "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-          conn$active_table
-        )
       table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+        RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
     }
     else
       table_info$data <- NULL
@@ -99,36 +89,18 @@ mod_view_tables_server <- function(input, output, session, conn) {
     table_info$page <- input$display_table_rows_current[1] - 1
     table_info$edit_info = input$display_table_cell_edit
     
-    if (!is.na(as.numeric(table_info$edit_info$value))) {
-      update_query <-
-        paste0(
-          "UPDATE ",
-          conn$active_table,
-          " SET ",
-          table_info$column_names$name[table_info$edit_info$col + 1],
-          " = ",
-          table_info$edit_info$value,
-          " WHERE rowid = ",
-          table_info$data$row_id[table_info$data$row_number == table_info$edit_info$row]
-        )
-    }
-    else{
-      update_query <-
-        paste0(
-          "UPDATE ",
-          conn$active_table,
-          " SET ",
-          table_info$column_names$name[table_info$edit_info$col + 1],
-          " = '",
-          table_info$edit_info$value,
-          "' WHERE rowid = ",
-          table_info$data$row_id[table_info$data$row_number == table_info$edit_info$row]
-        )
-    }
-    
     tryCatch(
       expr = {
-        RSQLite::dbExecute(conn$active_db, update_query)
+        RSQLite::dbExecute(
+          conn$active_db,
+          update_query(
+            conn$active_table,
+            table_info$column_names$name[table_info$edit_info$col + 1],
+            table_info$edit_info$value,
+            table_info$data$row_id[table_info$data$row_number == table_info$edit_info$row]
+          )
+        )
+        
         table_info$data[table_info$edit_info$row, table_info$edit_info$col +
                           3] <- table_info$edit_info$value
       },
@@ -138,13 +110,9 @@ mod_view_tables_server <- function(input, output, session, conn) {
           duration = 15,
           type = "error"
         )
-        data_fetch_query <-
-          paste0(
-            "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-            conn$active_table
-          )
+        
         table_info$data <-
-          RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+          RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
       }
     )
   })
@@ -159,12 +127,16 @@ mod_view_tables_server <- function(input, output, session, conn) {
     }
     else{
       showModal(modalDialog(
-        tagList(
-          p(h4("Are you sure you want to delete the selected rows? "))
-        ), 
-        title="Confirm Deletion of Rows",
-        footer = tagList(actionButton(inputId =  ns("confirm_delete_selected_rows"), label =  "Delete"),
-                         modalButton("Cancel")
+        tagList(p(
+          h4("Are you sure you want to delete the selected rows? ")
+        )),
+        title = "Confirm Deletion of Rows",
+        footer = tagList(
+          actionButton(
+            inputId =  ns("confirm_delete_selected_rows"),
+            label =  "Delete"
+          ),
+          modalButton("Cancel")
         )
       ))
     }
@@ -174,22 +146,15 @@ mod_view_tables_server <- function(input, output, session, conn) {
     removeModal()
     table_info$page <- input$display_table_rows_current[1] - 1
     info <- input$display_table_rows_selected
-    # print(input$display_table_rows_selected[1])
+    
     for (i in info) {
-      delete_query <-
-        paste0("DELETE FROM ",
-               conn$active_table,
-               " WHERE rowid = ",
-               table_info$data$row_id[table_info$data$row_number == i])
-      RSQLite::dbExecute(conn$active_db, delete_query)
+      RSQLite::dbExecute(conn$active_db,
+                         delete_query(conn$active_table,
+                                      table_info$data$row_id[table_info$data$row_number == i]))
     }
-    data_fetch_query <-
-      paste0(
-        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-        conn$active_table
-      )
+    
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
     showNotification(ui =  "Selected rows deleted successfully.",
                      duration = 3,
                      type = "message")
@@ -200,12 +165,16 @@ mod_view_tables_server <- function(input, output, session, conn) {
   observeEvent(input$delete_all_rows, {
     if (conn$active_table != "") {
       showModal(modalDialog(
-        tagList(
-          p(h4("Are you sure you want to delete all rows? "))
-        ), 
-        title="Confirm Deletion of Rows",
-        footer = tagList(actionButton(inputId =  ns("confirm_delete_all_rows"), label =  "Delete"),
-                         modalButton("Cancel")
+        tagList(p(
+          h4("Are you sure you want to delete all rows? ")
+        )),
+        title = "Confirm Deletion of Rows",
+        footer = tagList(
+          actionButton(
+            inputId =  ns("confirm_delete_all_rows"),
+            label =  "Delete"
+          ),
+          modalButton("Cancel")
         )
       ))
     }
@@ -217,19 +186,10 @@ mod_view_tables_server <- function(input, output, session, conn) {
   
   observeEvent(input$confirm_delete_all_rows, {
     removeModal()
-    delete_query <-
-      paste0("DELETE FROM ",
-             conn$active_table)
-    RSQLite::dbExecute(conn$active_db, delete_query)
-    
-    data_fetch_query <-
-      paste0(
-        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-        conn$active_table
-      )
+    RSQLite::dbExecute(conn$active_db, delete_all_query(conn$active_table))
     
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
     showNotification(ui =  "All rows deleted successfully.",
                      duration = 3,
                      type = "message")
@@ -269,42 +229,15 @@ mod_view_tables_server <- function(input, output, session, conn) {
   
   observeEvent(input$insert_row_button, {
     table_info$page <- input$display_table_rows_current[1] - 1
-    insert_query_values <- "("
+    values <- vector(length = nrow(table_info$column_names))
+    
     for (i in 1:nrow(table_info$column_names)) {
-      value <- input[[paste0("col", i)]]
-      
-      # Warning occurs here because of conversion into numeric type in if statement.
-      
-      if (!is.na(as.numeric(value))) {
-        if (i != nrow(table_info$column_names))
-          insert_query_values <-
-            paste0(insert_query_values, value, ",")
-        else
-          insert_query_values <-
-            paste0(insert_query_values, value, ")")
-      }
-      else{
-        if (i != nrow(table_info$column_names))
-          insert_query_values <-
-            paste0(insert_query_values, '"', value, '",')
-        else
-          insert_query_values <-
-            paste0(insert_query_values, '"', value, '")')
-      }
+      values[i] <- input[[paste0("col", i)]]
     }
-    insert_query <-
-      paste0("INSERT INTO ",
-             conn$active_table,
-             " VALUES ",
-             insert_query_values)
-    RSQLite::dbExecute(conn$active_db, insert_query)
-    data_fetch_query <-
-      paste0(
-        "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-        conn$active_table
-      )
+    
+    RSQLite::dbExecute(conn$active_db, insert_query(conn$active_table, values))
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query)
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
   })
   
   # UI for modal box when insert row button on main panel is clicked.
