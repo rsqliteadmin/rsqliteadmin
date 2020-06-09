@@ -59,17 +59,13 @@ mod_side_panel_server <- function(input, output, session, action) {
   )
   
   # Select directory to save and import databases
-  # Current user selected directory is store in directory.rds
+  # Current user selected directory is store in ./inst/extdata/directory.Rdata
   # Default directory when the first time app is opened is the current working directory.
   
-  if (file.exists("./data/directory.rds")) {
-    conn$directory <- readRDS("./data/directory.rds")
-  }
-  else{
-    conn$directory <- "./"
-    current_directory_path <- "./"
-    saveRDS(current_directory_path, "./data/directory.rds")
-  }
+  load(system.file("extdata", "directory.Rdata",
+                   package = "rsqliteadmin", mustWork = TRUE))
+  conn$directory<-db_directory_path
+  
   roots = c(
     shinyFiles::getVolumes()(),
     "Current Working Directory" = '.',
@@ -83,12 +79,12 @@ mod_side_panel_server <- function(input, output, session, action) {
   # parseDirPath returns character(0) on its first click.
   
   observeEvent(input$set_directory, {
-    path <- shinyFiles::parseDirPath(roots = roots, input$set_directory)
+    db_directory_path <- shinyFiles::parseDirPath(roots = roots, input$set_directory)
     if (!(identical(path, character(0)))) {
-      path <- paste0(path, "/")
-      conn$directory <- path
-      print(conn$active_db)
-      saveRDS(path, "./data/directory.rds")
+      db_directory_path <- paste0(db_directory_path, "/")
+      conn$directory <- db_directory_path
+      save(db_directory_path, file = system.file("extdata", "directory.Rdata",
+                                                 package = "rsqliteadmin", mustWork = TRUE))
     }
   })
   

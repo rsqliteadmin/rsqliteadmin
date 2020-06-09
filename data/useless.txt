@@ -1,1 +1,0 @@
-A useless text file created so that Git recognizes this folder.
