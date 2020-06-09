@@ -62,9 +62,15 @@ mod_side_panel_server <- function(input, output, session, action) {
   # Current user selected directory is store in ./inst/extdata/directory.Rdata
   # Default directory when the first time app is opened is the current working directory.
   
-  load(system.file("extdata", "directory.Rdata",
-                   package = "rsqliteadmin", mustWork = TRUE))
-  conn$directory<-db_directory_path
+  load(
+    system.file(
+      "extdata",
+      "directory.Rdata",
+      package = "rsqliteadmin",
+      mustWork = TRUE
+    )
+  )
+  conn$directory <- db_directory_path
   
   roots = c(
     shinyFiles::getVolumes()(),
@@ -79,12 +85,19 @@ mod_side_panel_server <- function(input, output, session, action) {
   # parseDirPath returns character(0) on its first click.
   
   observeEvent(input$set_directory, {
-    db_directory_path <- shinyFiles::parseDirPath(roots = roots, input$set_directory)
+    path <- shinyFiles::parseDirPath(roots = roots, input$set_directory)
     if (!(identical(path, character(0)))) {
-      db_directory_path <- paste0(db_directory_path, "/")
+      db_directory_path <- paste0(path, "/")
       conn$directory <- db_directory_path
-      save(db_directory_path, file = system.file("extdata", "directory.Rdata",
-                                                 package = "rsqliteadmin", mustWork = TRUE))
+      save(
+        db_directory_path,
+        file = system.file(
+          "extdata",
+          "directory.Rdata",
+          package = "rsqliteadmin",
+          mustWork = TRUE
+        )
+      )
     }
   })
   
