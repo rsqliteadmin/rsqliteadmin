@@ -1,12 +1,17 @@
 #' view_tables UI Function
 #'
-#' @description A shiny Module.
+#' @description Shiny module for View/Edit Tables tab.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom DT dataTableOutput
+#' @importFrom DT renderDT
+#' @importFrom DT datatable
+#' @importFrom RSQLite dbGetQuery
+#' @importFrom RSQLite dbExecute
+
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
   

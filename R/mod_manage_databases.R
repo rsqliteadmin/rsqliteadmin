@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom RSQLite dbDisconnect
 mod_manage_databases_ui <- function(id) {
   ns <- NS(id)
   tabPanel(title = "Manage Databases",

@@ -6,7 +6,10 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import shinyFiles
+#' @import RSQLite
+#' @importFrom fs path_home
+
 mod_side_panel_ui <- function(id) {
   ns <- NS(id)
   uiOutput(ns("side_panel_ui"))
