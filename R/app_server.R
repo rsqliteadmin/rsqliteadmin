@@ -5,8 +5,9 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
-  conn <- callModule(mod_side_panel_server, "side_panel", action)
+  conn <- callModule(mod_side_panel_server, "side_panel", action, action_manage_tables)
   action <-
     callModule(mod_manage_databases_server, "manage_databases", conn)
   callModule(mod_view_tables_server, "view_tables", conn)
+  action_manage_tables <- callModule(mod_manage_tables_server, "manage_tables", conn)
 }

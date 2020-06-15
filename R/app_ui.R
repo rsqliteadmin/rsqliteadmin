@@ -11,7 +11,8 @@ app_ui <- function(request) {
             mainPanel(
               tabsetPanel(
                 mod_manage_databases_ui("manage_databases"),
-                mod_view_tables_ui("view_tables")
+                mod_view_tables_ui("view_tables"),
+                mod_manage_tables_ui("manage_tables")
               )
             )
           )))

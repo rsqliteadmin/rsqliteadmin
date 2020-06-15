@@ -95,7 +95,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
     table_info$edit_info = input$display_table_cell_edit
     tryCatch(
       expr = {
-        RSQLite::dbExecute(
+        RSQLite::ecute(
           conn$active_db,
           update_query(
             conn$active_table,

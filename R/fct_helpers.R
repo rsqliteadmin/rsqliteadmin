@@ -109,3 +109,127 @@ insert_query <- function(active_table, values) {
            insert_query_values)
   return(res)
 }
+
+# Add column to a table
+
+column_details_query <- function(column_name = NULL,
+                                 data_type = NULL,
+                                 primary_key = NULL,
+                                 autoincrement_primary_key = NULL,
+                                 sort_order_primary_key = NULL,
+                                 on_conflict_primary_key = NULL,
+                                 unique = NULL,
+                                 on_conflict_unique = NULL,
+                                 not_null = NULL,
+                                 on_conflict_not_null = NULL,
+                                 default = NULL,
+                                 default_value_default = NULL,
+                                 check_condition = NULL,
+                                 specify_condition_check_condition = NULL,
+                                 collate = NULL,
+                                 collation_type_collate = NULL,
+                                 foreign_key = NULL,
+                                 foreign_table_foreign_key = NULL,
+                                 foreign_column_foreign_key = NULL,
+                                 on_update_foreign_key = NULL,
+                                 on_delete_foreign_key = NULL,
+                                 match_foreign_key = NULL,
+                                 defer_first_foreign_key = NULL,
+                                 defer_second_foreign_key = NULL) {
+  
+  res <- paste0(column_name, " ", data_type, " ")
+  
+  if(isTRUE(primary_key)){
+    
+    res<- paste0(res, "PRIMARY KEY ")
+    
+    if(isTRUE(autoincrement_primary_key))
+      res <- paste0(res, "AUTOINCREMENT ")
+    
+    if(sort_order_primary_key!="")
+      res <- paste0(res, sort_order_primary_key, " ")
+    
+    if(on_conflict_primary_key!="")
+      res <- paste0(res, "ON CONFLICT ", on_conflict_primary_key, " ")
+    
+  }
+  
+  if(isTRUE(unique)){
+    
+    res<- paste0(res, "UNIQUE ")
+    
+    if(on_conflict_unique!="")
+      res<- paste0(res, "ON CONFLICT ", on_conflict_unique, " ")
+  }
+  
+  if(isTRUE(not_null)){
+    
+    res<- paste0(res, "NOT NULL ")
+    
+    if(on_conflict_not_null!="")
+      res<- paste0(res, "ON CONFLICT ", on_conflict_not_null, " ")
+    
+  }
+  
+  if(isTRUE(default)){
+    
+    res<- paste0(res, "DEFAULT ")
+    
+    if (!is.na(as.numeric(default_value_default))) {
+      res <- paste0(res, "(", default_value_default, ") ")
+    }
+    else{
+      res <- paste0(res, default_value_default, " ")
+    }
+    
+  }
+  
+  if(isTRUE(check_condition)){
+    
+    res<- paste0(res, "CHECK (", specify_condition_check_condition, ") ")
+    
+  }
+  
+  if(isTRUE(collate)){
+    
+    res<- paste0(res, "COLLATE ", collation_type_collate, " ") 
+    
+  }
+  
+  if(isTRUE(foreign_key)){
+    res <- paste0(res, "REFERENCES ", foreign_table_foreign_key, 
+                  " (", foreign_column_foreign_key, ") ")
+    
+    if(on_update_foreign_key!="")
+      res<- paste0(res, "ON UPDATE ", on_update_foreign_key, " ")
+    
+    if(on_delete_foreign_key!="")
+      res<- paste0(res, "ON DELETE ", on_delete_foreign_key, " ")
+    
+    if(match_foreign_key!="")
+      res<- paste0(res, "MATCH ", match_foreign_key, " ")
+    
+    if(defer_first_foreign_key!="")
+      res<- paste0(res, defer_first_foreign_key, " ")
+    
+    if(defer_second_foreign_key!="")
+      res<- paste0(res, "INITIALLY ", defer_second_foreign_key, " ")
+    
+  }
+  
+  return(res)
+}
+
+create_table_query <- function(table_name = NULL, 
+                               column_details_query = NULL){
+  res<- paste0("CREATE TABLE ", table_name, " ( ")
+  for(i in column_details_query){
+    res<-paste0(res, i, ", ")
+  }
+  # Remove the last comma.
+  res <- substr(res, 1, nchar(res)-2)
+  
+  res<- paste0(res, ");")
+  print(res)
+  return(res)
+}
