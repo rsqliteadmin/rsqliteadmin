@@ -15,30 +15,43 @@
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
   
-  tabPanel(title = "View/Edit Tables",
-           br(),
-           fluidRow(
-             column(
-               width = 11,
-               DT::dataTableOutput(ns("display_table")),
-               style = "height:500px;overflow-y: scroll;overflow-x: scroll;"
-             )
-           ),
-           br(),
-           fluidRow(
-             column(width = 2,
-                    actionButton(
-                      inputId = ns("insert_rows"), label = "Insert new rows"
-                    )),
-             column(
-               width = 2,
-               actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows")
-             ),
-             column(width = 2,
-                    actionButton(
-                      inputId = ns("delete_all_rows"), label = "Delete All Rows"
-                    ))
-           ))
+  tabPanel(
+    title = "View/Edit Tables",
+    br(),
+    fluidRow(
+      column(
+        width = 11,
+        DT::dataTableOutput(ns("display_table")),
+        style = "height:500px;overflow-y: scroll;overflow-x: scroll;"
+      )
+    ),
+    br(),
+    fluidRow(
+      column(width = 2,
+             actionButton(
+               inputId = ns("insert_rows"), label = "Insert new rows"
+             )),
+      column(
+        width = 2,
+        actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows")
+      ),
+      column(width = 2,
+             actionButton(
+               inputId = ns("delete_all_rows"), label = "Delete All Rows"
+             )),
+      column(
+        width = 2,
+        actionButton(inputId = ns("fetch_previous"), label = "Fetch Previous Rows")
+      ),
+      column(width = 2,
+             actionButton(
+               inputId = ns("fetch_next"), label = "Fetch Next Rows"
+             ))
+    ),
+    br(),
+    br(),
+    uiOutput(ns("fetch_ui"))
+  )
 }
 
 #' view_tables Server Function
@@ -57,13 +70,15 @@ mod_view_tables_server <- function(input, output, session, conn) {
     column_names = NULL,
     data = NULL,
     edit_info = NULL,
-    page = NULL
+    page = NULL,
+    number_rows = 1000,
+    offset = 0
   )
   
   output$display_table <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = table_info$data[, -c(1:2)],
+        data = table_info$data[,-c(1:2)],
         editable = "cell",
         rownames = FALSE,
         selection = "multiple",
@@ -71,6 +86,94 @@ mod_view_tables_server <- function(input, output, session, conn) {
                        stateSave = TRUE)
       )
     })
+  
+  output$fetch_ui <- renderUI({
+    fluidPage(fluidRow(column(
+      width = 4,
+      numericInput(
+        inputId = ns("change_rows_fetched"),
+        label = "Change number of rows fetched:",
+        value = 1000,
+        min = 0
+      )
+    ),
+    
+    column(
+      width = 6,
+      numericInput(inputId = ns("fetch_offset"),
+                label = "Fetch from row number: ",
+                value = 1,
+                min = 0)
+    )),
+    fluidRow(
+      column(width = 4,
+             actionButton(
+               inputId = ns("confirm_change_rows_fetched"),
+               label = "Confirm"
+             )),
+      column(width = 6,
+             actionButton(
+               inputId = ns("confirm_fetch_offset"),
+               label = "Confirm"
+             ))
+    ))
+  })
+  
+  observeEvent(input$fetch_previous, {
+    table_info$offset = table_info$offset - table_info$number_rows
+    print(table_info$number_rows)
+    print(table_info$offset)
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
+                                                           table_info$offset))
+  })
+  
+  observeEvent(input$fetch_next, {
+    table_info$offset = table_info$offset + table_info$number_rows
+    print(table_info$number_rows)
+    print(table_info$offset)
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
+                                                           table_info$offset))
+  })
+  
+  observeEvent(input$confirm_change_rows_fetched, {
+    tryCatch({
+    table_info$number_rows= input$change_rows_fetched
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
+                                                           table_info$offset))
+    
+    },
+    error = function(err) {
+      showNotification(
+        ui =  "Please specify a value first.",
+        duration = 3,
+        type = "error"
+      )
+    })
+    print(table_info$number_rows)
+    print(table_info$offset)
+  })
+  
+  observeEvent(input$confirm_fetch_offset,{
+    tryCatch({
+    table_info$offset = input$fetch_offset - 1
+    table_info$data <-
+      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
+                                                           table_info$offset))
+    },
+    error = function(err) {
+      showNotification(
+        ui =  "Please specify a value first.",
+        duration = 3,
+        type = "error"
+      )
+    })
+    print(table_info$number_rows)
+    print(table_info$offset)
+    
+  })
   
   # Fetch data for active table.
   
@@ -80,7 +183,8 @@ mod_view_tables_server <- function(input, output, session, conn) {
         RSQLite::dbGetQuery(conn$active_db, column_names_query(conn$active_table))
       
       table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+        RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
+                                                             table_info$offset))
     }
     else
       table_info$data <- NULL
@@ -89,13 +193,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
   # Edit table cells.
   # Reference here - https://stackoverflow.com/questions/13638377/test-for-numeric-elements-in-a-character-string
   # Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
+
   
   observeEvent(input$display_table_cell_edit, {
     table_info$page <- input$display_table_rows_current[1] - 1
     table_info$edit_info = input$display_table_cell_edit
     tryCatch(
       expr = {
-        RSQLite::ecute(
+        RSQLite::dbExecute(
           conn$active_db,
           update_query(
             conn$active_table,

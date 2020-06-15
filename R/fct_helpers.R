@@ -25,10 +25,17 @@ column_names_query <- function(active_table = NULL) {
 }
 
 # Fetch data for a table
-data_fetch_query <- function(active_table = NULL) {
+data_fetch_query <- function(active_table = NULL, 
+                             number_rows = NULL, 
+                             offset = NULL) {
   res <- paste0(
     "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
-    active_table
+    active_table,
+    " LIMIT ",
+    number_rows,
+    " OFFSET ",
+    offset,
+    ";"
   )
   return(res)
 }
@@ -143,14 +150,14 @@ column_details_query <- function(column_name = NULL,
     
     res<- paste0(res, "PRIMARY KEY ")
     
-    if(isTRUE(autoincrement_primary_key))
-      res <- paste0(res, "AUTOINCREMENT ")
-    
     if(sort_order_primary_key!="")
       res <- paste0(res, sort_order_primary_key, " ")
     
     if(on_conflict_primary_key!="")
       res <- paste0(res, "ON CONFLICT ", on_conflict_primary_key, " ")
+    
+    if(isTRUE(autoincrement_primary_key))
+      res <- paste0(res, "AUTOINCREMENT ")
     
   }
   
