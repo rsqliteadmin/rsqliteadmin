@@ -88,23 +88,27 @@ mod_view_tables_server <- function(input, output, session, conn) {
     })
   
   output$fetch_ui <- renderUI({
-    fluidPage(fluidRow(column(
-      width = 4,
-      numericInput(
-        inputId = ns("change_rows_fetched"),
-        label = "Change number of rows fetched:",
-        value = 1000,
-        min = 0
+    fluidPage(fluidRow(
+      column(
+        width = 4,
+        numericInput(
+          inputId = ns("change_rows_fetched"),
+          label = "Change number of rows fetched:",
+          value = 1000,
+          min = 0
+        )
+      ),
+      
+      column(
+        width = 6,
+        numericInput(
+          inputId = ns("fetch_offset"),
+          label = "Fetch from row number: ",
+          value = 1,
+          min = 0
+        )
       )
     ),
-    
-    column(
-      width = 6,
-      numericInput(inputId = ns("fetch_offset"),
-                label = "Fetch from row number: ",
-                value = 1,
-                min = 0)
-    )),
     fluidRow(
       column(width = 4,
              actionButton(
@@ -124,8 +128,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
     print(table_info$number_rows)
     print(table_info$offset)
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
-                                                           table_info$offset))
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$offset
+        )
+      )
   })
   
   observeEvent(input$fetch_next, {
@@ -133,42 +143,56 @@ mod_view_tables_server <- function(input, output, session, conn) {
     print(table_info$number_rows)
     print(table_info$offset)
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
-                                                           table_info$offset))
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$offset
+        )
+      )
   })
   
   observeEvent(input$confirm_change_rows_fetched, {
     tryCatch({
-    table_info$number_rows= input$change_rows_fetched
-    table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
-                                                           table_info$offset))
-    
+      table_info$number_rows = input$change_rows_fetched
+      table_info$data <-
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$offset
+          )
+        )
+      
     },
     error = function(err) {
-      showNotification(
-        ui =  "Please specify a value first.",
-        duration = 3,
-        type = "error"
-      )
+      showNotification(ui =  "Please specify a value first.",
+                       duration = 3,
+                       type = "error")
     })
     print(table_info$number_rows)
     print(table_info$offset)
   })
   
-  observeEvent(input$confirm_fetch_offset,{
+  observeEvent(input$confirm_fetch_offset, {
     tryCatch({
-    table_info$offset = input$fetch_offset - 1
-    table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
-                                                           table_info$offset))
+      table_info$offset = input$fetch_offset - 1
+      table_info$data <-
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$offset
+          )
+        )
     },
     error = function(err) {
-      showNotification(
-        ui =  "Please specify a value first.",
-        duration = 3,
-        type = "error"
-      )
+      showNotification(ui =  "Please specify a value first.",
+                       duration = 3,
+                       type = "error")
     })
     print(table_info$number_rows)
     print(table_info$offset)
@@ -183,8 +207,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
         RSQLite::dbGetQuery(conn$active_db, column_names_query(conn$active_table))
       
       table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table, table_info$number_rows,
-                                                             table_info$offset))
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$offset
+          )
+        )
     }
     else
       table_info$data <- NULL
@@ -193,7 +223,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
   # Edit table cells.
   # Reference here - https://stackoverflow.com/questions/13638377/test-for-numeric-elements-in-a-character-string
   # Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
-
+  
   
   observeEvent(input$display_table_cell_edit, {
     table_info$page <- input$display_table_rows_current[1] - 1
@@ -221,7 +251,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
         )
         
         table_info$data <-
-          RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(
+              conn$active_table,
+              table_info$number_rows,
+              table_info$offset
+            )
+          )
       }
     )
   })
@@ -263,7 +300,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
     }
     
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$offset
+        )
+      )
     showNotification(ui =  "Selected rows deleted successfully.",
                      duration = 3,
                      type = "message")
@@ -298,7 +342,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
     RSQLite::dbExecute(conn$active_db, delete_all_query(conn$active_table))
     
     table_info$data <-
-      RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$offset
+        )
+      )
     showNotification(ui =  "All rows deleted successfully.",
                      duration = 3,
                      type = "message")
@@ -353,7 +404,14 @@ mod_view_tables_server <- function(input, output, session, conn) {
         type = "message"
       )
       table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db, data_fetch_query(conn$active_table))
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$offset
+          )
+        )
     },
     error = function(err) {
       showNotification(
