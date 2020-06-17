@@ -30,17 +30,20 @@ mod_manage_tables_ui <- function(id) {
              actionButton(
                inputId = ns("create_new_table"),
                label = "Create New Table"
+             )),
+      column(width = 3,
+             actionButton(
+               inputId = ns("reset_columns"),
+               label = "Reset Columns"
              ))
     ),
     br(),
-    fluidRow(
-      p(h2(
-        strong("Current Table Structure")
-      ))
-    ),
-    fluidRow(
-      DT::dataTableOutput(ns("display_table_structure"))
-    )
+    fluidRow(p(h2(
+      strong("Current Table Structure")
+    ))),
+    fluidRow(DT::dataTableOutput(ns(
+      "display_table_structure"
+    )))
   )
 }
 
@@ -74,18 +77,20 @@ mod_manage_tables_server <- function(input, output, session, conn) {
   output$display_new_table <-
     DT::renderDT(expr = {
       DT::datatable(data = info$new_table_columns[, c(-1)],
-                    rownames = FALSE,)
+                    rownames = FALSE,
+      )
     })
   
   output$display_table_structure <-
     DT::renderDT(expr = {
       DT::datatable(data = info$table_structure,
-                    rownames = FALSE,)
+                    rownames = FALSE, )
     })
   
   observeEvent(conn$active_table, {
-    query<- paste0("pragma table_info('", conn$active_table, "');")
-    info$table_structure <- RSQLite::dbGetQuery(conn$active_db, query)
+    query <- paste0("pragma table_info('", conn$active_table, "');")
+    info$table_structure <-
+      RSQLite::dbGetQuery(conn$active_db, query)
   })
   
   # Reference Here: https://github.com/rstudio/shiny/issues/1586
@@ -408,7 +413,7 @@ mod_manage_tables_server <- function(input, output, session, conn) {
       # rbind() messes with column names
       # Reference here: https://stackoverflow.com/questions/5231540/r-losing-column-names-when-adding-rows-to-an-empty-data-frame
       
-      info$new_table_columns[nrow(info$new_table_columns) + 1,] <-
+      info$new_table_columns[nrow(info$new_table_columns) + 1, ] <-
         c(
           column_details_query,
           input$column_name,
@@ -476,6 +481,21 @@ mod_manage_tables_server <- function(input, output, session, conn) {
     }
   })
   
+  observeEvent(input$reset_columns, {
+    info$new_table_columns <- data.frame(
+      column_query = character(),
+      Column_Name = character(),
+      Data_Type = character(),
+      Primary_Key = logical(),
+      Unique = logical(),
+      Not_Null = logical(),
+      Default = logical(),
+      Check_Condition = logical(),
+      Collate = logical(),
+      Foreign_Key = logical(),
+      stringsAsFactors = FALSE
+    )
+  })
   return(action_manage_tables)
 }
 
