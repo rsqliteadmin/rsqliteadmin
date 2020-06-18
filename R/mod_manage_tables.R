@@ -35,7 +35,12 @@ mod_manage_tables_ui <- function(id) {
              actionButton(
                inputId = ns("reset_columns"),
                label = "Reset Columns"
-             ))
+             )),
+      column(
+        width = 3,
+        actionButton(inputId = ns("drop_table"),
+                     label = "Drop Current Table")
+      )
     ),
     br(),
     fluidRow(p(h2(
@@ -71,27 +76,26 @@ mod_manage_tables_server <- function(input, output, session, conn) {
       table_structure = NULL
     )
   
-  action_manage_tables <- reactiveValues(created_table = NULL)
-  
+  action_manage_tables <- reactiveValues(created_table = NULL,
+                                         dropped_table = NULL)
   
   output$display_new_table <-
     DT::renderDT(expr = {
       DT::datatable(data = info$new_table_columns[, c(-1)],
-                    rownames = FALSE,
-      )
+                    rownames = FALSE,)
     })
   
   output$display_table_structure <-
     DT::renderDT(expr = {
       DT::datatable(data = info$table_structure,
-                    rownames = FALSE, )
+                    rownames = FALSE,)
     })
   
   observeEvent(conn$active_table, {
     query <- paste0("pragma table_info('", conn$active_table, "');")
-    if(conn$active_table!=""){
-    info$table_structure <-
-      RSQLite::dbGetQuery(conn$active_db, query)
+    if (conn$active_table != "") {
+      info$table_structure <-
+        RSQLite::dbGetQuery(conn$active_db, query)
     }
   })
   
@@ -415,7 +419,7 @@ mod_manage_tables_server <- function(input, output, session, conn) {
       # rbind() messes with column names
       # Reference here: https://stackoverflow.com/questions/5231540/r-losing-column-names-when-adding-rows-to-an-empty-data-frame
       
-      info$new_table_columns[nrow(info$new_table_columns) + 1, ] <-
+      info$new_table_columns[nrow(info$new_table_columns) + 1,] <-
         c(
           column_details_query,
           input$column_name,
@@ -498,6 +502,52 @@ mod_manage_tables_server <- function(input, output, session, conn) {
       stringsAsFactors = FALSE
     )
   })
+  
+  observeEvent(input$drop_table, {
+    if (conn$active_table == "") {
+      showNotification(ui = "No table selected.",
+                       duration = 3,
+                       type = "error")
+    }
+    else{
+      showModal(modalDialog(
+        tagList(p(
+          h4(
+            paste0("Are you sure you want to delete "),
+            conn$active_table,
+            "?"
+          )
+        )),
+        title = "Confirm Delete Table",
+        footer = tagList(
+          actionButton(
+            inputId =  ns("confirm_delete_table"),
+            label =  "Delete"
+          ),
+          modalButton("Cancel")
+        )
+      ))
+    }
+  })
+  
+  observeEvent(input$confirm_delete_table, {
+    tryCatch({
+      RSQLite::dbExecute(conn$active_db, drop_table_query(conn$active_table))
+      removeModal()
+      showNotification(ui = "The table was deleted successfully!",
+                       duration = 3,
+                       type = "message")
+      action_manage_tables$dropped_table <- input$drop_table
+    },
+    error = function(err) {
+      showNotification(
+        ui =  paste0(err, ". Table not dropped."),
+        duration = 3,
+        type = "warning"
+      )
+    })
+  })
+  
   return(action_manage_tables)
 }
 

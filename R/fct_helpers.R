@@ -235,8 +235,11 @@ create_table_query <- function(table_name = NULL,
   }
   # Remove the last comma.
   res <- substr(res, 1, nchar(res)-2)
-  
   res<- paste0(res, ");")
-  print(res)
+  return(res)
+}
+
+drop_table_query <- function(table_name = NULL){
+  res<- paste0("DROP TABLE ", table_name)
   return(res)
 }
