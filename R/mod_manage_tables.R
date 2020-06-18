@@ -89,8 +89,10 @@ mod_manage_tables_server <- function(input, output, session, conn) {
   
   observeEvent(conn$active_table, {
     query <- paste0("pragma table_info('", conn$active_table, "');")
+    if(conn$active_table!=""){
     info$table_structure <-
       RSQLite::dbGetQuery(conn$active_db, query)
+    }
   })
   
   # Reference Here: https://github.com/rstudio/shiny/issues/1586
