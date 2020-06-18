@@ -20,7 +20,7 @@ mod_manage_tables_ui <- function(id) {
         inputId = ns("new_table_name"),
         label = h4(strong("Enter Table Name"))
       ),
-      DT::dataTableOutput(ns("display_new_table")),
+      DT::DTOutput(ns("display_new_table")),
       column(width = 3,
              actionButton(
                inputId =  ns("add_column"),
@@ -41,7 +41,7 @@ mod_manage_tables_ui <- function(id) {
     fluidRow(p(h2(
       strong("Current Table Structure")
     ))),
-    fluidRow(DT::dataTableOutput(ns(
+    fluidRow(DT::DTOutput(ns(
       "display_table_structure"
     )))
   )

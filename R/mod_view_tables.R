@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' @importFrom DT renderDT
 #' @importFrom DT datatable
 #' @importFrom RSQLite dbGetQuery
@@ -21,7 +21,7 @@ mod_view_tables_ui <- function(id) {
     fluidRow(
       column(
         width = 11,
-        DT::dataTableOutput(ns("display_table")),
+        DT::DTOutput(ns("display_table")),
         style = "height:500px;overflow-y: scroll;overflow-x: scroll;"
       )
     ),
