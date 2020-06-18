@@ -78,7 +78,7 @@ mod_view_tables_server <- function(input, output, session, conn) {
   output$display_table <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = table_info$data[,-c(1:2)],
+        data = table_info$data[,-c(1:2), drop = FALSE],
         editable = "cell",
         rownames = FALSE,
         selection = "multiple",
