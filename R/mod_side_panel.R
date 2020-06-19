@@ -222,6 +222,16 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
     )
   })
   
+  # Update table list when a table is renamed.
+  
+  observeEvent(action_manage_tables$renamed_table, {
+    updateSelectInput(
+      session,
+      inputId =  "select_active_table",
+      choices = RSQLite::dbListTables(conn$active_db)
+    )
+  })
+  
   # Return the conn reactive values
   
   return(conn)

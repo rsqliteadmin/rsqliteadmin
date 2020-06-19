@@ -21,25 +21,30 @@ mod_manage_tables_ui <- function(id) {
         label = h4(strong("Enter Table Name"))
       ),
       DT::DTOutput(ns("display_new_table")),
-      column(width = 3,
+      column(width =2,
              actionButton(
                inputId =  ns("add_column"),
                label = "Add a new column"
              )),
-      column(width = 3,
+      column(width = 2,
              actionButton(
                inputId = ns("create_new_table"),
                label = "Create New Table"
              )),
-      column(width = 3,
+      column(width = 2,
              actionButton(
                inputId = ns("reset_columns"),
                label = "Reset Columns"
              )),
       column(
-        width = 3,
+        width = 2,
         actionButton(inputId = ns("drop_table"),
                      label = "Drop Current Table")
+      ),
+      column(
+        width = 2,
+        actionButton(inputId = ns("remove_columns"),
+                     label = "Remove Selected Columns")
       )
     ),
     br(),
@@ -48,7 +53,10 @@ mod_manage_tables_ui <- function(id) {
     ))),
     fluidRow(DT::DTOutput(ns(
       "display_table_structure"
-    )))
+    ))),
+    column(width = 2,
+           actionButton(inputId = ns("rename_table"),
+                        label = "Rename Table"))
   )
 }
 
@@ -77,12 +85,14 @@ mod_manage_tables_server <- function(input, output, session, conn) {
     )
   
   action_manage_tables <- reactiveValues(created_table = NULL,
-                                         dropped_table = NULL)
+                                         dropped_table = NULL,
+                                         renamed_table = NULL)
   
   output$display_new_table <-
     DT::renderDT(expr = {
       DT::datatable(data = info$new_table_columns[, c(-1)],
-                    rownames = FALSE,)
+                    rownames = FALSE,
+                    selection = "multiple")
     })
   
   output$display_table_structure <-
@@ -546,6 +556,51 @@ mod_manage_tables_server <- function(input, output, session, conn) {
         type = "warning"
       )
     })
+  })
+  
+  observeEvent(input$remove_columns, {
+    if(is.null(input$display_new_table_rows_selected))
+      showNotification(ui = "No column selected",
+                       duration = 3,
+                       type = "error")
+    else{
+      info$new_table_columns <- info$new_table_columns[-as.numeric(input$display_new_table_rows_selected),]
+    }
+  })
+  
+  observeEvent(input$rename_table, {
+    if(conn$active_table=="")
+      showNotification(ui = "No table selected.",
+                       duration = 3,
+                       type = "error")
+    else{
+      showModal(modalDialog(easyClose = TRUE,
+                            title = "Rename Table",
+                            textInput(inputId = ns("rename_table_name"), label = "Enter New Name"),
+                            footer = tagList(
+                              actionButton(
+                                inputId =  ns("confirm_rename"),
+                                label =  "Confirm"
+                              ),
+                              modalButton("Cancel")
+                            )
+      ))
+    }
+  })
+  
+  observeEvent(input$confirm_rename, {
+    if(input$rename_table_name == "")
+      showNotification(ui = "Please enter new name.",
+                       duration = 3,
+                       type = "error")
+    else{
+      RSQLite::dbExecute(conn$active_db, rename_table_query(conn$active_table, input$rename_table_name))
+      action_manage_tables$renamed_table <- input$rename_table
+      removeModal()
+      showNotification(ui = "Table Renamed Successfully",
+                       duration = 3,
+                       type = "message")
+    }
   })
   
   return(action_manage_tables)

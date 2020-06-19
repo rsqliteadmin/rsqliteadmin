@@ -227,6 +227,8 @@ column_details_query <- function(column_name = NULL,
   return(res)
 }
 
+# Create a new table.
+
 create_table_query <- function(table_name = NULL, 
                                column_details_query = NULL){
   res<- paste0("CREATE TABLE ", table_name, " ( ")
@@ -241,5 +243,13 @@ create_table_query <- function(table_name = NULL,
 
 drop_table_query <- function(table_name = NULL){
   res<- paste0("DROP TABLE ", table_name)
+  return(res)
+}
+
+# Rename an existing table.
+
+rename_table_query <- function(old_name = NULL,
+                               new_name = NULL){
+  res <- paste0("ALTER TABLE ", old_name, " RENAME TO ", new_name, ";")
   return(res)
 }
