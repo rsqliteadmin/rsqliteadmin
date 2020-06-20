@@ -1,4 +1,6 @@
 ## Functions for module create_databases
+# Note: For SQLite, A keyword in single quotes ('') is a string literal
+#               and A keyword in double-quotes ("") is an identifier.
 
 # Returns the list of databases in folder "directory"
 db_list <- function(directory = NULL) {
@@ -25,17 +27,17 @@ column_names_query <- function(active_table = NULL) {
 }
 
 # Fetch data for a table
-data_fetch_query <- function(active_table = NULL, 
-                             number_rows = NULL, 
+data_fetch_query <- function(active_table = NULL,
+                             number_rows = NULL,
                              offset = NULL) {
   res <- paste0(
-    "SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM ",
+    'SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM "',
     active_table,
-    " LIMIT ",
+    '" LIMIT ',
     number_rows,
-    " OFFSET ",
+    ' OFFSET ',
     offset,
-    ";"
+    ';'
   )
   return(res)
 }
@@ -45,34 +47,36 @@ update_query <- function(active_table, column_name, value, rowid) {
   res <- NULL
   if (!is.na(as.numeric(value))) {
     res <-
-      paste0("UPDATE ",
+      paste0('UPDATE "',
              active_table,
-             " SET ",
+             '" SET "',
              column_name,
-             " = ",
+             '" = ',
              value,
              " WHERE rowid = ",
              rowid)
   }
   else{
     res <-
-      paste0("UPDATE ",
-             active_table,
-             " SET ",
-             column_name,
-             " = '",
-             value,
-             "' WHERE rowid = ",
-             rowid)
+      paste0(
+        'UPDATE "',
+        active_table,
+        '" SET "',
+        column_name,
+        '" = \'',
+        value,
+        '\' WHERE rowid = ',
+        rowid
+      )
   }
   return(res)
 }
 
 # Delete a row from the table
 delete_query <- function(active_table, rowid) {
-  res <- paste0("DELETE FROM ",
+  res <- paste0('DELETE FROM "',
                 active_table,
-                " WHERE rowid = ",
+                '" WHERE rowid = ',
                 rowid)
   print(res)
   return(res)
@@ -80,14 +84,14 @@ delete_query <- function(active_table, rowid) {
 
 # Delete all rows from a table
 delete_all_query <- function(active_table) {
-  res <- paste0("DELETE FROM ",
-                active_table)
+  res <- paste0('DELETE FROM "',
+                active_table, '"')
   return(res)
 }
 
 # Insert data into a table
 insert_query <- function(active_table, values) {
-  insert_query_values <- "("
+  insert_query_values <- '('
   i = 0
   for (val in values) {
     # Warning occurs here because of conversion into numeric type in if statement.
@@ -95,24 +99,24 @@ insert_query <- function(active_table, values) {
     if (!is.na(as.numeric(val))) {
       if (i != length(values))
         insert_query_values <-
-          paste0(insert_query_values, val, ",")
+          paste0(insert_query_values, val, ',')
       else
         insert_query_values <-
-          paste0(insert_query_values, val, ")")
+          paste0(insert_query_values, val, ')')
     }
     else{
       if (i != length(values))
         insert_query_values <-
-          paste0(insert_query_values, '"', val, '",')
+          paste0(insert_query_values, '\'', val, '\',')
       else
         insert_query_values <-
-          paste0(insert_query_values, '"', val, '")')
+          paste0(insert_query_values, '\'', val, '\')')
     }
   }
   res <-
-    paste0("INSERT INTO ",
+    paste0('INSERT INTO "',
            active_table,
-           " VALUES ",
+           '" VALUES ',
            insert_query_values)
   return(res)
 }
@@ -143,84 +147,86 @@ column_details_query <- function(column_name = NULL,
                                  match_foreign_key = NULL,
                                  defer_first_foreign_key = NULL,
                                  defer_second_foreign_key = NULL) {
+  res <- paste0('"', column_name, '" "', data_type, '" ')
   
-  res <- paste0(column_name, " ", data_type, " ")
-  
-  if(isTRUE(primary_key)){
+  if (isTRUE(primary_key)) {
+    res <- paste0(res, "PRIMARY KEY ")
     
-    res<- paste0(res, "PRIMARY KEY ")
-    
-    if(sort_order_primary_key!="")
+    if (sort_order_primary_key != "")
       res <- paste0(res, sort_order_primary_key, " ")
     
-    if(on_conflict_primary_key!="")
-      res <- paste0(res, "ON CONFLICT ", on_conflict_primary_key, " ")
+    if (on_conflict_primary_key != "")
+      res <-
+        paste0(res, "ON CONFLICT ", on_conflict_primary_key, " ")
     
-    if(isTRUE(autoincrement_primary_key))
+    if (isTRUE(autoincrement_primary_key))
       res <- paste0(res, "AUTOINCREMENT ")
     
   }
   
-  if(isTRUE(unique)){
+  if (isTRUE(unique)) {
+    res <- paste0(res, "UNIQUE ")
     
-    res<- paste0(res, "UNIQUE ")
-    
-    if(on_conflict_unique!="")
-      res<- paste0(res, "ON CONFLICT ", on_conflict_unique, " ")
+    if (on_conflict_unique != "")
+      res <- paste0(res, "ON CONFLICT ", on_conflict_unique, " ")
   }
   
-  if(isTRUE(not_null)){
+  if (isTRUE(not_null)) {
+    res <- paste0(res, "NOT NULL ")
     
-    res<- paste0(res, "NOT NULL ")
-    
-    if(on_conflict_not_null!="")
-      res<- paste0(res, "ON CONFLICT ", on_conflict_not_null, " ")
+    if (on_conflict_not_null != "")
+      res <- paste0(res, "ON CONFLICT ", on_conflict_not_null, " ")
     
   }
   
-  if(isTRUE(default)){
-    
-    res<- paste0(res, "DEFAULT ")
+  if (isTRUE(default)) {
+    res <- paste0(res, "DEFAULT ")
     
     if (!is.na(as.numeric(default_value_default))) {
       res <- paste0(res, "(", default_value_default, ") ")
     }
     else{
-      res <- paste0(res, default_value_default, " ")
+      res <- paste0(res, "'", default_value_default, "' ")
     }
     
   }
   
-  if(isTRUE(check_condition)){
-    
-    res<- paste0(res, "CHECK (", specify_condition_check_condition, ") ")
-    
-  }
-  
-  if(isTRUE(collate)){
-    
-    res<- paste0(res, "COLLATE ", collation_type_collate, " ") 
+  if (isTRUE(check_condition)) {
+    res <-
+      paste0(res, "CHECK (", specify_condition_check_condition, ") ")
     
   }
   
-  if(isTRUE(foreign_key)){
-    res <- paste0(res, "REFERENCES ", foreign_table_foreign_key, 
-                  " (", foreign_column_foreign_key, ") ")
+  if (isTRUE(collate)) {
+    res <- paste0(res, "COLLATE ", collation_type_collate, " ")
     
-    if(on_update_foreign_key!="")
-      res<- paste0(res, "ON UPDATE ", on_update_foreign_key, " ")
+  }
+  
+  if (isTRUE(foreign_key)) {
+    res <- paste0(
+      res,
+      "REFERENCES \"",
+      foreign_table_foreign_key,
+      "\" (",
+      foreign_column_foreign_key,
+      ") "
+    )
     
-    if(on_delete_foreign_key!="")
-      res<- paste0(res, "ON DELETE ", on_delete_foreign_key, " ")
+    if (on_update_foreign_key != "")
+      res <- paste0(res, "ON UPDATE ", on_update_foreign_key, " ")
     
-    if(match_foreign_key!="")
-      res<- paste0(res, "MATCH ", match_foreign_key, " ")
+    if (on_delete_foreign_key != "")
+      res <- paste0(res, "ON DELETE ", on_delete_foreign_key, " ")
     
-    if(defer_first_foreign_key!="")
-      res<- paste0(res, defer_first_foreign_key, " ")
+    if (match_foreign_key != "")
+      res <- paste0(res, "MATCH ", match_foreign_key, " ")
     
-    if(defer_second_foreign_key!="")
-      res<- paste0(res, "INITIALLY ", defer_second_foreign_key, " ")
+    if (defer_first_foreign_key != "")
+      res <- paste0(res, defer_first_foreign_key, " ")
+    
+    if (defer_second_foreign_key != "")
+      res <-
+        paste0(res, "INITIALLY ", defer_second_foreign_key, " ")
     
   }
   
@@ -229,27 +235,28 @@ column_details_query <- function(column_name = NULL,
 
 # Create a new table.
 
-create_table_query <- function(table_name = NULL, 
-                               column_details_query = NULL){
-  res<- paste0("CREATE TABLE ", table_name, " ( ")
-  for(i in column_details_query){
-    res<-paste0(res, i, ", ")
+create_table_query <- function(table_name = NULL,
+                               column_details_query = NULL) {
+  res <- paste0("CREATE TABLE \"", table_name, "\" ( ")
+  for (i in column_details_query) {
+    res <- paste0(res, i, ", ")
   }
   # Remove the last comma.
-  res <- substr(res, 1, nchar(res)-2)
-  res<- paste0(res, ");")
+  res <- substr(res, 1, nchar(res) - 2)
+  res <- paste0(res, ");")
   return(res)
 }
 
-drop_table_query <- function(table_name = NULL){
-  res<- paste0("DROP TABLE ", table_name)
+drop_table_query <- function(table_name = NULL) {
+  res <- paste0("DROP TABLE \"", table_name, "\"")
   return(res)
 }
 
 # Rename an existing table.
 
 rename_table_query <- function(old_name = NULL,
-                               new_name = NULL){
-  res <- paste0("ALTER TABLE ", old_name, " RENAME TO ", new_name, ";")
+                               new_name = NULL) {
+  res <-
+    paste0('ALTER TABLE "', old_name, '" RENAME TO "', new_name, '";')
   return(res)
 }
