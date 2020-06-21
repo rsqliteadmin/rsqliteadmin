@@ -121,7 +121,7 @@ insert_query <- function(active_table, values) {
   return(res)
 }
 
-# Add column to a table
+# Column definition query.
 
 column_details_query <- function(column_name = NULL,
                                  data_type = NULL,
@@ -271,6 +271,18 @@ update_column_name_query <- function(table_name = NULL,
                 '" TO "',
                 new_name,
                 '"')
+  print(res)
+  return(res)
+}
+
+# Add column to an existing table
+
+add_column_query <- function(active_table = NULL,
+                             column_details_query = NULL){
+  res <- paste0('ALTER TABLE "',
+                active_table,
+                '" ADD COLUMN ',
+                column_details_query)
   print(res)
   return(res)
 }
