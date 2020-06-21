@@ -260,3 +260,17 @@ rename_table_query <- function(old_name = NULL,
     paste0('ALTER TABLE "', old_name, '" RENAME TO "', new_name, '";')
   return(res)
 }
+
+update_column_name_query <- function(table_name = NULL,
+                                     old_name = NULL,
+                                     new_name = NULL) {
+  res <- paste0('ALTER TABLE "',
+                table_name,
+                '" RENAME COLUMN "',
+                old_name, 
+                '" TO "',
+                new_name,
+                '"')
+  print(res)
+  return(res)
+}

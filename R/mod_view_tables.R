@@ -57,7 +57,7 @@ mod_view_tables_ui <- function(id) {
 #' view_tables Server Function
 #'
 #' @noRd
-mod_view_tables_server <- function(input, output, session, conn) {
+mod_view_tables_server <- function(input, output, session, conn, action_manage_tables) {
   ns <- session$ns
   
   # tableinfo - stores all the info about currently active table.
@@ -430,6 +430,20 @@ mod_view_tables_server <- function(input, output, session, conn) {
       textInput(inputId = ns(paste0("col", i)),
                 label = h4(strong(table_info$column_names[i, 1])))
     })
+  })
+  
+  # Refresh data when column names are changed.
+  
+  observeEvent(action_manage_tables$column_renamed, {
+    table_info$data <-
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$offset
+        )
+      )
   })
   
 }

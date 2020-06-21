@@ -86,7 +86,8 @@ mod_manage_tables_server <- function(input, output, session, conn) {
   
   action_manage_tables <- reactiveValues(created_table = NULL,
                                          dropped_table = NULL,
-                                         renamed_table = NULL)
+                                         renamed_table = NULL,
+                                         column_renamed = NULL)
   
   output$display_new_table <-
     DT::renderDT(expr = {
@@ -98,7 +99,8 @@ mod_manage_tables_server <- function(input, output, session, conn) {
   output$display_table_structure <-
     DT::renderDT(expr = {
       DT::datatable(data = info$table_structure,
-                    rownames = FALSE,)
+                    rownames = FALSE,
+                    editable = list(target = "cell", disable = list(columns = c(0, 2:5))))
     })
   
   observeEvent(conn$active_table, {
@@ -601,6 +603,38 @@ mod_manage_tables_server <- function(input, output, session, conn) {
                        duration = 3,
                        type = "message")
     }
+  })
+  
+  observeEvent(input$display_table_structure_cell_edit,{
+    
+    tryCatch(
+      expr = {
+        RSQLite::dbExecute(
+          conn$active_db,
+          update_column_name_query(
+            conn$active_table,
+            info$table_structure[input$display_table_structure_cell_edit$row, 
+                                 input$display_table_structure_cell_edit$col+1],
+            input$display_table_structure_cell_edit$value
+          )
+        )
+        action_manage_tables$column_renamed <- input$display_table_structure_cell_edit$value
+      },
+      error = function(err) {
+        showNotification(
+          ui =  paste0(err, ". Changes not saved."),
+          duration = 15,
+          type = "error"
+        )
+      },
+      finally = {
+        query <- paste0("pragma table_info('", conn$active_table, "');")
+        if (conn$active_table != "") {
+          info$table_structure <-
+            RSQLite::dbGetQuery(conn$active_db, query)
+        }
+      }
+    )
   })
   
   return(action_manage_tables)
