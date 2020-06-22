@@ -38,16 +38,17 @@ mod_manage_tables_ui <- function(id) {
              )),
       column(
         width = 2,
-        actionButton(inputId = ns("drop_table"),
-                     label = "Drop Current Table")
+        actionButton(inputId = ns("remove_columns"),
+                     label = "Remove Selected Columns")
       ),
       column(
         width = 2,
-        actionButton(inputId = ns("remove_columns"),
-                     label = "Remove Selected Columns")
+        actionButton(inputId = ns("drop_table"),
+                     label = "Drop Current Table")
       )
     ),
     br(),
+    HTML('<hr style="height:2px;border-width:0;color:black;background-color:black">'),
     fluidRow(p(h2(
       strong("Current Table Structure")
     ))),
@@ -102,6 +103,15 @@ mod_manage_tables_server <- function(input, output, session, conn, action_query)
     DT::renderDT(expr = {
       DT::datatable(
         data = info$new_table_columns[, c(-1)],
+        rownames = FALSE,
+        selection = "multiple"
+      )
+    })
+  
+  output$display_new_table_modal <-
+    DT::renderDT(expr = {
+      DT::datatable(
+        data = info$new_table_columns[, c(-1, -4:-10)],
         rownames = FALSE,
         selection = "multiple"
       )
@@ -387,7 +397,10 @@ mod_manage_tables_server <- function(input, output, session, conn, action_query)
           )
         ),
         actionButton(inputId = ns("confirm_column"),
-                     label = "Confirm Column Details")
+                     label = "Confirm Column Details"),
+        br(),br(),
+        HTML('<hr style="height:2px;border-width:0;color:black;background-color:black">'),
+        DT::DTOutput(ns("display_new_table_modal"))
       )
     )
   })

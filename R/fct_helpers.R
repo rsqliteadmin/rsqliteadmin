@@ -1,6 +1,7 @@
-## Functions for module create_databases
 # Note: For SQLite, A keyword in single quotes ('') is a string literal
 #               and A keyword in double-quotes ("") is an identifier.
+
+## Functions for module create_databases
 
 # Returns the list of databases in folder "directory"
 db_list <- function(directory = NULL) {
@@ -23,6 +24,12 @@ column_names_query <- function(active_table = NULL) {
   res <- paste0("SELECT name FROM PRAGMA_TABLE_INFO('",
                 active_table,
                 "');")
+  return(res)
+}
+
+#Get number of rows for a table.
+total_rows_query <- function(active_table = NULL){
+  res<- paste0('SELECT COUNT(*) FROM "', active_table, '"')
   return(res)
 }
 

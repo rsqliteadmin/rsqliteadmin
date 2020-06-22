@@ -20,6 +20,30 @@ mod_view_tables_ui <- function(id) {
     br(),
     fluidRow(
       column(
+        width = 1,
+        actionButton(inputId = ns("header"), label = "Header")
+      ),
+      column(width = 1,
+             actionButton(
+               inputId = ns("footer"), label = "Footer"
+             )),
+      column(
+        width = 2,
+        actionButton(inputId = ns("fetch_all"), label = "Fetch All Rows")
+      ),
+      column(
+        width = 3,
+        actionButton(inputId = ns("fetch_previous"), label = "Fetch Previous Subset of Rows")
+      ),
+      column(width = 3,
+             actionButton(
+               inputId = ns("fetch_next"), label = "Fetch Next Subset of Rows"
+             ))
+    ), br(),
+    uiOutput(ns("fetch_ui")),
+    br(),
+    fluidRow(
+      column(
         width = 11,
         DT::DTOutput(ns("display_table")),
         style = "height:500px;overflow-y: scroll;overflow-x: scroll;"
@@ -38,19 +62,8 @@ mod_view_tables_ui <- function(id) {
       column(width = 2,
              actionButton(
                inputId = ns("delete_all_rows"), label = "Delete All Rows"
-             )),
-      column(
-        width = 2,
-        actionButton(inputId = ns("fetch_previous"), label = "Fetch Previous Rows")
-      ),
-      column(width = 2,
-             actionButton(
-               inputId = ns("fetch_next"), label = "Fetch Next Rows"
              ))
-    ),
-    br(),
-    br(),
-    uiOutput(ns("fetch_ui"))
+    ), br(), br()
   )
 }
 
@@ -69,6 +82,7 @@ mod_view_tables_server <- function(input, output, session, conn, action_manage_t
   table_info <- reactiveValues(
     column_names = NULL,
     data = NULL,
+    total_rows = NULL,
     edit_info = NULL,
     page = NULL,
     number_rows = 1000,
@@ -83,7 +97,10 @@ mod_view_tables_server <- function(input, output, session, conn, action_manage_t
         rownames = FALSE,
         selection = "multiple",
         options = list(displayStart = table_info$page,
-                       stateSave = TRUE)
+                       stateSave = TRUE,
+                       language = list(  infoPostFix = paste0("<br>Fetching ", table_info$number_rows, 
+                                                     " rows out of total ", table_info$total_rows,
+                                                     " rows")))
       )
     })
   
@@ -123,6 +140,30 @@ mod_view_tables_server <- function(input, output, session, conn, action_manage_t
     ))
   })
   
+  observeEvent(input$header, {
+    table_info$data <-
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          0
+        )
+      )
+  })
+  
+  observeEvent(input$footer, {
+    table_info$data <-
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$total_rows - table_info$number_rows
+        )
+      )
+  })
+  
   observeEvent(input$fetch_previous, {
     table_info$offset = table_info$offset - table_info$number_rows
     print(table_info$number_rows)
@@ -149,6 +190,18 @@ mod_view_tables_server <- function(input, output, session, conn, action_manage_t
           conn$active_table,
           table_info$number_rows,
           table_info$offset
+        )
+      )
+  })
+  
+  observeEvent(input$fetch_all, {
+    table_info$data <-
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$total_rows,
+          0
         )
       )
   })
@@ -215,6 +268,8 @@ mod_view_tables_server <- function(input, output, session, conn, action_manage_t
             table_info$offset
           )
         )
+      
+      table_info$total_rows <- RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table))
     }
     else
       table_info$data <- NULL
