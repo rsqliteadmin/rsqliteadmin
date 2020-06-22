@@ -18,7 +18,7 @@ mod_side_panel_ui <- function(id) {
 #' side_panel Server Function
 #'
 #' @noRd
-mod_side_panel_server <- function(input, output, session, action, action_manage_tables) {
+mod_side_panel_server <- function(input, output, session, action, action_manage_tables, action_query) {
   ns <- session$ns
   
   output$side_panel_ui <- renderUI({
@@ -230,6 +230,25 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
       inputId =  "select_active_table",
       choices = RSQLite::dbListTables(conn$active_db)
     )
+  })
+  
+  # Update database list when a query is executed
+  
+  observeEvent(action_query$data_updated, {
+    updateSelectInput(
+      session,
+      inputId =  "select_active_db",
+      label = "Choose a database",
+      choices = db_list(conn$directory)
+    )
+  })
+  
+  # Update table list when a query is executed.
+  
+  observeEvent(action_query$data_updated, {
+    updateSelectInput(session,
+                      inputId =  "select_active_table",
+                      choices = RSQLite::dbListTables(conn$active_db))
   })
   
   # Return the conn reactive values

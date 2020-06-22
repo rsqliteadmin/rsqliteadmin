@@ -70,7 +70,7 @@ mod_manage_tables_ui <- function(id) {
 #' manage_tables Server Function
 #'
 #' @noRd
-mod_manage_tables_server <- function(input, output, session, conn) {
+mod_manage_tables_server <- function(input, output, session, conn, action_query) {
   ns <- session$ns
   
   info <-
@@ -956,6 +956,14 @@ mod_manage_tables_server <- function(input, output, session, conn) {
       )
     }
     
+  })
+  
+  observeEvent(action_query$data_updated, {
+    query <- paste0("pragma table_info('", conn$active_table, "');")
+    if (conn$active_table != "") {
+      info$table_structure <-
+        RSQLite::dbGetQuery(conn$active_db, query)
+    }
   })
   
   return(action_manage_tables)

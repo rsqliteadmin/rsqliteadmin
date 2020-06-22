@@ -57,7 +57,7 @@ mod_view_tables_ui <- function(id) {
 #' view_tables Server Function
 #'
 #' @noRd
-mod_view_tables_server <- function(input, output, session, conn, action_manage_tables) {
+mod_view_tables_server <- function(input, output, session, conn, action_manage_tables, action_query) {
   ns <- session$ns
   
   # tableinfo - stores all the info about currently active table.
@@ -446,6 +446,19 @@ mod_view_tables_server <- function(input, output, session, conn, action_manage_t
       )
   })
   
+  # Refresh data when a query is executed affecting data.
+  
+  observeEvent(action_query$data_updated, {
+    table_info$data <-
+      RSQLite::dbGetQuery(
+        conn$active_db,
+        data_fetch_query(
+          conn$active_table,
+          table_info$number_rows,
+          table_info$offset
+        )
+      )
+  })
 }
 
 ## To be copied in the UI
