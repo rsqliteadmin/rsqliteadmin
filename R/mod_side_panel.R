@@ -22,8 +22,8 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
   ns <- session$ns
   
   output$side_panel_ui <- renderUI({
-    fluidPage(
-      fluidRow(
+    fillPage(
+      
         actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
         br(),
         br(),
@@ -45,7 +45,7 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
           choices = NULL
         )
       )
-    )
+    
   })
   
   # conn - stores the information about database
@@ -235,20 +235,24 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
   # Update database list when a query is executed
   
   observeEvent(action_query$data_updated, {
+    tryCatch({
     updateSelectInput(
       session,
       inputId =  "select_active_db",
       label = "Choose a database",
       choices = db_list(conn$directory)
     )
+    })
   })
   
   # Update table list when a query is executed.
   
   observeEvent(action_query$data_updated, {
+    tryCatch({
     updateSelectInput(session,
                       inputId =  "select_active_table",
                       choices = RSQLite::dbListTables(conn$active_db))
+    })
   })
   
   # Return the conn reactive values

@@ -16,13 +16,17 @@ mod_query_ui <- function(id) {
       shinyAce::aceEditor(
         outputId = ns("ace"),
         placeholder = "Enter query here.",
-        mode = "sql"
+        mode = "sql",
+        height = "200px"
       )
     )),
-    fluidRow(actionButton(
-      inputId = ns("run"),
-      label = "Run Query"
-    )),
+    fluidRow(
+      actionButton(inputId = ns("execute"),
+                   label = "Execute Query"),
+      br(),
+      br(),
+      verbatimTextOutput(ns("display_error"))
+    ),
     br(),
     fluidRow(uiOutput(ns(
       "query_results_ui"
@@ -36,11 +40,16 @@ mod_query_ui <- function(id) {
 mod_query_server <- function(input, output, session, conn) {
   ns <- session$ns
   
-  info <- reactiveValues(data = NULL)
+  info <- reactiveValues(data = NULL,
+                         error = NULL)
   
   action_query <- reactiveValues(data_updated = NULL)
   
-  observeEvent(input$run, {
+  output$display_error <- renderText({
+    info$error
+  })
+  
+  observeEvent(input$execute, {
     if (!is.null(conn$active_db)) {
       query <- input$ace
       query <- gsub("\n", " ", query)
@@ -53,18 +62,14 @@ mod_query_server <- function(input, output, session, conn) {
         }
         else{
           RSQLite::dbExecute(conn$active_db, query)
-          action_query$data_updated <- input$run
+          action_query$data_updated <- input$execute
           showNotification(ui = "Query Completed.",
                            duration = 3,
                            type = "message")
         }
       },
       error = function(err) {
-        showNotification(
-          ui =  paste0(err, ". Query not completed."),
-          duration = 10,
-          type = "error"
-        )
+        info$error <- toString(err)
       })
     }
     else{

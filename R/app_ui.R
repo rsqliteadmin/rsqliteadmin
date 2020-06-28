@@ -7,7 +7,7 @@
 app_ui <- function(request) {
   tagList(golem_add_external_resources(),
           fluidPage(sidebarLayout(
-            sidebarPanel(mod_side_panel_ui("side_panel"), width = 4),
+            sidebarPanel(mod_side_panel_ui("side_panel"), width = 3),
             mainPanel(
               tabsetPanel(
                 mod_manage_databases_ui("manage_databases"),
