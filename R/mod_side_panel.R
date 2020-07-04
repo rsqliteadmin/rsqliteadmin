@@ -12,7 +12,7 @@
 
 mod_side_panel_ui <- function(id) {
   ns <- NS(id)
-  uiOutput(ns("side_panel_ui"))
+  shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))
 }
 
 #' side_panel Server Function
@@ -21,32 +21,7 @@ mod_side_panel_ui <- function(id) {
 mod_side_panel_server <- function(input, output, session, action, action_manage_tables, action_query) {
   ns <- session$ns
   
-  output$side_panel_ui <- renderUI({
-    fillPage(
-      
-        actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
-        br(),
-        br(),
-        shinyFiles::shinyDirButton(
-          id = ns("set_directory"),
-          label = "Set database directory",
-          title = "Select a folder"
-        ),
-        br(),
-        br(),
-        selectInput(
-          ns("select_active_db"),
-          "Select a database to work on",
-          choices = db_list(directory = conn$directory)
-        ),
-        selectInput(
-          ns("select_active_table"),
-          "Select a table to work on.",
-          choices = NULL
-        )
-      )
-    
-  })
+  
   
   # conn - stores the information about database
   # conn$active_db - the current active database selected by the user.
@@ -58,8 +33,165 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
     active_db = NULL,
     db_name = NULL,
     active_table = NULL,
-    directory = NULL
+    directory = NULL,
+    db_list  = NULL,
+    state = NULL,
+    current_db = "a34n4wi4nsi1sf39dvb"
   )
+  
+  observeEvent(session, {
+    conn$db_list <- db_list(conn$directory)
+  })
+  
+  output$sidebar_ui <- shinydashboard::renderMenu({
+    # fluidPage(
+    #   fluidRow(#     actionButton(inputId =  ns("create_db"), label =  "Create a new database"),
+    #     br(),
+    #     br(),
+    #     shinyFiles::shinyDirButton(
+    #       id = ns("set_directory"),
+    #       label = "Set database directory",
+    #       title = "Select a folder"
+    #     ),
+    #     br(),
+    #     br(),
+    #     selectInput(
+    #       ns("select_active_db"),
+    #       "Select a database to work on",
+    #       choices = db_list(directory = conn$directory)
+    #     ),
+    #     selectInput(
+    #       ns("select_active_table"),
+    #       "Select a table to work on.",
+    #       choices = NULL
+    #     )
+    #   )
+    # )
+    
+    db_menu <- list()
+    for (i in 1:length(conn$db_list)) {
+      db_menu[[i]] <-
+        convertMenuItem(shinydashboard::menuItem(
+          text = conn$db_list[i],
+          tabName = paste0("db_", i),
+          icon = icon("search", lib = "glyphicon")
+        ),paste0("db_", i)
+        )
+    }
+    
+    return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
+  })
+  
+  observeEvent(input$sidebar_menu, {
+    print(input$sidebar_menu)
+    
+    if (!is.null(conn$directory)) {
+      tryCatch({
+        if (!is.null(conn$active_db)) {
+          RSQLite::dbDisconnect(conn$active_db)
+          conn$active_db <- NULL
+          conn$db_name <- NULL
+        }
+        conn$active_db <-
+          RSQLite::dbConnect(RSQLite::SQLite(),
+                             paste0(conn$directory, input$sidebar_menu, ".db"))
+        conn$db_name <- input$sidebar_menu
+      },
+      error = function(err) {
+        showNotification(
+          ui =  paste0("No databases in this folder. Create or import one."),
+          duration = 3,
+          type = "warning"
+        )
+      })
+    }
+    # print(conn$active_db)
+    if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE))&&conn$current_db!=input$sidebar_menu)
+    {
+      print(conn$db_list[1])
+      db_menu <- list()
+      for (i in 1:length(conn$db_list)) {
+        if (conn$db_list[i] == paste0(input$sidebar_menu, ".db"))
+        {
+          table_list <- RSQLite::dbListTables(conn$active_db)
+          print(table_list)
+          db_menu[[i]] <-
+            convertMenuItem(
+              shinydashboard::menuItem(
+                text = conn$db_list[i],
+                tabName = paste0("db_", i),
+                icon = icon("search", lib = "glyphicon"),
+                startExpanded = TRUE,
+                lapply(1:length(table_list), function(i) {
+                  shinydashboard::menuSubItem(text = table_list[i],
+                                              tabName = paste0("table_", i))
+                })
+              ),
+              paste0("db_", i)
+            )
+        }
+        else{
+          db_menu[[i]] <-
+            convertMenuItem(
+              shinydashboard::menuItem(
+                text = conn$db_list[i],
+                tabName = paste0("db_", i),
+                icon = icon("search", lib = "glyphicon")
+              ),
+              paste0("db_", i)
+            )
+        }
+      }
+      
+      conn$current_db <- input$sidebar_menu
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
+      shinydashboard::updateTabItems(session, inputId = 'sidebar_menu', selected = input$sidebar_menu)
+    }
+    
+    if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE))
+    )
+      conn$state <- "Table"
+    else
+      conn$state <- "Database"
+  })
+  
+  # Select active database and establish an RSQLite connection.
+  
+  # observeEvent(input$select_active_db, {
+  #   if (!is.null(conn$directory)) {
+  #     tryCatch({
+  #       if (!is.null(conn$active_db)) {
+  #         RSQLite::dbDisconnect(conn$active_db)
+  #         conn$active_db <- NULL
+  #         conn$db_name <- NULL
+  #       }
+  #       conn$active_db <-
+  #         RSQLite::dbConnect(RSQLite::SQLite(),
+  #                            paste0(conn$directory, input$select_active_db))
+  #       conn$db_name <- input$select_active_db
+  #       
+  #       if (!is.null(conn$active_db)) {
+  #         updateSelectInput(
+  #           session =  session,
+  #           inputId =  "select_active_table",
+  #           choices = RSQLite::dbListTables(conn$active_db)
+  #         )
+  #       }
+  #     },
+  #     error = function(err) {
+  #       showNotification(
+  #         ui =  paste0("No databases in this folder. Create or import one."),
+  #         duration = 3,
+  #         type = "warning"
+  #       )
+  #     })
+  #   }
+  # })
+  
+  
   
   # Select directory to save and import databases
   # Current user selected directory is store in ./inst/extdata/directory.Rdata
@@ -152,38 +284,7 @@ mod_side_panel_server <- function(input, output, session, action, action_manage_
     )
   })
   
-  # Select active database and establish an RSQLite connection.
   
-  observeEvent(input$select_active_db, {
-    if (!is.null(conn$directory)) {
-      tryCatch({
-        if (!is.null(conn$active_db)) {
-          RSQLite::dbDisconnect(conn$active_db)
-          conn$active_db <- NULL
-          conn$db_name <- NULL
-        }
-        conn$active_db <-
-          RSQLite::dbConnect(RSQLite::SQLite(),
-                             paste0(conn$directory, input$select_active_db))
-        conn$db_name <- input$select_active_db
-        
-        if (!is.null(conn$active_db)) {
-          updateSelectInput(
-            session =  session,
-            inputId =  "select_active_table",
-            choices = RSQLite::dbListTables(conn$active_db)
-          )
-        }
-      },
-      error = function(err) {
-        showNotification(
-          ui =  paste0("No databases in this folder. Create or import one."),
-          duration = 3,
-          type = "warning"
-        )
-      })
-    }
-  })
   
   
   # Select active table and set that value to conn$active_table
