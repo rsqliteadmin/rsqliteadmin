@@ -17,7 +17,16 @@ app_ui <- function(request) {
   #             )
   #           )
   #         )))
-  fluidPage(
+  
+  # Reference Here: https://stackoverflow.com/a/31629455
+  fillPage(tags$head(
+    tags$style(HTML(".sidebar {
+                      height: 90vh; overflow-y: auto;
+                      overflow-x: auto
+                    }"
+    ) # close HTML       
+    )            # close tags$style
+  ),     
     shinydashboard::dashboardPage(
       shinydashboard::dashboardHeader(title = "RSQLiteAdmin"),
       shinydashboard::dashboardSidebar(mod_side_panel_ui("side_panel")),
