@@ -12,7 +12,28 @@
 
 mod_side_panel_ui <- function(id) {
   ns <- NS(id)
-  shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))
+  shinydashboard::dashboardPage(
+    shinydashboard::dashboardHeader(title = "RSQLiteAdmin",
+                                    tags$li(
+                                      class = "dropdown",
+                                      tags$li(
+                                        class = "dropdown",
+                                        shinyFiles::shinyDirButton(
+                                          id = ns("set_directory"),
+                                          label = "Set database directory",
+                                          title = "Select a folder",
+                                          icon("paper-plane"),
+                                          style = "color: #fff;
+                                                       padding: 8.4%;
+                                                       background-color: #337ab7;
+                                                       border-color: #2e6da4"
+                                        )
+                                      )
+                                    )),
+    shinydashboard::dashboardSidebar(shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))),
+    shinydashboard::dashboardBody(mod_manage_dashboard_body_ui("manage_dashboard_body"))
+    
+  )
 }
 
 #' side_panel Server Function
@@ -61,7 +82,6 @@ mod_side_panel_server <-
             paste0("db_", i)
           )
       }
-      
       return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
     })
     
@@ -78,7 +98,6 @@ mod_side_panel_server <-
         selected_db <- conn$db_list[selected_db_index]
         
         if (conn$db_name != selected_db) {
-          
           if (!is.null(conn$directory)) {
             tryCatch({
               if (!is.null(conn$active_db)) {
@@ -105,8 +124,9 @@ mod_side_panel_server <-
           
           # print(conn$db_list[1])
           db_menu <- list()
-          for (i in 1:length(conn$db_list)) {
-            if (conn$db_list[i] == selected_db && !identical(table_list, character(0)))
+          for (i in seq_len(length(conn$db_list))) {
+            if (conn$db_list[i] == selected_db &&
+                !identical(table_list, character(0)))
             {
               db_menu[[i]] <-
                 convertMenuItem(
@@ -228,6 +248,32 @@ mod_side_panel_server <-
             mustWork = TRUE
           )
         )
+        conn$db_list <- db_list(conn$directory)
+        if (length(conn$db_list) == 0) {
+          output$sidebar_ui <- shinydashboard::renderMenu({
+            db_menu <- list()
+            db_menu[[1]] <- shinydashboard::menuItem(text = "No databases in current folder.",
+                                                     icon = icon("search", lib = "glyphicon"))
+            return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
+          })
+        }
+        else{
+          output$sidebar_ui <- shinydashboard::renderMenu({
+            db_menu <- list()
+            for (i in seq_len(length(conn$db_list))) {
+              db_menu[[i]] <-
+                convertMenuItem(
+                  shinydashboard::menuItem(
+                    text = conn$db_list[i],
+                    tabName = paste0("db_", i),
+                    icon = icon("search", lib = "glyphicon")
+                  ),
+                  paste0("db_", i)
+                )
+            }
+            return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
+          })
+        }
       }
     })
     

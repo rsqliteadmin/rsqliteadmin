@@ -19,21 +19,13 @@ app_ui <- function(request) {
   #         )))
   
   # Reference Here: https://stackoverflow.com/a/31629455
-  fillPage(tags$head(
-    tags$style(HTML(".sidebar {
+  fillPage(tags$head(tags$style(
+    HTML(".sidebar {
                       height: 90vh; overflow-y: auto;
                       overflow-x: auto
-                    }"
-    ) # close HTML       
-    )            # close tags$style
-  ),     
-    shinydashboard::dashboardPage(
-      shinydashboard::dashboardHeader(title = "RSQLiteAdmin"),
-      shinydashboard::dashboardSidebar(mod_side_panel_ui("side_panel")),
-      shinydashboard::dashboardBody(mod_manage_dashboard_body_ui("manage_dashboard_body")
-      )
-    )
-  )
+                    }")
+  )),
+  mod_side_panel_ui("side_panel"))
 }
 # shinythemes::themeSelector()
 #' Add external Resources to the Application
