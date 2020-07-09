@@ -5,27 +5,16 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
-  # tagList(golem_add_external_resources(),
-  #         fluidPage(sidebarLayout(
-  #           sidebarPanel(mod_side_panel_ui("side_panel"), width = 3),
-  #           mainPanel(
-  #             tabsetPanel(
-  #               mod_manage_databases_ui("manage_databases"),
-  #               mod_view_tables_ui("view_tables"),
-  #               mod_manage_tables_ui("manage_tables"),
-  #               mod_query_ui("query")
-  #             )
-  #           )
-  #         )))
-  
-  # Reference Here: https://stackoverflow.com/a/31629455
-  fillPage(tags$head(tags$style(
-    HTML(".sidebar {
-                      height: 90vh; overflow-y: auto;
-                      overflow-x: auto
+  tagList(golem_add_external_resources(),
+          
+          # Reference Here: https://stackoverflow.com/a/31629455
+          fluidPage(tags$head(tags$style(
+            HTML(".sidebar {
+                      overflow-y: scroll;
+                      overflow-x: scroll;
                     }")
-  )),
-  mod_side_panel_ui("side_panel"))
+          )),
+          mod_side_panel_ui("side_panel")))
 }
 # shinythemes::themeSelector()
 #' Add external Resources to the Application

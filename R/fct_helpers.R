@@ -305,3 +305,65 @@ convertMenuItem <- function(mi,tabName) {
   }
   mi
 }
+
+update_sidebar_db <- function(db_list){
+  db_menu <- list()
+  for (i in seq_len(length(db_list))) {
+    db_menu[[i]] <-
+      convertMenuItem(
+        shinydashboard::menuItem(
+          text = db_list[i],
+          tabName = paste0("db_", i),
+          icon = icon("search", lib = "glyphicon")
+        ),
+        paste0("db_", i)
+      )
+  }
+  return(db_menu)
+}
+
+update_sidebar_table <- function(input_sidebar_menu, active_db, db_list){
+  selected_db_index <- strtoi(substr(
+    input_sidebar_menu,
+    start = 4,
+    stop = nchar(input_sidebar_menu)
+  ))
+  selected_db <- db_list[selected_db_index]
+  
+  table_list <- RSQLite::dbListTables(active_db)
+  
+  db_menu <- list()
+  for (i in seq_len(length(db_list))) {
+    if (db_list[i] == selected_db &&
+        !identical(table_list, character(0)))
+    {
+      db_menu[[i]] <-
+        convertMenuItem(
+          shinydashboard::menuItem(
+            text = db_list[i],
+            tabName = paste0("db_", i),
+            icon = icon("search", lib = "glyphicon"),
+            startExpanded = TRUE,
+            lapply(1:length(table_list), function(i) {
+              shinydashboard::menuSubItem(text = table_list[i],
+                                          tabName = paste0("table_", i))
+            })
+          ),
+          paste0("db_", i)
+        )
+    }
+    else{
+      db_menu[[i]] <-
+        convertMenuItem(
+          shinydashboard::menuItem(
+            text = db_list[i],
+            tabName = paste0("db_", i),
+            icon = icon("search", lib = "glyphicon")
+          ),
+          paste0("db_", i)
+        )
+    }
+  }
+  
+  return(db_menu)
+}

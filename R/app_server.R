@@ -10,7 +10,8 @@ app_server <- function(input, output, session) {
                "side_panel",
                action,
                action_manage_tables,
-               action_query)
+               action_query,
+               action_create_table)
   callModule(mod_manage_dashboard_body_server, "manage_dashboard_body", conn)
   action <-
     callModule(mod_manage_databases_server, "manage_databases", conn)
@@ -25,5 +26,6 @@ app_server <- function(input, output, session) {
                conn,
                action_query)
   action_query <- callModule(mod_query_server, "query", conn)
+  action_create_table <- callModule(mod_create_table_server, "create_table", conn)
   
 }

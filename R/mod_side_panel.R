@@ -25,7 +25,7 @@ mod_side_panel_ui <- function(id) {
             title = "Select a folder",
             icon("paper-plane"),
             style = "color: #fff;
-                     padding: 8.4%;
+                     padding: 9%;
                      background-color: #337ab7;
                      border-color: #2e6da4"
           )
@@ -59,11 +59,10 @@ mod_side_panel_server <-
            session,
            action,
            action_manage_tables,
-           action_query) {
+           action_query,
+           action_create_table) {
     ns <- session$ns
-    
-    
-    
+  
     # conn - stores the information about database
     # conn$active_db - the current active database selected by the user.
     # conn$db_name - string containing the name of current active database.
@@ -86,23 +85,11 @@ mod_side_panel_server <-
     # Select active database/active table and establish an RSQLite connection.
     
     output$sidebar_ui <- shinydashboard::renderMenu({
-      db_menu <- list()
-      for (i in seq_len(length(conn$db_list))) {
-        db_menu[[i]] <-
-          convertMenuItem(
-            shinydashboard::menuItem(
-              text = conn$db_list[i],
-              tabName = paste0("db_", i),
-              icon = icon("search", lib = "glyphicon")
-            ),
-            paste0("db_", i)
-          )
-      }
+      db_menu <- update_sidebar_db(conn$db_list)
       return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
     })
     
     observeEvent(input$sidebar_menu, {
-      # print(conn$active_db)
       
       if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE)))
       {
@@ -136,41 +123,7 @@ mod_side_panel_server <-
             })
           }
           
-          table_list <- RSQLite::dbListTables(conn$active_db)
-          
-          # print(conn$db_list[1])
-          db_menu <- list()
-          for (i in seq_len(length(conn$db_list))) {
-            if (conn$db_list[i] == selected_db &&
-                !identical(table_list, character(0)))
-            {
-              db_menu[[i]] <-
-                convertMenuItem(
-                  shinydashboard::menuItem(
-                    text = conn$db_list[i],
-                    tabName = paste0("db_", i),
-                    icon = icon("search", lib = "glyphicon"),
-                    startExpanded = TRUE,
-                    lapply(1:length(table_list), function(i) {
-                      shinydashboard::menuSubItem(text = table_list[i],
-                                                  tabName = paste0("table_", i))
-                    })
-                  ),
-                  paste0("db_", i)
-                )
-            }
-            else{
-              db_menu[[i]] <-
-                convertMenuItem(
-                  shinydashboard::menuItem(
-                    text = conn$db_list[i],
-                    tabName = paste0("db_", i),
-                    icon = icon("search", lib = "glyphicon")
-                  ),
-                  paste0("db_", i)
-                )
-            }
-          }
+          db_menu <- update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
           
           conn$db_name <- selected_db
           output$sidebar_ui <-
@@ -183,10 +136,21 @@ mod_side_panel_server <-
         }
       }
       
+      if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE))){
+        table_list <- RSQLite::dbListTables(conn$active_db)
+        selected_table_index <- strtoi(substr(
+          input$sidebar_menu,
+          start = 7,
+          stop = nchar(input$sidebar_menu)
+        ))
+        conn$active_table <- table_list[selected_table_index]
+      }
+      
       if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE)))
         conn$state <- "Table"
       else
         conn$state <- "Database"
+      print(input$sidebarItemExpanded)
     })
     
     # Select directory to save and import databases
@@ -241,18 +205,7 @@ mod_side_panel_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- list()
-            for (i in seq_len(length(conn$db_list))) {
-              db_menu[[i]] <-
-                convertMenuItem(
-                  shinydashboard::menuItem(
-                    text = conn$db_list[i],
-                    tabName = paste0("db_", i),
-                    icon = icon("search", lib = "glyphicon")
-                  ),
-                  paste0("db_", i)
-                )
-            }
+            db_menu <- update_sidebar_db(conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
           })
         }
@@ -311,18 +264,7 @@ mod_side_panel_server <-
       }
       else{
         output$sidebar_ui <- shinydashboard::renderMenu({
-          db_menu <- list()
-          for (i in seq_len(length(conn$db_list))) {
-            db_menu[[i]] <-
-              convertMenuItem(
-                shinydashboard::menuItem(
-                  text = conn$db_list[i],
-                  tabName = paste0("db_", i),
-                  icon = icon("search", lib = "glyphicon")
-                ),
-                paste0("db_", i)
-              )
-          }
+          db_menu <- update_sidebar_db(conn$db_list)
           return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
         })
       }
@@ -343,18 +285,7 @@ mod_side_panel_server <-
       }
       else{
         output$sidebar_ui <- shinydashboard::renderMenu({
-          db_menu <- list()
-          for (i in seq_len(length(conn$db_list))) {
-            db_menu[[i]] <-
-              convertMenuItem(
-                shinydashboard::menuItem(
-                  text = conn$db_list[i],
-                  tabName = paste0("db_", i),
-                  icon = icon("search", lib = "glyphicon")
-                ),
-                paste0("db_", i)
-              )
-          }
+          db_menu <- update_sidebar_db(conn$db_list)
           return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
         })
       }
@@ -362,32 +293,39 @@ mod_side_panel_server <-
     
     # Update table list when a new table is created
     
-    observeEvent(action_manage_tables$created_table, {
-      updateSelectInput(
-        session,
-        inputId =  "select_active_table",
-        choices = RSQLite::dbListTables(conn$active_db)
-      )
+    observeEvent(action_create_table$created_table, {
+      
+      db_menu <- update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
+      shinydashboard::updateTabItems(session,
+                                     inputId = 'sidebar_menu',
+                                     selected = input$sidebar_menu)
     })
     
     # Update table list when a table is dropped.
     
     observeEvent(action_manage_tables$dropped_table, {
-      updateSelectInput(
-        session,
-        inputId =  "select_active_table",
-        choices = RSQLite::dbListTables(conn$active_db)
-      )
+      db_menu <- update_sidebar_db(conn$db_list)
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
     })
     
     # Update table list when a table is renamed.
     
     observeEvent(action_manage_tables$renamed_table, {
-      updateSelectInput(
-        session,
-        inputId =  "select_active_table",
-        choices = RSQLite::dbListTables(conn$active_db)
-      )
+      db_menu <- update_sidebar_db(conn$db_list)
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
+      shinydashboard::updateTabItems(session,
+                                     inputId = 'sidebar_menu',
+                                     selected = input$sidebar_menu)
     })
     
     # Update database list when a query is executed
@@ -406,33 +344,13 @@ mod_side_panel_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- list()
-            for (i in seq_len(length(conn$db_list))) {
-              db_menu[[i]] <-
-                convertMenuItem(
-                  shinydashboard::menuItem(
-                    text = conn$db_list[i],
-                    tabName = paste0("db_", i),
-                    icon = icon("search", lib = "glyphicon")
-                  ),
-                  paste0("db_", i)
-                )
-            }
+            db_menu <- update_sidebar_db(conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
+            shinydashboard::updateTabItems(session,
+                                           inputId = 'sidebar_menu',
+                                           selected = input$sidebar_menu)
           })
         }
-      })
-    })
-    
-    # Update table list when a query is executed.
-    
-    observeEvent(action_query$data_updated, {
-      tryCatch({
-        updateSelectInput(
-          session,
-          inputId =  "select_active_table",
-          choices = RSQLite::dbListTables(conn$active_db)
-        )
       })
     })
     
