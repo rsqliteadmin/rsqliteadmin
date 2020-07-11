@@ -14,7 +14,7 @@ app_ui <- function(request) {
                       overflow-x: scroll;
                     }")
           )),
-          mod_side_panel_ui("side_panel")))
+          mod_dashboard_structure_ui("dashboard_structure")))
 }
 
 # shinythemes::themeSelector()

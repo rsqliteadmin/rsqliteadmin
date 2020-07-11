@@ -8,10 +8,10 @@
 app_server <- function(input, output, session) {
   conn <-
     callModule(
-      mod_side_panel_server,
-      "side_panel",
+      mod_dashboard_structure_server,
+      "dashboard_structure",
       action,
-      action_manage_tables,
+      action_table_structure,
       action_query,
       action_create_table
     )
@@ -23,11 +23,11 @@ app_server <- function(input, output, session) {
   callModule(mod_view_tables_server,
              "view_tables",
              conn,
-             action_manage_tables,
+             action_table_structure,
              action_query)
-  action_manage_tables <-
-    callModule(mod_manage_tables_server,
-               "manage_tables",
+  action_table_structure <-
+    callModule(mod_table_structure_server,
+               "table_structure",
                conn,
                action_query)
   action_query <- callModule(mod_query_server, "query", conn)

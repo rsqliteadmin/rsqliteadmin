@@ -295,7 +295,7 @@ add_column_query <- function(active_table = NULL,
   return(res)
 }
 
-## Functions for module side_panel
+## Functions for module dashboard_structure
 
 # Reference Here: https://stackoverflow.com/a/37595263
 convertMenuItem <- function(mi, tabName) {

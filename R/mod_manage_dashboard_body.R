@@ -33,7 +33,7 @@ mod_manage_dashboard_body_server <-
       else if (identical(conn$state, "Table"))
         return(tabsetPanel(
           mod_view_tables_ui("view_tables"),
-          mod_manage_tables_ui("manage_tables")
+          mod_table_structure_ui("table_structure")
         ))
       else
         return(p("No Database Selected"))

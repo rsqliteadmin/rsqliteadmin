@@ -1,4 +1,4 @@
-#' manage_tables UI Function
+#' table_structure UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -14,7 +14,7 @@
 #' @importFrom RSQLite dbExecute
 #' @importFrom RSQLite dbListTables
 
-mod_manage_tables_ui <- function(id) {
+mod_table_structure_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     title = "Structure",
@@ -44,11 +44,11 @@ mod_manage_tables_ui <- function(id) {
   )
 }
 
-#' manage_tables Server Function
+#' table_structure Server Function
 #'
 #' @noRd
 
-mod_manage_tables_server <-
+mod_table_structure_server <-
   function(input, output, session, conn, action_query) {
     ns <- session$ns
     
@@ -57,10 +57,10 @@ mod_manage_tables_server <-
     info <-
       reactiveValues(table_structure = NULL)
     
-    # action_manage_tables - variables change state whenever
+    # action_table_structure - variables change state whenever
     # corresponding actions are taken so that other modules are notified of it.
     
-    action_manage_tables <- reactiveValues(
+    action_table_structure <- reactiveValues(
       dropped_table = NULL,
       renamed_table = NULL,
       column_renamed = NULL
@@ -133,7 +133,7 @@ mod_manage_tables_server <-
         showNotification(ui = "The table was deleted successfully!",
                          duration = 3,
                          type = "message")
-        action_manage_tables$dropped_table <- input$drop_table
+        action_table_structure$dropped_table <- input$drop_table
       },
       error = function(err) {
         showNotification(
@@ -180,7 +180,7 @@ mod_manage_tables_server <-
           conn$active_db,
           rename_table_query(conn$active_table, input$rename_table_name)
         )
-        action_manage_tables$renamed_table <- input$rename_table
+        action_table_structure$renamed_table <- input$rename_table
         removeModal()
         showNotification(ui = "Table Renamed Successfully",
                          duration = 3,
@@ -201,7 +201,7 @@ mod_manage_tables_server <-
               input$display_table_structure_cell_edit$value
             )
           )
-          action_manage_tables$column_renamed <-
+          action_table_structure$column_renamed <-
             input$display_table_structure_cell_edit$value
         },
         error = function(err) {
@@ -531,11 +531,11 @@ mod_manage_tables_server <-
       })
     })
     
-    return(action_manage_tables)
+    return(action_table_structure)
   }
 
 ## To be copied in the UI
-# mod_manage_tables_ui("manage_tables_ui_1")
+# mod_table_structure_ui("table_structure_ui_1")
 
 ## To be copied in the server
-# callModule(mod_manage_tables_server, "manage_tables_ui_1")
+# callModule(mod_table_structure_server, "table_structure_ui_1")

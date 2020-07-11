@@ -1,4 +1,4 @@
-#' side_panel UI Function
+#' dashboard_structure UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -12,7 +12,7 @@
 #' @import shinydashboard
 #' @importFrom fs path_home
 
-mod_side_panel_ui <- function(id) {
+mod_dashboard_structure_ui <- function(id) {
   ns <- NS(id)
   shinydashboard::dashboardPage(
     shinydashboard::dashboardHeader(
@@ -52,10 +52,10 @@ mod_side_panel_ui <- function(id) {
   )
 }
 
-#' side_panel Server Function
+#' dashboard_structure Server Function
 #'
 #' @noRd
-mod_side_panel_server <-
+mod_dashboard_structure_server <-
   function(input,
            output,
            session,
@@ -370,7 +370,7 @@ mod_side_panel_server <-
   }
 
 ## To be copied in the UI
-# mod_side_panel_ui("side_panel_ui_1")
+# mod_dashboard_structure_ui("dashboard_structure_ui_1")
 
 ## To be copied in the server
-# callModule(mod_side_panel_server, "side_panel_ui_1")
+# callModule(mod_dashboard_structure_server, "dashboard_structure_ui_1")
