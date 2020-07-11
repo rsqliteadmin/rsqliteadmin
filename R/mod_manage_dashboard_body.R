@@ -6,7 +6,8 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS
+
 mod_manage_dashboard_body_ui <- function(id) {
   ns <- NS(id)
   uiOutput(ns("body_ui"))
@@ -15,31 +16,27 @@ mod_manage_dashboard_body_ui <- function(id) {
 #' manage_dashboard_body Server Function
 #'
 #' @noRd
+
 mod_manage_dashboard_body_server <-
   function(input, output, session, conn) {
     ns <- session$ns
     
+    # conn$state tells us what has been selected
+    
     output$body_ui <- renderUI({
-      # if (conn$state == "Database")
-      if(identical(conn$state, "Database"))
-        return(
-          tabsetPanel(
-            mod_manage_databases_ui("manage_databases"),
-            mod_create_table_ui("create_table"),
-            mod_query_ui("query")
-          )
-        )
-      else if(identical(conn$state, "Table"))
-        return(
-          tabsetPanel(
-            mod_view_tables_ui("view_tables"),
-            mod_manage_tables_ui("manage_tables")
-          )
-        )
+      if (identical(conn$state, "Database"))
+        return(tabsetPanel(
+          mod_manage_databases_ui("manage_databases"),
+          mod_create_table_ui("create_table"),
+          mod_query_ui("query")
+        ))
+      else if (identical(conn$state, "Table"))
+        return(tabsetPanel(
+          mod_view_tables_ui("view_tables"),
+          mod_manage_tables_ui("manage_tables")
+        ))
       else
-        return(
-          p("No Database Selected")
-        )
+        return(p("No Database Selected"))
     })
   }
 

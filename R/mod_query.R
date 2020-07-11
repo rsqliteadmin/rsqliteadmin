@@ -6,12 +6,21 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS
+#' @importFrom shinyjqui jqui_resizable
+#' @importFrom shinyAce aceEditor
+#' @importFrom DT DTOutput
+#' @importFrom DT renderDT
+#' @importFrom DT datatable
+#' @importFrom RSQLite dbGetQuery
+#' @importFrom RSQLite dbExecute
+
 mod_query_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     title = "Query",
     br(),
+    # shinyjqui to make it resizable
     fluidRow(shinyjqui::jqui_resizable(
       shinyAce::aceEditor(
         outputId = ns("ace"),
@@ -37,28 +46,34 @@ mod_query_ui <- function(id) {
 #' query Server Function
 #'
 #' @noRd
+
 mod_query_server <- function(input, output, session, conn) {
   ns <- session$ns
+  
+  # info$data - stores data fetched from query
+  # info$error - stores error fetched from query
   
   info <- reactiveValues(data = NULL,
                          error = NULL)
   
-  action_query <- reactiveValues(data_updated = NULL)
+  #action_query$data_updated - updates when a query is executed
+  #                            to notify other modules
   
-  output$display_error <- renderText({
-    info$error
-  })
+  action_query <- reactiveValues(data_updated = NULL)
   
   observeEvent(input$execute, {
     if (!is.null(conn$active_db)) {
       query <- input$ace
       query <- gsub("\n", " ", query)
+      # Queries with "SELECT" string are executed with dbGetQuery and
+      # others with dbExecuteQuery
       tryCatch({
         if (isTRUE(grepl("select", query, ignore.case = TRUE))) {
           info$data <- RSQLite::dbGetQuery(conn$active_db, query)
           showNotification(ui = "Query Completed.",
                            duration = 5,
                            type = "message")
+          info$error <- NULL
         }
         else{
           RSQLite::dbExecute(conn$active_db, query)
@@ -66,6 +81,7 @@ mod_query_server <- function(input, output, session, conn) {
           showNotification(ui = "Query Completed.",
                            duration = 3,
                            type = "message")
+          info$error <- NULL
         }
       },
       error = function(err) {
@@ -94,6 +110,10 @@ mod_query_server <- function(input, output, session, conn) {
     DT::renderDT(expr = {
       DT::datatable(data = info$data)
     })
+  
+  output$display_error <- renderText({
+    info$error
+  })
   
   return(action_query)
   

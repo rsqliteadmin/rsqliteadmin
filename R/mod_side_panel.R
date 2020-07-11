@@ -6,8 +6,10 @@
 #'
 #' @noRd
 #'
+#' @importFrom shiny NS
 #' @import shinyFiles
 #' @import RSQLite
+#' @import shinydashboard
 #' @importFrom fs path_home
 
 mod_side_panel_ui <- function(id) {
@@ -62,16 +64,22 @@ mod_side_panel_server <-
            action_query,
            action_create_table) {
     ns <- session$ns
-  
+    
     # conn - stores the information about database
     # conn$active_db - the current active database selected by the user.
-    # conn$db_name - string containing the name of current active database.
+    # conn$db_name - string containing the name of current active database. To
+    #                support current functionality, right now a random string has been
+    #                random string has been assigned to this variable.
     # conn$active_table - the current active table selected by user.
-    # conn$directory - string containing path to the current directory where databases are saved and imported.
+    # conn$directory - string containing path to the current directory
+    # where databases are saved and imported.
+    # conn$db_list - List of all databases in current directory
+    # conn$state - Stores if a Database or a Table is selected
+    #              currently so that tabs according to that can be shown.
     
     conn <- reactiveValues(
       active_db = NULL,
-      db_name = "a34n4wi4nsi1sf39dvb",
+      db_name = "a34n4wi4nsi1sf39dvbKNFDIDN",
       active_table = NULL,
       directory = NULL,
       db_list  = NULL,
@@ -82,15 +90,16 @@ mod_side_panel_server <-
       conn$db_list <- db_list(conn$directory)
     })
     
-    # Select active database/active table and establish an RSQLite connection.
+    # Load the list of databases initially on starting the app
     
     output$sidebar_ui <- shinydashboard::renderMenu({
       db_menu <- update_sidebar_db(conn$db_list)
       return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
     })
     
+    # Select active database/active table and establish an RSQLite connection.
+    
     observeEvent(input$sidebar_menu, {
-      
       if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE)))
       {
         selected_db_index <- strtoi(substr(
@@ -123,7 +132,8 @@ mod_side_panel_server <-
             })
           }
           
-          db_menu <- update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
+          db_menu <-
+            update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
           
           conn$db_name <- selected_db
           output$sidebar_ui <-
@@ -136,7 +146,7 @@ mod_side_panel_server <-
         }
       }
       
-      if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE))){
+      if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE))) {
         table_list <- RSQLite::dbListTables(conn$active_db)
         selected_table_index <- strtoi(substr(
           input$sidebar_menu,
@@ -150,11 +160,11 @@ mod_side_panel_server <-
         conn$state <- "Table"
       else
         conn$state <- "Database"
-      print(input$sidebarItemExpanded)
     })
     
     # Select directory to save and import databases
     # Current user selected directory is store in ./inst/extdata/directory.Rdata
+    # Inside the directory.Rdata file, directory is stored in variable named db_directory_path.
     # Default directory when the first time app is opened is the current working directory.
     
     load(
@@ -294,8 +304,8 @@ mod_side_panel_server <-
     # Update table list when a new table is created
     
     observeEvent(action_create_table$created_table, {
-      
-      db_menu <- update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
+      db_menu <-
+        update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
       output$sidebar_ui <-
         shinydashboard::renderMenu({
           shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)

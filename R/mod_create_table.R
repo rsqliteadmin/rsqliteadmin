@@ -4,10 +4,14 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
-mod_create_table_ui <- function(id){
+#' @importFrom DT DTOutput
+#' @importFrom DT renderDT
+#' @importFrom DT datatable
+#' @importFrom RSQLite dbExecute
+
+mod_create_table_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     title = "Tables",
@@ -51,32 +55,36 @@ mod_create_table_ui <- function(id){
     )
   )
 }
-    
+
 #' create_table Server Function
 #'
-#' @noRd 
-mod_create_table_server <- function(input, output, session, conn){
+#' @noRd
+
+mod_create_table_server <- function(input, output, session, conn) {
   ns <- session$ns
   
-  info <- reactiveValues(
-      new_table_columns = data.frame(
-        column_query = character(),
-        Column_Name = character(),
-        Data_Type = character(),
-        Primary_Key = logical(),
-        Unique = logical(),
-        Not_Null = logical(),
-        Default = logical(),
-        Check_Condition = logical(),
-        Collate = logical(),
-        Foreign_Key = logical(),
-        stringsAsFactors = FALSE
-      )
-    )
+  # info$new_table_columns - information about the columns user is adding along with the corresponding
+  #                          column details query in the first column.
   
-  action_create_table <- reactiveValues(
-    created_table = NULL
+  info <- reactiveValues(
+    new_table_columns = data.frame(
+      column_query = character(),
+      Column_Name = character(),
+      Data_Type = character(),
+      Primary_Key = logical(),
+      Unique = logical(),
+      Not_Null = logical(),
+      Default = logical(),
+      Check_Condition = logical(),
+      Collate = logical(),
+      Foreign_Key = logical(),
+      stringsAsFactors = FALSE
+    )
   )
+  
+  # action_create_table$created_table - reactive value to notify other modules of creating a table.
+  
+  action_create_table <- reactiveValues(created_table = NULL)
   
   output$display_new_table <-
     DT::renderDT(expr = {
@@ -87,16 +95,19 @@ mod_create_table_server <- function(input, output, session, conn){
       )
     })
   
+  # Displaying the new table structure inside the modal dialog box.
+  
   output$display_new_table_modal <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = info$new_table_columns[, c(-1, -4:-10)],
+        data = info$new_table_columns[, c(-1,-4:-10)],
         rownames = FALSE,
         selection = "multiple"
       )
     })
   
-  # Reference Here: https://github.com/rstudio/shiny/issues/1586
+  # Reference for how to write conditions for conditional panels here:
+  # https://github.com/rstudio/shiny/issues/1586
   
   observeEvent(input$add_column, {
     showModal(
@@ -423,7 +434,7 @@ mod_create_table_server <- function(input, output, session, conn){
       # rbind() messes with column names
       # Reference here: https://stackoverflow.com/questions/5231540/r-losing-column-names-when-adding-rows-to-an-empty-data-frame
       
-      info$new_table_columns[nrow(info$new_table_columns) + 1, ] <-
+      info$new_table_columns[nrow(info$new_table_columns) + 1,] <-
         c(
           column_details_query,
           input$column_name,
@@ -492,6 +503,8 @@ mod_create_table_server <- function(input, output, session, conn){
     }
   })
   
+  # Recreate an empty table to reset columns.
+  
   observeEvent(input$reset_columns, {
     info$new_table_columns <- data.frame(
       column_query = character(),
@@ -515,16 +528,15 @@ mod_create_table_server <- function(input, output, session, conn){
                        type = "error")
     else{
       info$new_table_columns <-
-        info$new_table_columns[-as.numeric(input$display_new_table_rows_selected), ]
+        info$new_table_columns[-as.numeric(input$display_new_table_rows_selected),]
     }
   })
   
   return(action_create_table)
 }
-    
+
 ## To be copied in the UI
 # mod_create_table_ui("create_table_ui_1")
-    
+
 ## To be copied in the server
 # callModule(mod_create_table_server, "create_table_ui_1")
- 

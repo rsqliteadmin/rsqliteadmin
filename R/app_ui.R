@@ -4,9 +4,9 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
+
 app_ui <- function(request) {
   tagList(golem_add_external_resources(),
-          
           # Reference Here: https://stackoverflow.com/a/31629455
           fluidPage(tags$head(tags$style(
             HTML(".sidebar {
@@ -16,6 +16,7 @@ app_ui <- function(request) {
           )),
           mod_side_panel_ui("side_panel")))
 }
+
 # shinythemes::themeSelector()
 #' Add external Resources to the Application
 #'
@@ -25,6 +26,7 @@ app_ui <- function(request) {
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
+
 golem_add_external_resources <- function() {
   add_resource_path('www', app_sys('app/www'))
   

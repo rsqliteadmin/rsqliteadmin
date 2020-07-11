@@ -6,7 +6,9 @@
 #'
 #' @noRd
 #'
+#' @importFrom shiny NS
 #' @importFrom RSQLite dbDisconnect
+
 mod_manage_databases_ui <- function(id) {
   ns <- NS(id)
   tabPanel(title = "Manage Databases",
@@ -21,6 +23,7 @@ mod_manage_databases_ui <- function(id) {
 #' create_databases Server Function
 #'
 #' @noRd
+
 mod_manage_databases_server <-
   function(input, output, session, conn) {
     ns <- session$ns

@@ -6,6 +6,7 @@
 #'
 #' @noRd
 #'
+#' @importFrom shiny NS
 #' @importFrom DT DTOutput
 #' @importFrom DT renderDT
 #' @importFrom DT datatable
@@ -14,6 +15,9 @@
 
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
+  
+  # Header - Display rows from the start.
+  # Footer - Display rows from the end.
   
   tabPanel(
     title = "View/Edit Tables",
@@ -128,91 +132,28 @@ mod_view_tables_server <-
             label = "Change number of rows displayed:",
             value = 1000,
             min = 0
+          ),
+          actionButton(
+            inputId = ns("confirm_change_rows_fetched"),
+            label = "Confirm"
           )
         ),
         
         column(
-          width = 6,
+          width = 4,
           numericInput(
             inputId = ns("fetch_offset"),
             label = "Display from row number: ",
             value = 1,
-            min = 0
+            min = 1
+          ),
+          
+          actionButton(
+            inputId = ns("confirm_fetch_offset"),
+            label = "Confirm"
           )
         )
-      ),
-      fluidRow(
-        column(width = 4,
-               actionButton(
-                 inputId = ns("confirm_change_rows_fetched"),
-                 label = "Confirm"
-               )),
-        column(width = 6,
-               actionButton(
-                 inputId = ns("confirm_fetch_offset"),
-                 label = "Confirm"
-               ))
       ))
-    })
-    
-    observeEvent(input$header, {
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(conn$active_table,
-                           table_info$number_rows,
-                           0)
-        )
-    })
-    
-    observeEvent(input$footer, {
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$total_rows - table_info$number_rows
-          )
-        )
-    })
-    
-    observeEvent(input$fetch_previous, {
-      table_info$offset = table_info$offset - table_info$number_rows
-      print(table_info$number_rows)
-      print(table_info$offset)
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$offset
-          )
-        )
-    })
-    
-    observeEvent(input$fetch_next, {
-      table_info$offset = table_info$offset + table_info$number_rows
-      print(table_info$number_rows)
-      print(table_info$offset)
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$offset
-          )
-        )
-    })
-    
-    observeEvent(input$fetch_all, {
-      table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db,
-                            data_fetch_query(conn$active_table,
-                                             table_info$total_rows,
-                                             0))
     })
     
     observeEvent(input$confirm_change_rows_fetched, {
@@ -234,9 +175,9 @@ mod_view_tables_server <-
                          duration = 3,
                          type = "error")
       })
-      print(table_info$number_rows)
-      print(table_info$offset)
     })
+    
+    # Offset is one less than the row number to be displayed from.
     
     observeEvent(input$confirm_fetch_offset, {
       tryCatch({
@@ -256,9 +197,72 @@ mod_view_tables_server <-
                          duration = 3,
                          type = "error")
       })
-      print(table_info$number_rows)
-      print(table_info$offset)
-      
+    })
+    
+    observeEvent(input$header, {
+      table_info$offset <- 0
+      table_info$data <-
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(conn$active_table,
+                           table_info$number_rows,
+                           0)
+        )
+    })
+    
+    observeEvent(input$footer, {
+      table_info$offset <- table_info$total_rows - table_info$number_rows
+      table_info$data <-
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$total_rows - table_info$number_rows
+          )
+        )
+    })
+    
+    observeEvent(input$fetch_previous, {
+      table_info$offset = max(table_info$offset - table_info$number_rows, 0)
+      table_info$data <-
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$offset
+          )
+        )
+    })
+    
+    # If  current offset is greater than total_rows-number_rows
+    # than we should display from the offset as it is the part
+    # of last subset anyway.
+    
+    observeEvent(input$fetch_next, {
+      if (table_info$offset < table_info$total_rows - table_info$number_rows)
+        table_info$offset = min(
+          table_info$offset + table_info$number_rows,
+          table_info$total_rows - table_info$number_rows
+        )
+      table_info$data <-
+        RSQLite::dbGetQuery(
+          conn$active_db,
+          data_fetch_query(
+            conn$active_table,
+            table_info$number_rows,
+            table_info$offset
+          )
+        )
+    })
+    
+    observeEvent(input$fetch_all, {
+      table_info$data <-
+        RSQLite::dbGetQuery(conn$active_db,
+                            data_fetch_query(conn$active_table,
+                                             table_info$total_rows,
+                                             0))
     })
     
     # Fetch data for active table.
@@ -279,7 +283,7 @@ mod_view_tables_server <-
           )
         
         table_info$total_rows <-
-          RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table))
+          as.integer(RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table)))
       }
       else
         table_info$data <- NULL
@@ -457,7 +461,7 @@ mod_view_tables_server <-
         table_info$page <- input$display_table_rows_current[1] - 1
         values <- vector(length = nrow(table_info$column_names))
         
-        for (i in 1:nrow(table_info$column_names)) {
+        for (i in seq_len(table_info$column_names)) {
           values[i] <- input[[paste0("col", i)]]
         }
         

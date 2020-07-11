@@ -6,7 +6,14 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS
+#' @importFrom DT DTOutput
+#' @importFrom DT renderDT
+#' @importFrom DT datatable
+#' @importFrom RSQLite dbGetQuery
+#' @importFrom RSQLite dbExecute
+#' @importFrom RSQLite dbListTables
+
 mod_manage_tables_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
@@ -40,20 +47,26 @@ mod_manage_tables_ui <- function(id) {
 #' manage_tables Server Function
 #'
 #' @noRd
+
 mod_manage_tables_server <-
   function(input, output, session, conn, action_query) {
     ns <- session$ns
     
+    # info$table_structure - Information about table structure.
+    
     info <-
-      reactiveValues(
-        table_structure = NULL
-      )
+      reactiveValues(table_structure = NULL)
+    
+    # action_manage_tables - variables change state whenever
+    # corresponding actions are taken so that other modules are notified of it.
     
     action_manage_tables <- reactiveValues(
       dropped_table = NULL,
       renamed_table = NULL,
       column_renamed = NULL
     )
+    
+    # Only column names can be edited in structure.
     
     output$display_table_structure <-
       DT::renderDT(expr = {
@@ -194,7 +207,7 @@ mod_manage_tables_server <-
         error = function(err) {
           showNotification(
             ui =  paste0(err, ". Changes not saved."),
-            duration = 15,
+            duration = 10,
             type = "error"
           )
         },
@@ -477,11 +490,15 @@ mod_manage_tables_server <-
           showNotification(ui = "Column added successfully.",
                            duration = 3,
                            type = "message")
+          query <-
+            paste0("pragma table_info('", conn$active_table, "');")
+          info$table_structure <-
+            RSQLite::dbGetQuery(conn$active_db, query)
         },
         error = function(err) {
           showNotification(
             ui =  paste0(err, ". Column not added."),
-            duration = 3,
+            duration = 10,
             type = "error"
           )
         })
@@ -502,7 +519,6 @@ mod_manage_tables_server <-
           choices = RSQLite::dbListTables(conn$active_db)
         )
       }
-      
     })
     
     observeEvent(action_query$data_updated, {

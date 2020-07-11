@@ -28,8 +28,8 @@ column_names_query <- function(active_table = NULL) {
 }
 
 #Get number of rows for a table.
-total_rows_query <- function(active_table = NULL){
-  res<- paste0('SELECT COUNT(*) FROM "', active_table, '"')
+total_rows_query <- function(active_table = NULL) {
+  res <- paste0('SELECT COUNT(*) FROM "', active_table, '"')
   return(res)
 }
 
@@ -268,24 +268,25 @@ rename_table_query <- function(old_name = NULL,
   return(res)
 }
 
+# Rename an existing column
+
 update_column_name_query <- function(table_name = NULL,
                                      old_name = NULL,
                                      new_name = NULL) {
   res <- paste0('ALTER TABLE "',
                 table_name,
                 '" RENAME COLUMN "',
-                old_name, 
+                old_name,
                 '" TO "',
                 new_name,
                 '"')
-  print(res)
   return(res)
 }
 
 # Add column to an existing table
 
 add_column_query <- function(active_table = NULL,
-                             column_details_query = NULL){
+                             column_details_query = NULL) {
   res <- paste0('ALTER TABLE "',
                 active_table,
                 '" ADD COLUMN ',
@@ -297,16 +298,17 @@ add_column_query <- function(active_table = NULL,
 ## Functions for module side_panel
 
 # Reference Here: https://stackoverflow.com/a/37595263
-convertMenuItem <- function(mi,tabName) {
-  mi$children[[1]]$attribs['data-toggle']="tab"
+convertMenuItem <- function(mi, tabName) {
+  mi$children[[1]]$attribs['data-toggle'] = "tab"
   mi$children[[1]]$attribs['data-value'] = tabName
-  if(length(mi$attribs$class)>0 && mi$attribs$class=="treeview"){
-    mi$attribs$class=NULL
+  if (length(mi$attribs$class) > 0 && mi$attribs$class == "treeview") {
+    mi$attribs$class = NULL
   }
   mi
 }
 
-update_sidebar_db <- function(db_list){
+# Update the database list without tables in the sidebar.
+update_sidebar_db <- function(db_list) {
   db_menu <- list()
   for (i in seq_len(length(db_list))) {
     db_menu[[i]] <-
@@ -322,48 +324,50 @@ update_sidebar_db <- function(db_list){
   return(db_menu)
 }
 
-update_sidebar_table <- function(input_sidebar_menu, active_db, db_list){
-  selected_db_index <- strtoi(substr(
-    input_sidebar_menu,
-    start = 4,
-    stop = nchar(input_sidebar_menu)
-  ))
-  selected_db <- db_list[selected_db_index]
-  
-  table_list <- RSQLite::dbListTables(active_db)
-  
-  db_menu <- list()
-  for (i in seq_len(length(db_list))) {
-    if (db_list[i] == selected_db &&
-        !identical(table_list, character(0)))
-    {
-      db_menu[[i]] <-
-        convertMenuItem(
-          shinydashboard::menuItem(
-            text = db_list[i],
-            tabName = paste0("db_", i),
-            icon = icon("search", lib = "glyphicon"),
-            startExpanded = TRUE,
-            lapply(1:length(table_list), function(i) {
-              shinydashboard::menuSubItem(text = table_list[i],
-                                          tabName = paste0("table_", i))
-            })
-          ),
-          paste0("db_", i)
-        )
+# Update the database list with tables in the sidebar.
+update_sidebar_table <-
+  function(input_sidebar_menu, active_db, db_list) {
+    selected_db_index <- strtoi(substr(
+      input_sidebar_menu,
+      start = 4,
+      stop = nchar(input_sidebar_menu)
+    ))
+    selected_db <- db_list[selected_db_index]
+    
+    table_list <- RSQLite::dbListTables(active_db)
+    
+    db_menu <- list()
+    for (i in seq_len(length(db_list))) {
+      if (db_list[i] == selected_db &&
+          !identical(table_list, character(0)))
+      {
+        db_menu[[i]] <-
+          convertMenuItem(
+            shinydashboard::menuItem(
+              text = db_list[i],
+              tabName = paste0("db_", i),
+              icon = icon("search", lib = "glyphicon"),
+              startExpanded = TRUE,
+              lapply(1:length(table_list), function(i) {
+                shinydashboard::menuSubItem(text = table_list[i],
+                                            tabName = paste0("table_", i))
+              })
+            ),
+            paste0("db_", i)
+          )
+      }
+      else{
+        db_menu[[i]] <-
+          convertMenuItem(
+            shinydashboard::menuItem(
+              text = db_list[i],
+              tabName = paste0("db_", i),
+              icon = icon("search", lib = "glyphicon")
+            ),
+            paste0("db_", i)
+          )
+      }
     }
-    else{
-      db_menu[[i]] <-
-        convertMenuItem(
-          shinydashboard::menuItem(
-            text = db_list[i],
-            tabName = paste0("db_", i),
-            icon = icon("search", lib = "glyphicon")
-          ),
-          paste0("db_", i)
-        )
-    }
+    
+    return(db_menu)
   }
-  
-  return(db_menu)
-}
