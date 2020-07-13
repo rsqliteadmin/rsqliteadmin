@@ -28,6 +28,7 @@ mod_manage_dashboard_body_server <-
         return(tabsetPanel(
           mod_manage_databases_ui("manage_databases"),
           mod_create_table_ui("create_table"),
+          mod_import_table_ui("import_table"),
           mod_query_ui("query")
         ))
       else if (identical(conn$state, "Table"))

@@ -25,6 +25,7 @@ app_server <- function(input, output, session) {
              conn,
              action_table_structure,
              action_query)
+  callModule(mod_import_table_server, "import_table", conn)
   action_table_structure <-
     callModule(mod_table_structure_server,
                "table_structure",

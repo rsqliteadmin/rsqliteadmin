@@ -21,6 +21,7 @@ importFrom(golem,favicon)
 importFrom(golem,with_golem_options)
 importFrom(shiny,NS)
 importFrom(shiny,shinyApp)
+importFrom(shiny,tagList)
 importFrom(shinyAce,aceEditor)
 importFrom(shinyjqui,jqui_resizable)
 
