@@ -14,7 +14,7 @@
 mod_create_table_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
-    title = "Create/Import Table",
+    title = "Create Table",
     br(),
     fluidRow(p(h2(
       strong("Create a new Table")

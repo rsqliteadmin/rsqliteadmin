@@ -105,6 +105,8 @@ mod_import_table_server <- function(input, output, session, conn) {
   
   info <- reactiveValues(file_path = NULL)
   
+  action_import_table <- reactiveValues(imported_table = NULL)
+  
   roots = c(
     shinyFiles::getVolumes()(),
     "Current Working Directory" = '.',
@@ -175,6 +177,7 @@ mod_import_table_server <- function(input, output, session, conn) {
             input$overwrite
           ))
         )
+        action_import_table$imported_table <- input$import
       }
       else if (input$separator == "TAB") {
         library(readr)
@@ -188,6 +191,7 @@ mod_import_table_server <- function(input, output, session, conn) {
             input$overwrite
           ))
         )
+        action_import_table$imported_table <- input$import
       }
       else {
         library(readr)
@@ -201,6 +205,7 @@ mod_import_table_server <- function(input, output, session, conn) {
             input$overwrite
           ))
         )
+        action_import_table$imported_table <- input$import
       }
     },
     error = function(err) {
@@ -217,6 +222,8 @@ mod_import_table_server <- function(input, output, session, conn) {
     else
       return(paste0("File Selected: ", info$file_path))
   })
+  
+  return(action_import_table)
 }
 
 ## To be copied in the UI
