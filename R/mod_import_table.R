@@ -16,10 +16,6 @@ mod_import_table_ui <- function(id) {
     fluidRow(p(h2(
       strong("Import a new Table")
     ))),
-    fluidRow(textInput(
-      inputId = ns("table_name"),
-      label = h4(strong("Enter Table Name"))
-    )),
     fluidRow(
       column(
         width = 1,
@@ -27,12 +23,18 @@ mod_import_table_ui <- function(id) {
           id = ns("file_name"),
           label = "Select File",
           title = "Select File",
-          multiple = FALSE
+          multiple = FALSE,
+          style='padding:9px; font-size:110%'
         )
       ),
       column(width = 6,
              verbatimTextOutput(ns("file_selected")))
     ),
+    fluidRow(textInput(
+      inputId = ns("table_name"),
+      label = h4(strong("Table Name")),
+      placeholder = "Enter Table Name"
+    )),
     fluidRow(
       column(width = 2,
              checkboxInput(
@@ -50,25 +52,23 @@ mod_import_table_ui <- function(id) {
                       label = "Trim Whitespaces")
       )
     ),
-    fluidRow(
-      conditionalPanel(
-        condition = paste0("input['", ns("specify_custom_separator"), "'] == false"),
-        column(
-          width = 2,
-          selectInput(
-            inputId = ns("separator"),
-            label = "Separator",
-            choices = c(",", "TAB", ";")
-          )
+    fluidRow(conditionalPanel(
+      condition = paste0("input['", ns("specify_custom_separator"), "'] == false"),
+      column(
+        width = 2,
+        selectInput(
+          inputId = ns("separator"),
+          label = "Separator",
+          choices = c(",", "TAB", ";")
         )
       )
-      # column(
-      #   width = 4,
-      #   textInput(inputId = ns("na_values"),
-      #             label = "Strings to be treated as NA values.",
-      #             value = "'', 'NA'")
-      # )
-    ),
+    )),
+    # column(
+    #   width = 4,
+    #   textInput(inputId = ns("na_values"),
+    #             label = "Strings to be treated as NA values.",
+    #             value = "'', 'NA'")
+    # )),
     fluidRow(
       column(
         width = 2,
@@ -94,7 +94,7 @@ mod_import_table_ui <- function(id) {
       inputId = ns("import"),
       label = "Import"
     ))
-  )
+    )
 }
 
 #' import_table Server Function
@@ -121,7 +121,12 @@ mod_import_table_server <- function(input, output, session, conn) {
       path <- shinyFiles::parseFilePaths(roots = roots, input$file_name)
       file_path <- path$datapath
       if (!(identical(file_path, character(0))))
+      {
         info$file_path <- file_path
+        updateTextInput(session = session,
+                        inputId = "table_name", 
+                        value = tools::file_path_sans_ext(basename(file_path)))
+      }
     },
     error = function(err) {
       showNotification(
