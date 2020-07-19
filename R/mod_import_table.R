@@ -24,17 +24,61 @@ mod_import_table_ui <- function(id) {
           label = "Select File",
           title = "Select File",
           multiple = FALSE,
-          style='padding:9px; font-size:110%'
+          style = 'padding:9px; font-size:110%'
         )
       ),
       column(width = 6,
              verbatimTextOutput(ns("file_selected")))
     ),
-    fluidRow(textInput(
-      inputId = ns("table_name"),
-      label = h4(strong("Table Name")),
-      placeholder = "Enter Table Name"
+    fluidRow(
+      conditionalPanel(
+        condition = paste0("input['", ns("specify_custom_separator"), "'] == false"),
+        column(
+          width = 2,
+          selectInput(
+            inputId = ns("separator"),
+            label = "Separator",
+            choices = c(",", "TAB", ";")
+          )
+        )
+      ),
+      column(
+        width = 2,
+        div(
+          style = "display: inline-block; margin-top:12%",
+          checkboxInput(
+            inputId = ns("specify_custom_separator"),
+            label = "Specify Custom Separator"
+          )
+        )
+      ),
+      column(width = 6,
+             conditionalPanel(
+               condition = paste0("input['", ns("specify_custom_separator"), "'] == true"),
+               column(
+                 width = 4,
+                 textInput(
+                   inputId = ns("custom_separator"),
+                   label = "Custom Separator",
+                   value = ","
+                 )
+               ),
+             ))
+    ),
+    fluidRow(column(
+      width = 4,
+      textInput(
+        inputId = ns("table_name"),
+        label = h4(strong("Table Name")),
+        placeholder = "Enter Table Name"
+      )
     )),
+    column(width = 3,
+           checkboxInput(ns(
+             "import_selected_columns"
+           ),
+           label = "Import Selected Columns")),
+    uiOutput(ns("display_header_ui")),
     fluidRow(
       column(width = 2,
              checkboxInput(
@@ -52,49 +96,17 @@ mod_import_table_ui <- function(id) {
                       label = "Trim Whitespaces")
       )
     ),
-    fluidRow(conditionalPanel(
-      condition = paste0("input['", ns("specify_custom_separator"), "'] == false"),
-      column(
-        width = 2,
-        selectInput(
-          inputId = ns("separator"),
-          label = "Separator",
-          choices = c(",", "TAB", ";")
-        )
-      )
-    )),
     # column(
     #   width = 4,
     #   textInput(inputId = ns("na_values"),
     #             label = "Strings to be treated as NA values.",
     #             value = "'', 'NA'")
     # )),
-    fluidRow(
-      column(
-        width = 2,
-        checkboxInput(
-          inputId = ns("specify_custom_separator"),
-          label = "Specify Custom Separator"
-        )
-      ),
-      column(width = 4,
-             conditionalPanel(
-               condition = paste0("input['", ns("specify_custom_separator"), "'] == true"),
-               column(
-                 width = 4,
-                 textInput(
-                   inputId = ns("custom_separator"),
-                   label = "Custom Separator",
-                   value = ","
-                 )
-               ),
-             ))
-    ),
     fluidRow(actionButton(
       inputId = ns("import"),
       label = "Import"
     ))
-    )
+  )
 }
 
 #' import_table Server Function
@@ -103,7 +115,8 @@ mod_import_table_ui <- function(id) {
 mod_import_table_server <- function(input, output, session, conn) {
   ns <- session$ns
   
-  info <- reactiveValues(file_path = NULL)
+  info <- reactiveValues(file_path = NULL,
+                         header_data = NULL)
   
   action_import_table <- reactiveValues(imported_table = NULL)
   
@@ -116,16 +129,16 @@ mod_import_table_server <- function(input, output, session, conn) {
   shinyFiles::shinyFileChoose(input = input,
                               id = "file_name",
                               roots = roots)
+  
   observeEvent(input$file_name, {
     tryCatch({
-      path <- shinyFiles::parseFilePaths(roots = roots, input$file_name)
+      print(is.null(input$file_name))
+      path <-
+        shinyFiles::parseFilePaths(roots = roots, input$file_name)
       file_path <- path$datapath
       if (!(identical(file_path, character(0))))
       {
         info$file_path <- file_path
-        updateTextInput(session = session,
-                        inputId = "table_name", 
-                        value = tools::file_path_sans_ext(basename(file_path)))
       }
     },
     error = function(err) {
@@ -137,6 +150,68 @@ mod_import_table_server <- function(input, output, session, conn) {
     })
   })
   
+  observeEvent(info$file_path, {
+    if (!is.null(info$file_path)) {
+      tryCatch({
+        updateTextInput(
+          session = session,
+          inputId = "table_name",
+          value = tools::file_path_sans_ext(basename(info$file_path))
+        )
+        if (isTRUE(input$specify_custom_separator) &&
+            input$custom_separator == "")
+          showNotification(
+            ui =  paste0("Please enter a separator."),
+            duration = 3,
+            type = "error"
+          )
+        else if (isTRUE(input$specify_custom_separator)) {
+          info$header_data <- readr::read_delim(
+            file = info$file_path,
+            delim = input$custom_separator,
+            n_max = 5
+          )
+        }
+        else if (input$separator == "TAB") {
+          info$header_data <- readr::read_delim(
+            file = info$file_path,
+            delim = "\t",
+            n_max = 5
+          )
+        }
+        else {
+          info$header_data <- readr::read_delim(
+            file = info$file_path,
+            delim = input$separator,
+            n_max = 5
+          )
+        }
+      },
+      error = function(err) {
+        showNotification(
+          ui =  paste0(err, ". Cannot show header."),
+          duration = 5,
+          type = "error"
+        )
+      })
+    }
+  })
+  
+  output$display_header_ui <- renderUI({
+    fluidRow(conditionalPanel(condition = !is.null(info$file_path),
+                              DT::DTOutput(ns(
+                                "display_header"
+                              ))))
+  })
+  
+  output$display_header <- DT::renderDT(expr = {
+    DT::datatable(data = info$header_data,
+                  selection = list(target = "column"))
+  })
+  
+  observe({
+    print(input$display_header_columns_selected)
+  })
   # Reference Here: https://stackoverflow.com/questions/43677277/reading-csv-files-in-chunks-with-readrread-csv-chunked
   # Reference Here: https://stackoverflow.com/a/49241426/
   
@@ -151,66 +226,158 @@ mod_import_table_server <- function(input, output, session, conn) {
       }
     }
     tryCatch({
-      if (input$table_name == "")
-        showNotification(
-          ui =  paste0("Please enter a table name."),
-          duration = 3,
-          type = "error"
-        )
-      else if (is.null(info$file_path))
-        showNotification(
-          ui =  paste0("No file selected."),
-          duration = 3,
-          type = "error"
-        )
-      else if (isTRUE(input$specify_custom_separator) &&
-               input$custom_separator == "")
-        showNotification(
-          ui =  paste0("Please enter a separator."),
-          duration = 3,
-          type = "error"
-        )
-      else if (isTRUE(input$specify_custom_separator)) {
-        library(readr)
-        readr::read_delim_chunked(
-          file = info$file_path,
-          delim = input$custom_separator,
-          trim_ws = input$trim_ws,
-          callback = DataFrameCallback$new(f(
-            conn$active_db,
-            input$table_name,
-            input$overwrite
-          ))
-        )
-        action_import_table$imported_table <- input$import
+      if (isTRUE(input$import_selected_columns))
+      {
+        if (is.null(input$display_header_columns_selected))
+          showNotification(
+            ui =  paste0(
+              "No column selected.
+                         Please select a column
+                         or uncheck \"Import Selected Columns\""
+            ),
+            duration = 5,
+            type = "error"
+          )
+        else if (input$table_name == "")
+          showNotification(
+            ui =  paste0("Please enter a table name."),
+            duration = 3,
+            type = "error"
+          )
+        else if (is.null(info$file_path))
+          showNotification(
+            ui =  paste0("No file selected."),
+            duration = 3,
+            type = "error"
+          )
+        else if (isTRUE(input$specify_custom_separator) &&
+                 input$custom_separator == "")
+          showNotification(
+            ui =  paste0("Please enter a separator."),
+            duration = 3,
+            type = "error"
+          )
+        else if (isTRUE(input$specify_custom_separator)) {
+          library(readr)
+          col_names<- colnames(info$header_data)[input$display_header_columns_selected]
+          col_names_list = list()
+          for(i in col_names){
+            col_names_list[[i]] = "?"
+          }
+          readr::read_delim_chunked(
+            file = info$file_path,
+            delim = input$custom_separator,
+            col_types = do.call(cols_only, col_names_list),
+            callback = DataFrameCallback$new(
+              f(conn$active_db,
+                input$table_name,
+                input$overwrite)
+            )
+          )
+          action_import_table$imported_table <- input$import
+        }
+        else if (input$separator == "TAB") {
+          library(readr)
+          col_names<- colnames(info$header_data)[input$display_header_columns_selected]
+          col_names_list = list()
+          for(i in col_names){
+            col_names_list[[i]] = "?"
+          }
+          readr::read_delim_chunked(
+            file = info$file_path,
+            delim = "\t",
+            col_types = do.call(cols_only, col_names_list),
+            callback = DataFrameCallback$new(
+              f(conn$active_db,
+                input$table_name,
+                input$overwrite)
+            )
+          )
+          action_import_table$imported_table <- input$import
+        }
+        else {
+          library(readr)
+          col_names<- colnames(info$header_data)[input$display_header_columns_selected]
+          col_names_list = list()
+          for(i in col_names){
+            col_names_list[[i]] = "?"
+          }
+          readr::read_delim_chunked(
+            file = info$file_path,
+            delim = input$separator,
+            col_types = do.call(cols_only, col_names_list),
+            callback = DataFrameCallback$new(
+              f(conn$active_db,
+                input$table_name,
+                input$overwrite)
+            )
+          )
+          action_import_table$imported_table <- input$import
+        }
       }
-      else if (input$separator == "TAB") {
-        library(readr)
-        readr::read_delim_chunked(
-          file = info$file_path,
-          delim = "\t",
-          trim_ws = input$trim_ws,
-          callback = DataFrameCallback$new(f(
-            conn$active_db,
-            input$table_name,
-            input$overwrite
-          ))
-        )
-        action_import_table$imported_table <- input$import
-      }
-      else {
-        library(readr)
-        readr::read_delim_chunked(
-          file = info$file_path,
-          delim = input$separator,
-          trim_ws = input$trim_ws,
-          callback = DataFrameCallback$new(f(
-            conn$active_db,
-            input$table_name,
-            input$overwrite
-          ))
-        )
-        action_import_table$imported_table <- input$import
+      
+      else{
+        if (input$table_name == "")
+          showNotification(
+            ui =  paste0("Please enter a table name."),
+            duration = 3,
+            type = "error"
+          )
+        else if (is.null(info$file_path))
+          showNotification(
+            ui =  paste0("No file selected."),
+            duration = 3,
+            type = "error"
+          )
+        else if (isTRUE(input$specify_custom_separator) &&
+                 input$custom_separator == "")
+          showNotification(
+            ui =  paste0("Please enter a separator."),
+            duration = 3,
+            type = "error"
+          )
+        else if (isTRUE(input$specify_custom_separator)) {
+          library(readr)
+          readr::read_delim_chunked(
+            file = info$file_path,
+            delim = input$custom_separator,
+            trim_ws = input$trim_ws,
+            callback = DataFrameCallback$new(
+              f(conn$active_db,
+                input$table_name,
+                input$overwrite)
+            )
+          )
+          action_import_table$imported_table <- input$import
+        }
+        else if (input$separator == "TAB") {
+          library(readr)
+          readr::read_delim_chunked(
+            file = info$file_path,
+            delim = "\t",
+            trim_ws = input$trim_ws,
+            callback = DataFrameCallback$new(
+              f(conn$active_db,
+                input$table_name,
+                input$overwrite)
+            )
+          )
+          action_import_table$imported_table <- input$import
+        }
+        else {
+          library(readr)
+          readr::read_delim_chunked(
+            file = info$file_path,
+            delim = input$separator,
+            trim_ws = input$trim_ws,
+            callback = DataFrameCallback$new(
+              f(conn$active_db,
+                input$table_name,
+                input$overwrite)
+            )
+          )
+          action_import_table$imported_table <- input$import
+        }
       }
     },
     error = function(err) {
