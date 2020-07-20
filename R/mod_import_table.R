@@ -102,10 +102,11 @@ mod_import_table_ui <- function(id) {
     #             label = "Strings to be treated as NA values.",
     #             value = "'', 'NA'")
     # )),
-    fluidRow(actionButton(
-      inputId = ns("import"),
-      label = "Import"
-    ))
+    fluidRow(
+      actionButton(inputId = ns("import"),
+                   label = "Import"),
+      actionButton(ns("test"), label = "TEST")
+    )
   )
 }
 
@@ -132,7 +133,6 @@ mod_import_table_server <- function(input, output, session, conn) {
   
   observeEvent(input$file_name, {
     tryCatch({
-      print(is.null(input$file_name))
       path <-
         shinyFiles::parseFilePaths(roots = roots, input$file_name)
       file_path <- path$datapath
@@ -209,8 +209,10 @@ mod_import_table_server <- function(input, output, session, conn) {
                   selection = list(target = "column"))
   })
   
-  observe({
-    print(input$display_header_columns_selected)
+  observeEvent(input$test, {
+    print(grepl("\\", input$custom_separator, fixed = TRUE))
+    # print(identical(eval(parse(text=sub("\\", "", deparse(input$custom_separator), fixed=TRUE))), "\t"))
+    # print(identical(input$custom_separator, "\t"))
   })
   # Reference Here: https://stackoverflow.com/questions/43677277/reading-csv-files-in-chunks-with-readrread-csv-chunked
   # Reference Here: https://stackoverflow.com/a/49241426/
@@ -259,28 +261,50 @@ mod_import_table_server <- function(input, output, session, conn) {
           )
         else if (isTRUE(input$specify_custom_separator)) {
           library(readr)
-          col_names<- colnames(info$header_data)[input$display_header_columns_selected]
+          col_names <-
+            colnames(info$header_data)[input$display_header_columns_selected]
           col_names_list = list()
-          for(i in col_names){
+          for (i in col_names) {
             col_names_list[[i]] = "?"
           }
-          readr::read_delim_chunked(
-            file = info$file_path,
-            delim = input$custom_separator,
-            col_types = do.call(cols_only, col_names_list),
-            callback = DataFrameCallback$new(
-              f(conn$active_db,
-                input$table_name,
-                input$overwrite)
+          if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE))) {
+            readr::read_delim_chunked(
+              file = info$file_path,
+              delim = eval(parse(
+                text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
+              )),
+              col_types = do.call(cols_only, col_names_list),
+              callback = DataFrameCallback$new(
+                f(
+                  conn$active_db,
+                  input$table_name,
+                  input$overwrite
+                )
+              )
             )
-          )
+          }
+          else{
+            readr::read_delim_chunked(
+              file = info$file_path,
+              delim = input$custom_separator,
+              col_types = do.call(cols_only, col_names_list),
+              callback = DataFrameCallback$new(
+                f(
+                  conn$active_db,
+                  input$table_name,
+                  input$overwrite
+                )
+              )
+            )
+          }
           action_import_table$imported_table <- input$import
         }
         else if (input$separator == "TAB") {
           library(readr)
-          col_names<- colnames(info$header_data)[input$display_header_columns_selected]
+          col_names <-
+            colnames(info$header_data)[input$display_header_columns_selected]
           col_names_list = list()
-          for(i in col_names){
+          for (i in col_names) {
             col_names_list[[i]] = "?"
           }
           readr::read_delim_chunked(
@@ -297,9 +321,10 @@ mod_import_table_server <- function(input, output, session, conn) {
         }
         else {
           library(readr)
-          col_names<- colnames(info$header_data)[input$display_header_columns_selected]
+          col_names <-
+            colnames(info$header_data)[input$display_header_columns_selected]
           col_names_list = list()
-          for(i in col_names){
+          for (i in col_names) {
             col_names_list[[i]] = "?"
           }
           readr::read_delim_chunked(
@@ -338,16 +363,36 @@ mod_import_table_server <- function(input, output, session, conn) {
           )
         else if (isTRUE(input$specify_custom_separator)) {
           library(readr)
-          readr::read_delim_chunked(
-            file = info$file_path,
-            delim = input$custom_separator,
-            trim_ws = input$trim_ws,
-            callback = DataFrameCallback$new(
-              f(conn$active_db,
-                input$table_name,
-                input$overwrite)
+          if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE))) {
+            readr::read_delim_chunked(
+              file = info$file_path,
+              delim = eval(parse(
+                text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
+              )),
+              trim_ws = input$trim_ws,
+              callback = DataFrameCallback$new(
+                f(
+                  conn$active_db,
+                  input$table_name,
+                  input$overwrite
+                )
+              )
             )
-          )
+          }
+          else{
+            eadr::read_delim_chunked(
+              file = info$file_path,
+              delim = input$custom_separator,
+              trim_ws = input$trim_ws,
+              callback = DataFrameCallback$new(
+                f(
+                  conn$active_db,
+                  input$table_name,
+                  input$overwrite
+                )
+              )
+            )
+          }
           action_import_table$imported_table <- input$import
         }
         else if (input$separator == "TAB") {
