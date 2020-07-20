@@ -214,13 +214,14 @@ mod_import_table_server <- function(input, output, session, conn) {
   })
   
   output$display_header_ui <- renderUI({
-    fluidRow(conditionalPanel(condition = !is.null(info$file_path),
-                              column(width = 12,
-                              DT::DTOutput(ns(
-                                "display_header"
-                              )),
-                              style = "height:500px;overflow-y: scroll;overflow-x: scroll;"
-                              )))
+    fluidRow(conditionalPanel(
+      condition = !is.null(info$file_path),
+      column(width = 12,
+             DT::DTOutput(ns(
+               "display_header"
+             )),
+             style = "height:500px;overflow-y: scroll;overflow-x: scroll;")
+    ))
   })
   
   output$display_header <- DT::renderDT(expr = {
