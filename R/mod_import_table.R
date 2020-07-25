@@ -112,7 +112,7 @@ mod_import_table_ui <- function(id) {
     fluidRow(
       actionButton(inputId = ns("import"),
                    label = "Import"),
-      actionButton(ns("test"), label = "TEST")
+      actionButton(ns("import_multiple_tables"), label = "Import Multiple Tables")
     )
   )
 }
@@ -126,7 +126,8 @@ mod_import_table_server <- function(input, output, session, conn) {
   info <- reactiveValues(file_path = NULL,
                          header_data = NULL)
   
-  action_import_table <- reactiveValues(imported_table = NULL)
+  action_import_table <- reactiveValues(imported_table = NULL,
+                                        imported_multiple_tables = NULL)
   
   roots = c(
     shinyFiles::getVolumes()(),
@@ -146,6 +147,113 @@ mod_import_table_server <- function(input, output, session, conn) {
       if (!(identical(file_path, character(0))))
       {
         info$file_path <- file_path
+      }
+    },
+    error = function(err) {
+      showNotification(
+        ui =  paste0(err, ". Data not imported."),
+        duration = 5,
+        type = "error"
+      )
+    })
+  })
+  
+  shinyFiles::shinyFileChoose(input = input,
+                              id = "files_multiple_table",
+                              roots = roots)
+  
+  observeEvent(input$import_multiple_tables, {
+    showModal(
+      modalDialog(
+        size = "l",
+        textInput(inputId = ns("extension"),
+                  label = "Enter Extension"),
+        textInput(
+          inputId = ns("separator_multiple_tables"),
+          label = "Enter Separator"
+        ),
+        shinyFiles::shinyFilesButton(
+          id = ns("files_multiple_table"),
+          label = "Select File",
+          title = "Select File",
+          multiple = TRUE
+        ),
+        actionButton(
+          inputId = ns("confirm_multiple_tables"),
+          label = "Confirm"
+        )
+      )
+    )
+  })
+  
+  observeEvent(input$confirm_multiple_tables, {
+    tryCatch({
+      f <- function(conn, table_name)
+      {
+        function(x, pos)
+        {
+          RSQLite::dbWriteTable(conn,
+                                table_name,
+                                x,
+                                append = TRUE)
+        }
+      }
+      paths <-
+        shinyFiles::parseFilePaths(roots = roots, input$files_multiple_table)
+      print(dim(paths)[1])
+      if (dim(paths)[1] == 0)
+        showNotification(
+          ui =  paste0("Please select some files first."),
+          duration = 5,
+          type = "error"
+        )
+      else if(input$separator_multiple_tables=="")
+        showNotification(
+          ui =  paste0("Please enter a separator."),
+          duration = 5,
+          type = "error"
+        )
+      else{
+        for (i in seq_len(dim(paths)[1])) {
+          file_path <- paths$datapath[i]
+          print(file_path)
+          table_name  <-
+            tools::file_path_sans_ext(basename(file_path))
+          print(table_name)
+          library(readr)
+          if (isTRUE(grepl("\\", input$separator_multiple_tables, fixed = TRUE)))
+          {
+            readr::read_delim_chunked(
+              file = file_path,
+              delim = eval(parse(
+                text = sub(
+                  "\\",
+                  "",
+                  deparse(input$separator_multiple_tables),
+                  fixed = TRUE
+                )
+              )),
+              callback = DataFrameCallback$new(f(conn$active_db,
+                                                 table_name))
+            )
+          }
+          else
+          {
+            readr::read_delim_chunked(
+              file = file_path,
+              delim = input$separator_multiple_tables,
+              callback = DataFrameCallback$new(f(conn$active_db,
+                                                 table_name))
+            )
+          }
+        }
+        action_import_table$imported_multiple_tables <-
+          input$import_multiple_tables
+        showNotification(
+          ui =  paste0("Selected tables imported successfully."),
+          duration = 5,
+          type = "message"
+        )
       }
     },
     error = function(err) {
@@ -220,7 +328,7 @@ mod_import_table_server <- function(input, output, session, conn) {
              DT::DTOutput(ns(
                "display_header"
              )),
-             style = "height:500px;overflow-y: scroll;overflow-x: scroll;")
+             style = "overflow-y: scroll;overflow-x: scroll;")
     ))
   })
   
