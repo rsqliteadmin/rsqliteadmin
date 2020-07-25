@@ -334,7 +334,8 @@ mod_import_table_server <- function(input, output, session, conn) {
   
   output$display_header <- DT::renderDT(expr = {
     DT::datatable(data = info$header_data,
-                  selection = list(target = "column"))
+                  selection = list(target = "column"),
+                  options = list(dom = 't'))
   })
   
   observeEvent(input$update_header, {
@@ -642,9 +643,9 @@ mod_import_table_server <- function(input, output, session, conn) {
                })
   output$file_selected <- renderText({
     if (is.null(info$file_path))
-      return("File Selected: None")
+      return("")
     else
-      return(paste0("File Selected: ", info$file_path))
+      return(info$file_path)
   })
   
   return(action_import_table)
