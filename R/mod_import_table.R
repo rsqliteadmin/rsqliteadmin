@@ -20,10 +20,10 @@ mod_import_table_ui <- function(id) {
       column(
         width = 1,
         shinyFiles::shinyFilesButton(
-          id = ns("file_name"),
-          label = "Select File",
-          title = "Select File",
-          multiple = FALSE,
+          id = ns("file_names"),
+          label = "Select File(s)",
+          title = "Select File(s)",
+          multiple = TRUE,
           style = 'padding:9px; font-size:110%'
         )
       ),
@@ -122,7 +122,7 @@ mod_import_table_ui <- function(id) {
 mod_import_table_server <- function(input, output, session, conn) {
   ns <- session$ns
   
-  info <- reactiveValues(file_path = NULL,
+  info <- reactiveValues(file_paths = NULL,
                          header_data = NULL)
   
   action_import_table <- reactiveValues(imported_table = NULL,
@@ -135,18 +135,15 @@ mod_import_table_server <- function(input, output, session, conn) {
   )
   
   shinyFiles::shinyFileChoose(input = input,
-                              id = "file_name",
+                              id = "file_names",
                               roots = roots)
   
-  observeEvent(input$file_name, {
+  observeEvent(input$file_names, {
     tryCatch({
-      path <-
-        shinyFiles::parseFilePaths(roots = roots, input$file_name)
-      file_path <- path$datapath
-      if (!(identical(file_path, character(0))))
-      {
-        info$file_path <- file_path
-      }
+      paths <-
+        shinyFiles::parseFilePaths(roots = roots, input$file_names)
+      if (dim(paths)[1] != 0)
+        info$file_paths <- paths
     },
     error = function(err) {
       showNotification(
@@ -157,54 +154,60 @@ mod_import_table_server <- function(input, output, session, conn) {
     })
   })
   
-  shinyFiles::shinyFileChoose(input = input,
-                              id = "files_multiple_table",
-                              roots = roots)
-  
-  observeEvent(info$file_path, {
-    if (!is.null(info$file_path)) {
+  observeEvent(info$file_paths, {
+    if (!is.null(info$file_paths)) {
       tryCatch({
-        updateTextInput(
-          session = session,
-          inputId = "table_name",
-          value = tools::file_path_sans_ext(basename(info$file_path))
-        )
-        if (isTRUE(input$specify_custom_separator) &&
-            input$custom_separator == "")
-          showNotification(
-            ui =  paste0("Please enter a separator."),
-            duration = 3,
-            type = "error"
+        if (dim(info$file_paths)[1] == 1) {
+          updateTextInput(
+            session = session,
+            inputId = "table_name",
+            value = tools::file_path_sans_ext(basename(info$file_paths$datapath[1]))
           )
-        else if (isTRUE(input$specify_custom_separator)) {
-          if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE)))
+          if (isTRUE(input$specify_custom_separator) &&
+              input$custom_separator == "")
+            showNotification(
+              ui =  paste0("Please enter a separator."),
+              duration = 3,
+              type = "error"
+            )
+          else if (isTRUE(input$specify_custom_separator)) {
+            if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE)))
+              info$header_data <- readr::read_delim(
+                file = info$file_paths$datapath[1],
+                delim = eval(parse(
+                  text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
+                )),
+                n_max = 5
+              )
+            else
+              info$header_data <- readr::read_delim(
+                file = info$file_paths$datapath[1],
+                delim = input$custom_separator,
+                n_max = 5
+              )
+          }
+          else if (input$separator == "TAB") {
             info$header_data <- readr::read_delim(
-              file = info$file_path,
-              delim = eval(parse(
-                text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
-              )),
+              file = info$file_paths$datapath[1],
+              delim = "\t",
               n_max = 5
             )
-          else
+          }
+          else {
             info$header_data <- readr::read_delim(
-              file = info$file_path,
-              delim = input$custom_separator,
+              file = info$file_paths$datapath[1],
+              delim = input$separator,
               n_max = 5
             )
+          }
         }
-        else if (input$separator == "TAB") {
-          info$header_data <- readr::read_delim(
-            file = info$file_path,
-            delim = "\t",
-            n_max = 5
+        else{
+          updateTextInput(
+            session = session,
+            inputId = "table_name",
+            value = ""
           )
-        }
-        else {
-          info$header_data <- readr::read_delim(
-            file = info$file_path,
-            delim = input$separator,
-            n_max = 5
-          )
+          info$header_data <- NULL
         }
       },
       error = function(err) {
@@ -219,7 +222,7 @@ mod_import_table_server <- function(input, output, session, conn) {
   
   output$display_header_ui <- renderUI({
     fluidRow(conditionalPanel(
-      condition = !is.null(info$file_path),
+      condition = !is.null(info$file_paths),
       column(width = 12,
              DT::DTOutput(ns(
                "display_header"
@@ -237,7 +240,7 @@ mod_import_table_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$update_header, {
-    if (!is.null(info$file_path)) {
+    if (!is.null(info$file_paths)) {
       tryCatch({
         if (isTRUE(input$specify_custom_separator) &&
             input$custom_separator == "")
@@ -249,7 +252,7 @@ mod_import_table_server <- function(input, output, session, conn) {
         else if (isTRUE(input$specify_custom_separator)) {
           if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE)))
             info$header_data <- readr::read_delim(
-              file = info$file_path,
+              file = info$file_paths$datapath[1],
               delim = eval(parse(
                 text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
               )),
@@ -257,21 +260,21 @@ mod_import_table_server <- function(input, output, session, conn) {
             )
           else
             info$header_data <- readr::read_delim(
-              file = info$file_path,
+              file = info$file_paths$datapath[1],
               delim = input$custom_separator,
               n_max = 5
             )
         }
         else if (input$separator == "TAB") {
           info$header_data <- readr::read_delim(
-            file = info$file_path,
+            file = info$file_paths$datapath[1],
             delim = "\t",
             n_max = 5
           )
         }
         else {
           info$header_data <- readr::read_delim(
-            file = info$file_path,
+            file = info$file_paths$datapath[1],
             delim = input$separator,
             n_max = 5
           )
@@ -324,7 +327,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                            type = "error"
                          )
                      else
-                       if (is.null(info$file_path))
+                       if (is.null(info$file_paths))
                          showNotification(
                            ui =  paste0("No file selected."),
                            duration = 3,
@@ -352,7 +355,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                          if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE)))
                          {
                            readr::read_delim_chunked(
-                             file = info$file_path,
+                             file = info$file_paths$datapath[1],
                              delim = eval(parse(
                                text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
                              )),
@@ -369,7 +372,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                          else
                          {
                            readr::read_delim_chunked(
-                             file = info$file_path,
+                             file = info$file_paths$datapath[1],
                              delim = input$custom_separator,
                              col_types = do.call(cols_only, col_names_list),
                              callback = DataFrameCallback$new(
@@ -396,7 +399,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                            col_names_list[[i]] = "?"
                          }
                          readr::read_delim_chunked(
-                           file = info$file_path,
+                           file = info$file_paths$datapath[1],
                            delim = "\t",
                            col_types = do.call(cols_only, col_names_list),
                            callback = DataFrameCallback$new(
@@ -419,7 +422,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                          col_names_list[[i]] = "?"
                        }
                        readr::read_delim_chunked(
-                         file = info$file_path,
+                         file = info$file_paths$datapath[1],
                          delim = input$separator,
                          col_types = do.call(cols_only, col_names_list),
                          callback = DataFrameCallback$new(
@@ -442,7 +445,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                          type = "error"
                        )
                      else
-                       if (is.null(info$file_path))
+                       if (is.null(info$file_paths))
                          showNotification(
                            ui =  paste0("No file selected."),
                            duration = 3,
@@ -463,7 +466,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                          if (isTRUE(grepl("\\", input$custom_separator, fixed = TRUE)))
                          {
                            readr::read_delim_chunked(
-                             file = info$file_path,
+                             file = info$file_paths$datapath[1],
                              delim = eval(parse(
                                text = sub("\\", "", deparse(input$custom_separator), fixed = TRUE)
                              )),
@@ -480,7 +483,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                          else
                          {
                            readr::read_delim_chunked(
-                             file = info$file_path,
+                             file = info$file_paths$datapath[1],
                              delim = input$custom_separator,
                              trim_ws = input$trim_ws,
                              callback = DataFrameCallback$new(
@@ -500,7 +503,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                        {
                          library(readr)
                          readr::read_delim_chunked(
-                           file = info$file_path,
+                           file = info$file_paths$datapath[1],
                            delim = "\t",
                            trim_ws = input$trim_ws,
                            callback = DataFrameCallback$new(
@@ -516,7 +519,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                      {
                        library(readr)
                        readr::read_delim_chunked(
-                         file = info$file_path,
+                         file = info$file_paths$datapath[1],
                          delim = input$separator,
                          trim_ws = input$trim_ws,
                          callback = DataFrameCallback$new(
@@ -539,11 +542,17 @@ mod_import_table_server <- function(input, output, session, conn) {
                    )
                  })
                })
+  
   output$file_selected <- renderText({
-    if (is.null(info$file_path))
+    if (is.null(info$file_paths))
       return("")
-    else
-      return(info$file_path)
+    else{
+      res <- ""
+      for(i in seq_len(dim(info$file_paths)[1])){
+        res<- paste0(res, info$file_paths$datapath[i], "\n")
+      }
+      return(res)
+    }
   })
   
   return(action_import_table)
