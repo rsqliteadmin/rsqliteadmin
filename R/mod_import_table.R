@@ -43,27 +43,24 @@ mod_import_table_ui <- function(id) {
         placeholder = "Enter Table Name"
       )
     )),
-    column(width = 3,
-           checkboxInput(ns(
-             "import_selected_columns"
-           ),
-           label = "Import Selected Columns")),
     uiOutput(ns("display_header_ui")),
     fluidRow(
-      column(
-        width = 3,
-        checkboxInput(inputId = ns("first_row"),
-                      label = "First Row contains Column Names")
-      ),
-      column(
-        width = 4,
-        checkboxInput(inputId = ns("trim_ws"),
-                      label = "Trim Whitespaces")
-      )
+      column(width = 3,
+             radioButtons(ns(
+               "import_type"
+             ),
+             label = "What method do you want to import with?",
+             choices = c("Import All Columns",
+                         "Import Selected Columns in Table",
+                         "Import Columns Selected via Checkboxes",
+                         "Import Specified Columns"))),
     ),
     fluidRow(
+      
       actionButton(inputId = ns("select_columns"),
-                   label = "Import Selected Columns"),
+                   label = "Select Columns to Import"),
+      actionButton(inputId = ns("specify_columns"),
+                   label = "Specify Columns to Import"),
       actionButton(inputId = ns("import"),
                    label = "Import")
     )
@@ -100,7 +97,8 @@ mod_import_table_server <- function(input, output, session, conn) {
         checkboxGroupInput(
           inputId = ns("selected_columns"),
           label = "Select columns to import",
-          choices = colnames(info$header_data)
+          choices = colnames(info$header_data),
+          selected = input$selected_columns
         ),
         actionButton(
           inputId = ns("confirm_select_columns"),
@@ -113,7 +111,27 @@ mod_import_table_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$confirm_select_columns, {
+    removeModal()
     print(input$selected_columns)
+  })
+  
+  observeEvent(input$specify_columns, {
+    if (!is.null(info$file_paths)) {
+      showModal(modalDialog(
+        size = "l",
+        textInput(inputId = ns("specified_columns"),
+                  label = "Specify Column Names separated by \",\"",
+                  value = input$specified_columns),
+        actionButton(
+          inputId = ns("confirm_specify_columns"),
+          label = "Confirm"
+        )
+      ))
+    }
+  })
+  
+  observeEvent(input$confirm_specify_columns, {
+    removeModal()
   })
   
   observeEvent(input$select_all, {
@@ -174,6 +192,17 @@ mod_import_table_server <- function(input, output, session, conn) {
             n_max = 5
           )
         }
+        if (dim(info$file_paths)[1] > 1)
+          updateRadioButtons(session = session, 
+                             inputId = "import_type",
+                             choices = c("Import All Columns"))
+        else
+          updateRadioButtons(session = session, 
+                             inputId = "import_type",
+                             choices = c("Import All Columns",
+                                         "Import Selected Columns in Table",
+                                         "Import Columns Selected via Checkboxes",
+                                         "Import Specified Columns"))
       },
       error = function(err) {
         showNotification(
@@ -248,15 +277,11 @@ mod_import_table_server <- function(input, output, session, conn) {
                    }
                  }
                  tryCatch({
-                   if (isTRUE(input$import_selected_columns))
+                   if (identical(input$import_type, "Import Selected Columns in Table"))
                    {
                      if (is.null(input$display_header_columns_selected))
                        showNotification(
-                         ui =  paste0(
-                           "No column selected.
-                         Please select a column
-                         or uncheck \"Import Selected Columns\""
-                         ),
+                         ui = "No column selected.",
                          duration = 5,
                          type = "error"
                        )
@@ -274,14 +299,14 @@ mod_import_table_server <- function(input, output, session, conn) {
                            duration = 3,
                            type = "error"
                          )
-                     else if (dim(info$file_paths)[1] > 1)
-                       showNotification(
-                         ui =  paste0(
-                           "Uncheck \"Import Selected Columns\" to  import multiple files."
-                         ),
-                         duration = 3,
-                         type = "error"
-                       )
+                     # else if (dim(info$file_paths)[1] > 1)
+                     #   showNotification(
+                     #     ui =  paste0(
+                     #       "Uncheck \"Import Selected Columns\" to  import multiple files."
+                     #     ),
+                     #     duration = 3,
+                     #     type = "error"
+                     #   )
                      else
                      {
                        library(readr)
@@ -306,7 +331,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                      }
                    }
                    
-                   else
+                   else if(identical(input$import_type, "Import All Columns"))
                    {
                      if (dim(info$file_paths)[1] == 1) {
                        if (input$table_name == "")
@@ -356,6 +381,93 @@ mod_import_table_server <- function(input, output, session, conn) {
                            )
                          }
                        }
+                       action_import_table$imported_table <-
+                         input$import
+                     }
+                   }
+                   else if(identical(input$import_type, "Import Columns Selected via Checkboxes"))
+                   {
+                     if (is.null(input$selected_columns))
+                       showNotification(
+                         ui =  "No Column Selected",
+                         duration = 5,
+                         type = "error"
+                       )
+                     else
+                       if (input$table_name == "")
+                         showNotification(
+                           ui =  paste0("Please enter a table name."),
+                           duration = 3,
+                           type = "error"
+                         )
+                     else
+                       if (is.null(info$file_paths))
+                         showNotification(
+                           ui =  paste0("No file selected."),
+                           duration = 3,
+                           type = "error"
+                         )
+                     else
+                     {
+                       library(readr)
+                       col_names <- input$selected_columns
+                       col_names_list = list()
+                       for (i in col_names)
+                       {
+                         col_names_list[[i]] = "?"
+                       }
+                       readr::read_delim_chunked(
+                         file = info$file_paths$datapath[1],
+                         delim = info$delimiter,
+                         col_types = do.call(cols_only, col_names_list),
+                         callback = DataFrameCallback$new(f(
+                           conn$active_db,
+                           input$table_name
+                         ))
+                       )
+                       action_import_table$imported_table <-
+                         input$import
+                     }
+                   }
+                   else if(identical(input$import_type, "Import Specified Columns")){
+                     if (input$specified_columns=="")
+                       showNotification(
+                         ui =  "No Column Specified",
+                         duration = 5,
+                         type = "error"
+                       )
+                     else
+                       if (input$table_name == "")
+                         showNotification(
+                           ui =  paste0("Please enter a table name."),
+                           duration = 3,
+                           type = "error"
+                         )
+                     else
+                       if (is.null(info$file_paths))
+                         showNotification(
+                           ui =  paste0("No file selected."),
+                           duration = 3,
+                           type = "error"
+                         )
+                     else
+                     {
+                       library(readr)
+                       col_names <- unlist(strsplit(input$specified_columns, "\\, |\\,"))
+                       col_names_list = list()
+                       for (i in col_names)
+                       {
+                         col_names_list[[i]] = "?"
+                       }
+                       readr::read_delim_chunked(
+                         file = info$file_paths$datapath[1],
+                         delim = info$delimiter,
+                         col_types = do.call(cols_only, col_names_list),
+                         callback = DataFrameCallback$new(f(
+                           conn$active_db,
+                           input$table_name
+                         ))
+                       )
                        action_import_table$imported_table <-
                          input$import
                      }
