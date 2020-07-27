@@ -317,14 +317,21 @@ mod_import_table_server <- function(input, output, session, conn) {
                        {
                          col_names_list[[i]] = "?"
                        }
-                       readr::read_delim_chunked(
-                         file = info$file_paths$datapath[1],
-                         delim = info$delimiter,
-                         col_types = do.call(cols_only, col_names_list),
-                         callback = DataFrameCallback$new(f(
-                           conn$active_db,
-                           input$table_name
-                         ))
+                       withProgress(message = "Import in Progress", expr =  {
+                         readr::read_delim_chunked(
+                           file = info$file_paths$datapath[1],
+                           delim = info$delimiter,
+                           col_types = do.call(cols_only, col_names_list),
+                           callback = DataFrameCallback$new(f(
+                             conn$active_db,
+                             input$table_name
+                           ))
+                         )
+                       })
+                       showNotification(
+                         ui = "Table Imported Successfully",
+                         duration = 3,
+                         type = "message"
                        )
                        action_import_table$imported_table <-
                          input$import
@@ -349,14 +356,23 @@ mod_import_table_server <- function(input, output, session, conn) {
                        else{
                          library(readr)
                          print(info$file_paths$datapath[1])
-                         readr::read_delim_chunked(
-                           file = info$file_paths$datapath[1],
-                           delim = info$delimiter,
-                           callback = DataFrameCallback$new(f(
-                             conn$active_db,
-                             input$table_name
-                           ))
+                         withProgress(message = "Import in Progress", expr =  {
+                           readr::read_delim_chunked(
+                             file = info$file_paths$datapath[1],
+                             delim = info$delimiter,
+                             callback = DataFrameCallback$new(f(
+                               conn$active_db,
+                               input$table_name
+                             ))
+                           )
+                         })
+                         showNotification(
+                           ui = "Table Imported Successfully",
+                           duration = 3,
+                           type = "message"
                          )
+                         action_import_table$imported_table <-
+                           input$import
                        }
                      }
                      else{
@@ -371,15 +387,22 @@ mod_import_table_server <- function(input, output, session, conn) {
                            library(readr)
                            table_name <-
                              tools::file_path_sans_ext(basename(info$file_paths$datapath[i]))
-                           readr::read_delim_chunked(
-                             file = info$file_paths$datapath[i],
-                             delim = info$delimiter,
-                             callback = DataFrameCallback$new(f(
-                               conn$active_db,
-                               table_name
-                             ))
-                           )
+                           withProgress(message = "Import in Progress", expr =  {
+                             readr::read_delim_chunked(
+                               file = info$file_paths$datapath[i],
+                               delim = info$delimiter,
+                               callback = DataFrameCallback$new(f(
+                                 conn$active_db,
+                                 table_name
+                               ))
+                             )
+                           })
                          }
+                         showNotification(
+                           ui = "Tables Imported Successfully",
+                           duration = 3,
+                           type = "message"
+                         )
                        }
                        action_import_table$imported_table <-
                          input$import
@@ -416,6 +439,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                        {
                          col_names_list[[i]] = "?"
                        }
+                       withProgress(message = "Import in Progress", expr =  {
                        readr::read_delim_chunked(
                          file = info$file_paths$datapath[1],
                          delim = info$delimiter,
@@ -424,6 +448,12 @@ mod_import_table_server <- function(input, output, session, conn) {
                            conn$active_db,
                            input$table_name
                          ))
+                       )
+                       })
+                       showNotification(
+                         ui = "Table Imported Successfully",
+                         duration = 3,
+                         type = "message"
                        )
                        action_import_table$imported_table <-
                          input$import
@@ -459,6 +489,7 @@ mod_import_table_server <- function(input, output, session, conn) {
                        {
                          col_names_list[[i]] = "?"
                        }
+                       withProgress(message = "Import in Progress", expr =  {
                        readr::read_delim_chunked(
                          file = info$file_paths$datapath[1],
                          delim = info$delimiter,
@@ -467,6 +498,12 @@ mod_import_table_server <- function(input, output, session, conn) {
                            conn$active_db,
                            input$table_name
                          ))
+                       )
+                       })
+                       showNotification(
+                         ui = "Table Imported Successfully",
+                         duration = 3,
+                         type = "message"
                        )
                        action_import_table$imported_table <-
                          input$import
