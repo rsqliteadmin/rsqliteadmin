@@ -114,7 +114,7 @@ mod_query_server <- function(input, output, session, conn) {
           outputId = ns("ace_save"),
           placeholder = "",
           mode = "sql",
-          height = "100px"
+          height = "200px"
         ),
         actionButton(inputId = ns("execute_saved"),
                      label = "Execute Query"),
@@ -179,9 +179,16 @@ mod_query_server <- function(input, output, session, conn) {
   
   output$display_saved_queries <- DT::renderDT(expr = {
     DT::datatable(
-      data = info$saved_data[, c(-1, -2)],
+      data = info$saved_data[, c(-1,-2)],
       rownames = FALSE,
-      selection = "single"
+      selection = "single",
+      plugins = "ellipsis",
+      options = list(columnDefs = list(
+        list(
+          targets = "_all",
+          render = DT::JS("$.fn.dataTable.render.ellipsis(75)")
+        )
+      ))
     )
   })
   

@@ -200,7 +200,11 @@ mod_import_table_server <- function(input, output, session, conn) {
     DT::datatable(
       data = info$header_data,
       selection = list(target = "column"),
-      options = list(dom = 't')
+      plugins = "ellipsis",
+      options = list(dom = 't',
+                     columnDefs = list(list(
+                       targets = "_all",
+                       render = DT::JS("$.fn.dataTable.render.ellipsis(20)"))))
     )
   })
   
