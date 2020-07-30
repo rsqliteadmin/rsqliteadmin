@@ -45,13 +45,6 @@ mod_create_table_ui <- function(id) {
                inputId = ns("create_new_table"),
                label = "Create New Table"
              ))
-    ),
-    br(),
-    HTML(
-      '<hr style="height:2px;
-    border-width:0;
-         color:black;
-         background-color:black">'
     )
   )
 }
@@ -373,10 +366,6 @@ mod_create_table_server <- function(input, output, session, conn) {
                      label = "Confirm Column Details"),
         br(),
         br(),
-        HTML(
-          '<hr style="height:2px;border-width:0;
-            color:black;background-color:black">'
-        ),
         DT::DTOutput(ns("display_new_table_modal"))
       )
     )

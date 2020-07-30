@@ -96,9 +96,10 @@ mod_query_server <- function(input, output, session, conn) {
   })
   
   output$query_results_ui <- renderUI({
+    
     column(
       width = 12,
-      style = "height:500px;overflow-y: scroll;overflow-x: scroll;",
+      id = "query_results",
       conditionalPanel(condition = !is.null(info$data),
                        fluidRow(DT::DTOutput(
                          ns("query_results")

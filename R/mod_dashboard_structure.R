@@ -18,37 +18,29 @@ mod_dashboard_structure_ui <- function(id) {
     shinydashboard::dashboardHeader(
       title = "RSQLiteAdmin",
       tags$li(
+        tags$head(
+          tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+        ),
         class = "dropdown",
-        tags$li(
-          class = "dropdown",
           shinyFiles::shinyDirButton(
             id = ns("set_directory"),
             label = "Set database directory",
-            title = "Select a folder",
-            icon("paper-plane"),
-            style = "color: #fff;
-                     padding: 9%;
-                     background-color: #337ab7;
-                     border-color: #2e6da4"
+            title = "Select a folder"
           )
-        )
       ),
       tags$li(class = "dropdown",
-              tags$li(
-                class = "dropdown",
                 actionButton(
                   inputId =  ns("create_db"),
                   label =  "Create a new database",
-                  icon("paper-plane"),
-                  style = "color: #fff;
-                           padding: 8.4%;
-                           background-color: #337ab7;
-                           border-color: #2e6da4"
+                  icon("paper-plane")
                 )
-              ))
+              )
     ),
     shinydashboard::dashboardSidebar(shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))),
-    shinydashboard::dashboardBody(mod_manage_dashboard_body_ui("manage_dashboard_body"))
+    shinydashboard::dashboardBody(mod_manage_dashboard_body_ui("manage_dashboard_body"),
+                                  tags$head(
+                                    tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+                                  ))
   )
 }
 

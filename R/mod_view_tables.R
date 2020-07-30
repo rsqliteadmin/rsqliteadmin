@@ -49,8 +49,9 @@ mod_view_tables_ui <- function(id) {
     br(),
     fluidRow(
       column(width = 11,
-             DT::DTOutput(ns("display_table")),
-             style = "height:500px;overflow-y: scroll;overflow-x: scroll;")
+             id = "display_table",
+             DT::DTOutput(ns("display_table"))
+             )
     ),
     br(),
     fluidRow(
