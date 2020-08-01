@@ -154,19 +154,28 @@ mod_query_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$confirm_save, {
-    if (!is.null(conn$active_db)) {
-      active_db_path <- RSQLite::dbGetInfo(conn$active_db)$dbname
-      active_db_name <- basename(active_db_path)
-      RSQLite::dbExecute(conn_save_db,
-                         insert_query(
-                           "table",
-                           c(input$save_query_name, input$ace, active_db_name)
-                         ))
-      showNotification(ui = "Query Saved Successfully.",
-                       duration = 5,
-                       type = "message")
-      removeModal()
-    }
+    tryCatch({
+      if (!is.null(conn$active_db)) {
+        active_db_path <- RSQLite::dbGetInfo(conn$active_db)$dbname
+        active_db_name <- basename(active_db_path)
+        RSQLite::dbExecute(conn_save_db,
+                           insert_query(
+                             "table",
+                             c(input$save_query_name, input$ace, active_db_name)
+                           ))
+        showNotification(ui = "Query Saved Successfully.",
+                         duration = 5,
+                         type = "message")
+        removeModal()
+      }
+    },
+    error = function(err) {
+      showNotification(
+        ui = paste0(err, ". Query not saved"),
+        duration = 3,
+        type = "error"
+      )
+    })
   })
   
   observeEvent(input$display_saved_queries_rows_selected, {
@@ -179,7 +188,7 @@ mod_query_server <- function(input, output, session, conn) {
   
   output$display_saved_queries <- DT::renderDT(expr = {
     DT::datatable(
-      data = info$saved_data[, c(-1,-2)],
+      data = info$saved_data[, c(-1, -2)],
       rownames = FALSE,
       selection = "single",
       plugins = "ellipsis",
