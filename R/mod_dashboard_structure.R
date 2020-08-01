@@ -393,21 +393,7 @@ mod_dashboard_structure_server <-
       shinydashboard::updateTabItems(session,
                                      inputId = 'sidebar_menu',
                                      selected = input$sidebar_menu)
-    })
-    
-    # Update table list when a multiple new tables are imported
-    
-    observeEvent(action_import_table$imported_multiple_tables, {
-      db_menu <-
-        update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
-      output$sidebar_ui <-
-        shinydashboard::renderMenu({
-          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
-        })
-      shinydashboard::updateTabItems(session,
-                                     inputId = 'sidebar_menu',
-                                     selected = input$sidebar_menu)
-    })
+    }, ignoreInit = TRUE)
     
     # Return the conn reactive values
     
