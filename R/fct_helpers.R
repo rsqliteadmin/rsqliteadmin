@@ -93,3 +93,4 @@ update_sidebar_table <-
     
     return(db_menu)
   }
+

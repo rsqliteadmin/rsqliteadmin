@@ -45,3 +45,4 @@ mod_manage_dashboard_body_server <-
 
 ## To be copied in the server
 # callModule(mod_manage_dashboard_body_server, "manage_dashboard_body_ui_1")
+

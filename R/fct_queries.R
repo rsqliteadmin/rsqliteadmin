@@ -278,3 +278,4 @@ add_column_query <- function(active_table = NULL,
   print(res)
   return(res)
 }
+

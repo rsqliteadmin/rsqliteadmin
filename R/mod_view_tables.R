@@ -538,3 +538,4 @@ mod_view_tables_server <-
 
 ## To be copied in the server
 # callModule(mod_view_tables_server, "view_tables_ui_1")
+

@@ -79,3 +79,4 @@ mod_manage_databases_server <-
 
 ## To be copied in the server
 # callModule(mod_manage_databases_server, "manage_databases_ui_1")
+

@@ -539,3 +539,4 @@ mod_table_structure_server <-
 
 ## To be copied in the server
 # callModule(mod_table_structure_server, "table_structure_ui_1")
+

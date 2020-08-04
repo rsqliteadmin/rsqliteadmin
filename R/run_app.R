@@ -11,3 +11,4 @@ run_app <- function(...) {
                                     server = app_server),
                      golem_opts = list(...))
 }
+

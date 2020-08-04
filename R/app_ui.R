@@ -34,3 +34,4 @@ golem_add_external_resources <- function() {
             bundle_resources(path = app_sys('app/www'),
                              app_title = 'rsqliteadmin'))
 }
+
