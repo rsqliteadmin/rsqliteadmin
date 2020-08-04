@@ -35,3 +35,4 @@ app_server <- function(input, output, session) {
     callModule(mod_create_table_server, "create_table", conn)
   
 }
+
