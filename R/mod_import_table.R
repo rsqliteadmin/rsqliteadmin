@@ -23,8 +23,7 @@ mod_import_table_ui <- function(id) {
           id = ns("file_names"),
           label = "Select File(s)",
           title = "Select File(s)",
-          multiple = TRUE,
-          style = 'padding:9px; font-size:110%'
+          multiple = TRUE
         )
       ),
       column(width = 6,
@@ -232,8 +231,7 @@ mod_import_table_server <- function(input, output, session, conn) {
       column(width = 12,
              DT::DTOutput(ns(
                "display_header"
-             )),
-             style = "overflow-y: scroll;overflow-x: scroll;")
+             )))
     ))
   })
   
