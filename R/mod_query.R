@@ -56,6 +56,7 @@ mod_query_server <- function(input, output, session, conn) {
   
   # info$data - stores data fetched from query
   # info$error - stores error fetched from query
+  # info$saved_data - stores data of saved queries
   
   info <- reactiveValues(data = NULL,
                          error = NULL,
@@ -66,6 +67,36 @@ mod_query_server <- function(input, output, session, conn) {
   
   action_query <- reactiveValues(data_updated = NULL,
                                  data_updated_save = NULL)
+  
+  conn_save_db <- RSQLite::dbConnect(
+    RSQLite::SQLite(),
+    system.file(
+      "extdata",
+      "saved_queries.db",
+      package = "rsqliteadmin",
+      mustWork = TRUE
+    )
+  )
+  
+  output$query_results_ui <- renderUI({
+    column(
+      width = 12,
+      id = "query_results",
+      conditionalPanel(condition = !is.null(info$data),
+                       fluidRow(DT::DTOutput(
+                         ns("query_results")
+                       )))
+    )
+  })
+  
+  output$query_results <-
+    DT::renderDT(expr = {
+      DT::datatable(data = info$data)
+    })
+  
+  output$display_error <- renderText({
+    info$error
+  })
   
   observeEvent(input$execute, {
     if (!is.null(conn$active_db)) {
@@ -99,6 +130,21 @@ mod_query_server <- function(input, output, session, conn) {
                        duration = 3,
                        type = "error")
     }
+  })
+  
+  output$display_saved_queries <- DT::renderDT(expr = {
+    DT::datatable(
+      data = info$saved_data[, c(-1, -2)],
+      rownames = FALSE,
+      selection = "single",
+      plugins = "ellipsis",
+      options = list(columnDefs = list(
+        list(
+          targets = "_all",
+          render = DT::JS("$.fn.dataTable.render.ellipsis(75)")
+        )
+      ))
+    )
   })
   
   observeEvent(input$saved_queries, {
@@ -186,21 +232,6 @@ mod_query_server <- function(input, output, session, conn) {
     )
   })
   
-  output$display_saved_queries <- DT::renderDT(expr = {
-    DT::datatable(
-      data = info$saved_data[, c(-1, -2)],
-      rownames = FALSE,
-      selection = "single",
-      plugins = "ellipsis",
-      options = list(columnDefs = list(
-        list(
-          targets = "_all",
-          render = DT::JS("$.fn.dataTable.render.ellipsis(75)")
-        )
-      ))
-    )
-  })
-  
   observeEvent(input$execute_saved, {
     if (!is.null(conn$active_db)) {
       active_db_path <- RSQLite::dbGetInfo(conn$active_db)$dbname
@@ -243,37 +274,6 @@ mod_query_server <- function(input, output, session, conn) {
                        type = "error")
     }
     
-  })
-  
-  conn_save_db <- RSQLite::dbConnect(
-    RSQLite::SQLite(),
-    system.file(
-      "extdata",
-      "saved_queries.db",
-      package = "rsqliteadmin",
-      mustWork = TRUE
-    )
-  )
-  
-  output$query_results_ui <- renderUI({
-    
-    column(
-      width = 12,
-      id = "query_results",
-      conditionalPanel(condition = !is.null(info$data),
-                       fluidRow(DT::DTOutput(
-                         ns("query_results")
-                       )))
-    )
-  })
-  
-  output$query_results <-
-    DT::renderDT(expr = {
-      DT::datatable(data = info$data)
-    })
-  
-  output$display_error <- renderText({
-    info$error
   })
   
   return(action_query)

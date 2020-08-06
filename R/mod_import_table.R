@@ -78,9 +78,18 @@ mod_import_table_ui <- function(id) {
 mod_import_table_server <- function(input, output, session, conn) {
   ns <- session$ns
   
+  # info$file_paths - Path(s) to file(s) which are to be imported.
+  # info$header_data - Header data for the file to be imported. 
+  #                    In case of multiple files being imported,
+  #                    data for the first file is stored and shown.
+  # info$delimiter - The delimiter used for importing files.
+  
   info <- reactiveValues(file_paths = NULL,
                          header_data = NULL,
                          delimiter = NULL)
+  
+  # action_import_table$imported_table - Updates when tables are imported
+  #                                      to notify other modules.
   
   action_import_table <- reactiveValues(imported_table = 0)
   
@@ -94,82 +103,43 @@ mod_import_table_server <- function(input, output, session, conn) {
                               id = "file_names",
                               roots = roots)
   
-  observeEvent(input$from_list, {
-    if(is.null(info$file_paths))
-      showNotification(
-        ui =  paste0("No file selected."),
-        duration = 3,
-        type = "error"
-      )
-    else if (dim(info$file_paths)[1] > 1)
-      showNotification(
-        ui =  "Importing selected columns not available when importing multiple tables.",
-        duration = 5,
-        type = "error"
-      )
-    else {
-      showModal(modalDialog(
-        size = "l",
-        checkboxGroupInput(
-          inputId = ns("selected_columns"),
-          label = "Select columns to import",
-          choices = colnames(info$header_data),
-          selected = input$selected_columns
-        ),
-        actionButton(
-          inputId = ns("confirm_select_columns"),
-          label = "Confirm"
-        ),
-        actionButton(inputId = ns("select_all"),
-                     label = "Select/Deselect All")
-      ))
-    }
+  output$display_header_ui <- renderUI({
+    fluidRow(conditionalPanel(
+      condition = !is.null(info$file_paths),
+      column(width = 12,
+             DT::DTOutput(ns(
+               "display_header"
+             )))
+    ))
   })
   
-  observeEvent(input$by_name, {
-    if(is.null(info$file_paths))
-      showNotification(
-        ui =  paste0("No file selected."),
-        duration = 3,
-        type = "error"
-      )
-    else if (dim(info$file_paths)[1] > 1)
-      showNotification(
-        ui =  "Importing selected columns not available when importing multiple tables.",
-        duration = 5,
-        type = "error"
-      )
-    else {
-      showModal(modalDialog(
-        size = "l",
-        textInput(
-          inputId = ns("specified_columns"),
-          label = "Specify Column Names separated by a comma.",
-          placeholder = "col1, col2, col3, col4",
-          value = input$specified_columns
-        ),
-        actionButton(
-          inputId = ns("confirm_specify_columns"),
-          label = "Confirm"
-        )
-      ))
-    }
+  output$display_header <- DT::renderDT(expr = {
+    DT::datatable(
+      data = info$header_data,
+      selection = list(target = "column"),
+      plugins = "ellipsis",
+      options = list(dom = 't',
+                     columnDefs = list(
+                       list(
+                         targets = "_all",
+                         render = DT::JS("$.fn.dataTable.render.ellipsis(20)")
+                       )
+                     ))
+    )
   })
   
-  observeEvent(input$select_all, {
-    if (input$select_all %% 2 == 0)
-      updateCheckboxGroupInput(
-        session = session,
-        inputId = "selected_columns",
-        choices = colnames(info$header_data)
-      )
+  output$file_selected <- renderText({
+    if (is.null(info$file_paths))
+      return("")
     else
-      updateCheckboxGroupInput(
-        session = session,
-        inputId = "selected_columns",
-        choices = colnames(info$header_data),
-        selected = colnames(info$header_data)
-      )
+    {
+      res <- ""
+      for (i in seq_len(dim(info$file_paths)[1]))
+      {
+        res <- paste0(res, info$file_paths$datapath[i], "\n")
+      }
+      return(res)
+    }
   })
   
   observeEvent(input$file_names, {
@@ -186,6 +156,22 @@ mod_import_table_server <- function(input, output, session, conn) {
         type = "error"
       )
     })
+  })
+  
+  observeEvent(input$select_all, {
+    if (input$select_all %% 2 == 0)
+      updateCheckboxGroupInput(
+        session = session,
+        inputId = "selected_columns",
+        choices = colnames(info$header_data)
+      )
+    else
+      updateCheckboxGroupInput(
+        session = session,
+        inputId = "selected_columns",
+        choices = colnames(info$header_data),
+        selected = colnames(info$header_data)
+      )
   })
   
   observeEvent(info$file_paths, {
@@ -223,31 +209,6 @@ mod_import_table_server <- function(input, output, session, conn) {
         )
       })
     }
-  })
-  
-  output$display_header_ui <- renderUI({
-    fluidRow(conditionalPanel(
-      condition = !is.null(info$file_paths),
-      column(width = 12,
-             DT::DTOutput(ns(
-               "display_header"
-             )))
-    ))
-  })
-  
-  output$display_header <- DT::renderDT(expr = {
-    DT::datatable(
-      data = info$header_data,
-      selection = list(target = "column"),
-      plugins = "ellipsis",
-      options = list(dom = 't',
-                     columnDefs = list(
-                       list(
-                         targets = "_all",
-                         render = DT::JS("$.fn.dataTable.render.ellipsis(20)")
-                       )
-                     ))
-    )
   })
   
   observeEvent(input$separator, {
@@ -427,6 +388,38 @@ mod_import_table_server <- function(input, output, session, conn) {
     })
   })
   
+  observeEvent(input$from_list, {
+    if(is.null(info$file_paths))
+      showNotification(
+        ui =  paste0("No file selected."),
+        duration = 3,
+        type = "error"
+      )
+    else if (dim(info$file_paths)[1] > 1)
+      showNotification(
+        ui =  "Importing selected columns not available when importing multiple tables.",
+        duration = 5,
+        type = "error"
+      )
+    else {
+      showModal(modalDialog(
+        size = "l",
+        checkboxGroupInput(
+          inputId = ns("selected_columns"),
+          label = "Select columns to import",
+          choices = colnames(info$header_data),
+          selected = input$selected_columns
+        ),
+        actionButton(
+          inputId = ns("confirm_select_columns"),
+          label = "Confirm"
+        ),
+        actionButton(inputId = ns("select_all"),
+                     label = "Select/Deselect All")
+      ))
+    }
+  })
+  
   observeEvent(input$confirm_select_columns, {
     tryCatch({
       if (is.null(info$file_paths))
@@ -482,6 +475,36 @@ mod_import_table_server <- function(input, output, session, conn) {
         type = "error"
       )
     })
+  })
+  
+  observeEvent(input$by_name, {
+    if(is.null(info$file_paths))
+      showNotification(
+        ui =  paste0("No file selected."),
+        duration = 3,
+        type = "error"
+      )
+    else if (dim(info$file_paths)[1] > 1)
+      showNotification(
+        ui =  "Importing selected columns not available when importing multiple tables.",
+        duration = 5,
+        type = "error"
+      )
+    else {
+      showModal(modalDialog(
+        size = "l",
+        textInput(
+          inputId = ns("specified_columns"),
+          label = "Specify Column Names separated by a comma.",
+          placeholder = "col1, col2, col3, col4",
+          value = input$specified_columns
+        ),
+        actionButton(
+          inputId = ns("confirm_specify_columns"),
+          label = "Confirm"
+        )
+      ))
+    }
   })
   
   observeEvent(input$confirm_specify_columns, {
@@ -542,20 +565,6 @@ mod_import_table_server <- function(input, output, session, conn) {
     })
   })
   
-  output$file_selected <- renderText({
-    if (is.null(info$file_paths))
-      return("")
-    else
-    {
-      res <- ""
-      for (i in seq_len(dim(info$file_paths)[1]))
-      {
-        res <- paste0(res, info$file_paths$datapath[i], "\n")
-      }
-      return(res)
-    }
-  })
-  
   return(action_import_table)
 }
 
@@ -564,3 +573,4 @@ mod_import_table_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_import_table_server, "import_table_ui_1")
+

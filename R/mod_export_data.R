@@ -68,6 +68,13 @@ mod_export_data_ui <- function(id) {
 mod_export_data_server <- function(input, output, session, conn) {
   ns <- session$ns
   
+  # info$file_name_list - List of file names whom data will be exported to,
+  #                       default for each file is the corresponding table name.
+  # info$column_list - For each table, the columns that have to be exported.
+  # info$include_column_names - For each table, specifies if column names are to
+  #                             be included in the exported data.
+  #
+  
   info <- reactiveValues(
     file_name_list = list(),
     column_list = list(),
@@ -90,13 +97,6 @@ mod_export_data_server <- function(input, output, session, conn) {
     return(info$save_directory)
   })
   
-  observeEvent(input$save_directory, {
-    path <-
-      shinyFiles::parseDirPath(roots = roots, input$save_directory)
-    if (!(identical(path, character(0))))
-      info$save_directory <- paste0(path, "/")
-  })
-  
   observeEvent(conn$active_db, {
     if (!is.null(conn$active_db)) {
       updateCheckboxGroupInput(
@@ -111,6 +111,13 @@ mod_export_data_server <- function(input, output, session, conn) {
         info$include_column_names[[i]] = TRUE
       }
     }
+  })
+  
+  observeEvent(input$save_directory, {
+    path <-
+      shinyFiles::parseDirPath(roots = roots, input$save_directory)
+    if (!(identical(path, character(0))))
+      info$save_directory <- paste0(path, "/")
   })
   
   observeEvent(input$selected_tables, {
@@ -159,6 +166,10 @@ mod_export_data_server <- function(input, output, session, conn) {
   
   observeEvent(input$delimiter, {
     tryCatch({
+      # To parse delimiters of the form "\t", "\n", "\r" - these
+      # are read in by shiny as "\\t", "\\n, "\\r" because the
+      # slash is escaped. We remove the first slash used for
+      # escaping so that it can be passed on as a valid delimiter.
       if (isTRUE(grepl("\\", input$delimiter, fixed = TRUE)))
         info$delimiter <- eval(parse(text = sub(
           "\\", "", deparse(input$delimiter), fixed = TRUE
@@ -189,7 +200,6 @@ mod_export_data_server <- function(input, output, session, conn) {
       tryCatch({
         data <- NULL
         extension <- NULL
-        
         if (info$delimiter == "," || info$delimiter == ";")
           extension <- "csv"
         else if (identical(info$delimiter, "\t"))
@@ -200,7 +210,6 @@ mod_export_data_server <- function(input, output, session, conn) {
           offset <- 0
           if (!is.null(info$column_list[[i]]))
           {
-            print(info$column_list[[i]])
             data <- RSQLite::dbGetQuery(
               conn$active_db,
               export_data_fetch_query(i,
@@ -213,7 +222,6 @@ mod_export_data_server <- function(input, output, session, conn) {
                      info$file_name_list[[i]],
                      ".",
                      extension)
-            print(file_path)
             # Never overwrite a file, always append.
             if (isTRUE(info$include_column_names[[i]])) {
               readr::write_delim(
@@ -285,3 +293,4 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
+

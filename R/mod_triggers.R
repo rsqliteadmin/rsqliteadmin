@@ -28,6 +28,8 @@ mod_triggers_ui <- function(id) {
 mod_triggers_server <- function(input, output, session, conn) {
   ns <- session$ns
   
+  # info$data - stores trigger data fetched from query
+  
   info <- reactiveValues(data = NULL)
   
   output$display_triggers <-
