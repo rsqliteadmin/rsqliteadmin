@@ -47,12 +47,11 @@ mod_view_tables_ui <- function(id) {
     br(),
     uiOutput(ns("fetch_ui")),
     br(),
-    fluidRow(
-      column(width = 11,
-             id = "display_table",
-             DT::DTOutput(ns("display_table"))
-             )
-    ),
+    fluidRow(column(
+      width = 11,
+      id = "display_table",
+      DT::DTOutput(ns("display_table"))
+    )),
     br(),
     fluidRow(
       column(width = 2,
@@ -76,6 +75,7 @@ mod_view_tables_ui <- function(id) {
 #' view_tables Server Function
 #'
 #' @noRd
+
 mod_view_tables_server <-
   function(input,
            output,

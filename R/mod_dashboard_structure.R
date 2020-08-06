@@ -22,31 +22,35 @@ mod_dashboard_structure_ui <- function(id) {
           tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
         ),
         class = "dropdown",
-          shinyFiles::shinyDirButton(
-            id = ns("set_directory"),
-            label = "Set database directory",
-            title = "Select a folder"
-          )
+        shinyFiles::shinyDirButton(
+          id = ns("set_directory"),
+          label = "Set database directory",
+          title = "Select a folder"
+        )
       ),
-      tags$li(class = "dropdown",
-                actionButton(
-                  inputId =  ns("create_db"),
-                  label =  "Create a new database",
-                  icon("paper-plane")
-                )
-              )
+      tags$li(
+        class = "dropdown",
+        actionButton(
+          inputId =  ns("create_db"),
+          label =  "Create a new database",
+          icon("paper-plane")
+        )
+      )
     ),
     shinydashboard::dashboardSidebar(shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))),
-    shinydashboard::dashboardBody(mod_manage_dashboard_body_ui("manage_dashboard_body"),
-                                  tags$head(
-                                    tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-                                  ))
+    shinydashboard::dashboardBody(
+      mod_manage_dashboard_body_ui("manage_dashboard_body"),
+      tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+      )
+    )
   )
 }
 
 #' dashboard_structure Server Function
 #'
 #' @noRd
+
 mod_dashboard_structure_server <-
   function(input,
            output,

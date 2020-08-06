@@ -6,7 +6,11 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS
+#' @importFrom DT DTOutput renderDT datatable
+#' @importFrom shinyAce aceEditor
+#' @importFrom RSQLite dbGetQuery dbExecute
+
 mod_triggers_ui <- function(id) {
   ns <- NS(id)
   tabPanel(title = "Triggers",
@@ -25,6 +29,7 @@ mod_triggers_ui <- function(id) {
 #' triggers Server Function
 #'
 #' @noRd
+
 mod_triggers_server <- function(input, output, session, conn) {
   ns <- session$ns
   
@@ -163,3 +168,4 @@ mod_triggers_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_triggers_server, "triggers_ui_1")
+

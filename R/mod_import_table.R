@@ -6,7 +6,15 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import DT
+#' @import shinyFiles
+#' @importFrom shiny NS
+#' @importFrom readr read_delim read_delim_chunked
+#' @importFrom fs path_home
+#' @importFrom tools file_path_sans_ext
+#' @importFrom RSQLite dbWriteTable
+#' @importFrom reader get.delim
+
 mod_import_table_ui <- function(id) {
   ns <- NS(id)
   
@@ -75,11 +83,12 @@ mod_import_table_ui <- function(id) {
 #' import_table Server Function
 #'
 #' @noRd
+
 mod_import_table_server <- function(input, output, session, conn) {
   ns <- session$ns
   
   # info$file_paths - Path(s) to file(s) which are to be imported.
-  # info$header_data - Header data for the file to be imported. 
+  # info$header_data - Header data for the file to be imported.
   #                    In case of multiple files being imported,
   #                    data for the first file is stored and shown.
   # info$delimiter - The delimiter used for importing files.
@@ -334,11 +343,9 @@ mod_import_table_server <- function(input, output, session, conn) {
           type = "error"
         )
       else if (dim(info$file_paths)[1] > 1)
-        showNotification(
-          ui =  "Importing selected columns not available when importing multiple tables.",
-          duration = 5,
-          type = "error"
-        )
+        showNotification(ui =  "Importing selected columns not available when importing multiple tables.",
+                         duration = 5,
+                         type = "error")
       else if (is.null(input$display_header_columns_selected))
         showNotification(ui = "No column selected.",
                          duration = 5,
@@ -389,18 +396,16 @@ mod_import_table_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$from_list, {
-    if(is.null(info$file_paths))
+    if (is.null(info$file_paths))
       showNotification(
         ui =  paste0("No file selected."),
         duration = 3,
         type = "error"
       )
     else if (dim(info$file_paths)[1] > 1)
-      showNotification(
-        ui =  "Importing selected columns not available when importing multiple tables.",
-        duration = 5,
-        type = "error"
-      )
+      showNotification(ui =  "Importing selected columns not available when importing multiple tables.",
+                       duration = 5,
+                       type = "error")
     else {
       showModal(modalDialog(
         size = "l",
@@ -478,18 +483,16 @@ mod_import_table_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$by_name, {
-    if(is.null(info$file_paths))
+    if (is.null(info$file_paths))
       showNotification(
         ui =  paste0("No file selected."),
         duration = 3,
         type = "error"
       )
     else if (dim(info$file_paths)[1] > 1)
-      showNotification(
-        ui =  "Importing selected columns not available when importing multiple tables.",
-        duration = 5,
-        type = "error"
-      )
+      showNotification(ui =  "Importing selected columns not available when importing multiple tables.",
+                       duration = 5,
+                       type = "error")
     else {
       showModal(modalDialog(
         size = "l",

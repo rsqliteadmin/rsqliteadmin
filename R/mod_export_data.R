@@ -6,7 +6,11 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import shinyFiles
+#' @importFrom shiny NS
+#' @importFrom RSQLite dbGetQuery dbListTables
+#' @importFrom readr write_delim
+
 mod_export_data_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
@@ -65,6 +69,7 @@ mod_export_data_ui <- function(id) {
 #' export_data Server Function
 #'
 #' @noRd
+
 mod_export_data_server <- function(input, output, session, conn) {
   ns <- session$ns
   

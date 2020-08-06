@@ -6,14 +6,13 @@
 #'
 #' @noRd
 #'
+#' @import RSQLite
 #' @importFrom shiny NS
 #' @importFrom shinyjqui jqui_resizable
 #' @importFrom shinyAce aceEditor
 #' @importFrom DT DTOutput
 #' @importFrom DT renderDT
 #' @importFrom DT datatable
-#' @importFrom RSQLite dbGetQuery
-#' @importFrom RSQLite dbExecute
 
 mod_query_ui <- function(id) {
   ns <- NS(id)
@@ -134,7 +133,7 @@ mod_query_server <- function(input, output, session, conn) {
   
   output$display_saved_queries <- DT::renderDT(expr = {
     DT::datatable(
-      data = info$saved_data[, c(-1, -2)],
+      data = info$saved_data[, c(-1,-2)],
       rownames = FALSE,
       selection = "single",
       plugins = "ellipsis",
