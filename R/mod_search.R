@@ -10,7 +10,7 @@
 mod_search_ui <- function(id){
   ns <- NS(id)
   tabPanel(
-    title = "Export Data",
+    title = "Search",
     br(),
   )
 }

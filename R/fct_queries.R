@@ -22,7 +22,7 @@ data_fetch_query <- function(active_table = NULL,
                              number_rows = NULL,
                              offset = NULL) {
   res <- paste0(
-    'SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM "',
+    'SELECT rowid AS row_id, * FROM "',
     active_table,
     '" LIMIT ',
     number_rows,
@@ -69,7 +69,6 @@ delete_query <- function(active_table, rowid) {
                 active_table,
                 '" WHERE rowid = ',
                 rowid)
-  print(res)
   return(res)
 }
 
@@ -275,7 +274,6 @@ add_column_query <- function(active_table = NULL,
                 active_table,
                 '" ADD COLUMN ',
                 column_details_query)
-  print(res)
   return(res)
 }
 
