@@ -59,7 +59,8 @@ mod_dashboard_structure_server <-
            action_manage_tables,
            action_query,
            action_create_table,
-           action_import_table) {
+           action_import_table,
+           action_clone_tables) {
     ns <- session$ns
     
     # conn - stores the information about database
@@ -388,6 +389,20 @@ mod_dashboard_structure_server <-
     # Update table list when a new table is imported
     
     observeEvent(action_import_table$imported_table, {
+      db_menu <-
+        update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
+      shinydashboard::updateTabItems(session,
+                                     inputId = 'sidebar_menu',
+                                     selected = input$sidebar_menu)
+    }, ignoreInit = TRUE)
+    
+    # Update table list when tables are cloned
+    
+    observeEvent(action_clone_tables$tables_cloned, {
       db_menu <-
         update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
       output$sidebar_ui <-

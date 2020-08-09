@@ -430,3 +430,31 @@ search_query_regex <- function(display_columns = NULL,
   res <- paste0(res, ";")
   return(res)
 }
+
+## Functions for module clone_tables
+
+clone_query <- function(new_table_name = NULL,
+                        old_table_name = NULL,
+                        column_list = NULL,
+                        include_data = NULL) {
+  res <- paste0("CREATE TABLE \"",
+                new_table_name,
+                "\" AS SELECT ")
+  for (i in column_list) {
+    res <- paste0(res, "\"", i, "\", ")
+  }
+  # Remove the last comma.
+  res <- substr(res, 1, nchar(res) - 2)
+  res <- paste0(res, " FROM \"",
+                old_table_name,
+                "\";")
+  # If data isn't to be included, 
+  # we mention an always false condition.
+  if(!isTRUE(include_data)){
+    res <- substr(res, 1, nchar(res) - 1)
+    res <- paste0(res, " WHERE 1==0;")
+  }
+    print(res)
+    return(res)
+}
+

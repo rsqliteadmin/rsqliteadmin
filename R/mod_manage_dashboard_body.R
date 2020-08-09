@@ -31,7 +31,8 @@ mod_manage_dashboard_body_server <-
             mod_create_table_ui("create_table"),
             mod_import_table_ui("import_table"),
             mod_query_ui("query"),
-            mod_export_data_ui("export_data")
+            mod_export_data_ui("export_data"),
+            mod_clone_tables_ui("clone_tables")
           )
         )
       else if (identical(conn$state, "Table"))
