@@ -13,18 +13,23 @@ app_server <- function(input, output, session) {
       action,
       action_table_structure,
       action_query,
-      action_create_table
+      action_create_table,
+      action_import_table
     )
   callModule(mod_manage_dashboard_body_server,
              "manage_dashboard_body",
              conn)
   action <-
     callModule(mod_manage_databases_server, "manage_databases", conn)
-  callModule(mod_view_tables_server,
-             "view_tables",
-             conn,
-             action_table_structure,
-             action_query)
+  callModule(
+    mod_view_tables_server,
+    "view_tables",
+    conn,
+    action_table_structure,
+    action_query
+  )
+  action_import_table <-
+    callModule(mod_import_table_server, "import_table", conn)
   action_table_structure <-
     callModule(mod_table_structure_server,
                "table_structure",
@@ -33,6 +38,8 @@ app_server <- function(input, output, session) {
   action_query <- callModule(mod_query_server, "query", conn)
   action_create_table <-
     callModule(mod_create_table_server, "create_table", conn)
-  
+  callModule(mod_triggers_server, "triggers", conn)
+  callModule(mod_export_data_server, "export_data", conn)
+  callModule(mod_search_server, "search", conn)
 }
 

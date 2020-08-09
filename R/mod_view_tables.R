@@ -47,12 +47,11 @@ mod_view_tables_ui <- function(id) {
     br(),
     uiOutput(ns("fetch_ui")),
     br(),
-    fluidRow(
-      column(width = 11,
-             id = "display_table",
-             DT::DTOutput(ns("display_table"))
-             )
-    ),
+    fluidRow(column(
+      width = 11,
+      id = "display_table",
+      DT::DTOutput(ns("display_table"))
+    )),
     br(),
     fluidRow(
       column(width = 2,
@@ -76,6 +75,7 @@ mod_view_tables_ui <- function(id) {
 #' view_tables Server Function
 #'
 #' @noRd
+
 mod_view_tables_server <-
   function(input,
            output,
@@ -104,7 +104,7 @@ mod_view_tables_server <-
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
-          data = table_info$data[, -c(1:2), drop = FALSE],
+          data = table_info$data[, -c(1), drop = FALSE],
           editable = "cell",
           rownames = FALSE,
           selection = "multiple",
@@ -306,12 +306,12 @@ mod_view_tables_server <-
               conn$active_table,
               table_info$column_names$name[table_info$edit_info$col + 1],
               table_info$edit_info$value,
-              table_info$data$row_id[table_info$data$row_number == table_info$edit_info$row]
+              table_info$data$row_id[table_info$edit_info$row]
             )
           )
           
           table_info$data[table_info$edit_info$row, table_info$edit_info$col +
-                            3] <- table_info$edit_info$value
+                            2] <- table_info$edit_info$value
         },
         error = function(err) {
           showNotification(
@@ -366,7 +366,7 @@ mod_view_tables_server <-
       for (i in info) {
         RSQLite::dbExecute(conn$active_db,
                            delete_query(conn$active_table,
-                                        table_info$data$row_id[table_info$data$row_number == i]))
+                                        table_info$data$row_id[i]))
       }
       
       table_info$data <-
