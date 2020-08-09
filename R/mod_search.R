@@ -128,6 +128,7 @@ mod_search_server <- function(input, output, session, conn) {
                                                          input$search_string))
     }
     else if(input$search_type=="Use Regex"){
+      RSQLite::initRegExp(conn$active_db)
       info$data<-RSQLite::dbGetQuery(conn$active_db,
                                      search_query_regex(input$display_columns,
                                                        input$search_columns,

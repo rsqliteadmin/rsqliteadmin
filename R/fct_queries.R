@@ -388,7 +388,6 @@ search_query_sqlite <- function(display_columns = NULL,
     res <- substr(res, 1, nchar(res) - 4)
     res <- paste0(res, ";")
   }
-  print(res)
   return(res)
 }
 
@@ -409,7 +408,6 @@ search_query_unix <- function(display_columns = NULL,
   # Remove the last OR.
   res <- substr(res, 1, nchar(res) - 4)
   res <- paste0(res, ";")
-  print(res)
   return(res)
 }
 
@@ -430,6 +428,5 @@ search_query_regex <- function(display_columns = NULL,
   # Remove the last OR.
   res <- substr(res, 1, nchar(res) - 4)
   res <- paste0(res, ";")
-  print(res)
   return(res)
 }
