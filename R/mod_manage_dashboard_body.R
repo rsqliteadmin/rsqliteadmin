@@ -31,16 +31,18 @@ mod_manage_dashboard_body_server <-
             mod_create_table_ui("create_table"),
             mod_import_table_ui("import_table"),
             mod_query_ui("query"),
-            mod_export_data_ui("export_data"),
-            mod_search_ui("search")
+            mod_export_data_ui("export_data")
           )
         )
       else if (identical(conn$state, "Table"))
-        return(tabsetPanel(
-          mod_view_tables_ui("view_tables"),
-          mod_table_structure_ui("table_structure"),
-          mod_triggers_ui("triggers")
-        ))
+        return(
+          tabsetPanel(
+            mod_view_tables_ui("view_tables"),
+            mod_table_structure_ui("table_structure"),
+            mod_triggers_ui("triggers"),
+            mod_search_ui("search")
+          )
+        )
       else
         return(p("No Database Selected"))
     })
