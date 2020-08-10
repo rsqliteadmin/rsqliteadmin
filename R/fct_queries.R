@@ -458,3 +458,20 @@ clone_query <- function(new_table_name = NULL,
     return(res)
 }
 
+## Functions for module query
+
+recent_query <- function(query = NULL,
+                         db_name = NULL) {
+  res <- paste0("INSERT INTO \"history\"(\"Query\", \"Database\") VALUES('",
+                query, 
+                "','", 
+                db_name, 
+                "');")
+  print(res)
+  return(res)
+}
+
+recent_data_fetch_query <- function() {
+  res <- "SELECT rowid AS row_id, * FROM \"history\" ORDER BY \"id\" DESC;"
+  return(res)
+}
