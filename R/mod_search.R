@@ -112,6 +112,10 @@ mod_search_server <- function(input, output, session, conn) {
                        duration = 3,
                        type = "error")
     }
+    else if(is.null(input$display_columns))
+      showNotification(ui = "Please select columns to display.",
+                       duration = 3,
+                       type = "error")
     else if(input$search_type=="Use SQLite Style Wildcard Characters"){
       info$data<-RSQLite::dbGetQuery(conn$active_db,
                           search_query_sqlite(input$display_columns,

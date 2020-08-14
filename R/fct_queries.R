@@ -365,12 +365,15 @@ search_query_sqlite <- function(display_columns = NULL,
     # Remove the last comma.
     res <- substr(res, 1, nchar(res) - 2)
     res <- paste0(res, " FROM \"", table_name, "\" WHERE ")
-    for (i in display_columns) {
+    for (i in search_columns) {
       res <- paste0(res, "\"", i, "\" LIKE '", search_string,
                     "' ESCAPE '\\' OR ")
     }
-    # Remove the last OR.
-    res <- substr(res, 1, nchar(res) - 15)
+    # Remove the last OR/WHERE.
+    if(length(search_columns)==0)
+      res <- substr(res, 1, nchar(res) - 7)
+    else
+      res <- substr(res, 1, nchar(res) - 15)
     res <- paste0(res, ";")
   }
   else {
@@ -381,11 +384,14 @@ search_query_sqlite <- function(display_columns = NULL,
     # Remove the last comma.
     res <- substr(res, 1, nchar(res) - 2)
     res <- paste0(res, " FROM \"", table_name, "\" WHERE ")
-    for (i in display_columns) {
+    for (i in search_columns) {
       res <- paste0(res, "\"", i, "\" LIKE '", search_string, "' OR ")
     }
-    # Remove the last OR.
-    res <- substr(res, 1, nchar(res) - 4)
+    # Remove the last OR/WHERE.
+    if(length(search_columns)==0)
+      res <- substr(res, 1, nchar(res) - 7)
+    else
+      res <- substr(res, 1, nchar(res) - 4)
     res <- paste0(res, ";")
   }
   return(res)
@@ -402,11 +408,14 @@ search_query_unix <- function(display_columns = NULL,
   # Remove the last comma.
   res <- substr(res, 1, nchar(res) - 2)
   res <- paste0(res, " FROM \"", table_name, "\" WHERE ")
-  for (i in display_columns) {
+  for (i in search_columns) {
     res <- paste0(res, "\"", i, "\" GLOB '", search_string, "' OR ")
   }
-  # Remove the last OR.
-  res <- substr(res, 1, nchar(res) - 4)
+  # Remove the last OR/WHERE
+  if(length(search_columns)==0)
+    res <- substr(res, 1, nchar(res) - 7)
+  else
+    res <- substr(res, 1, nchar(res) - 4)
   res <- paste0(res, ";")
   return(res)
 }
@@ -422,11 +431,14 @@ search_query_regex <- function(display_columns = NULL,
   # Remove the last comma.
   res <- substr(res, 1, nchar(res) - 2)
   res <- paste0(res, " FROM \"", table_name, "\" WHERE ")
-  for (i in display_columns) {
+  for (i in search_columns) {
     res <- paste0(res, "\"", i, "\" REGEXP '", search_string, "' OR ")
   }
-  # Remove the last OR.
-  res <- substr(res, 1, nchar(res) - 4)
+  # Remove the last OR/WHERE
+  if(length(search_columns)==0)
+    res <- substr(res, 1, nchar(res) - 7)
+  else
+    res <- substr(res, 1, nchar(res) - 4)
   res <- paste0(res, ";")
   return(res)
 }
