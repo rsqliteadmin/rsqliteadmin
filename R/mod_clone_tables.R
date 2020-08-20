@@ -6,7 +6,9 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import RSQLite
+#' @importFrom shiny NS
+
 mod_clone_tables_ui <- function(id) {
   ns <- NS(id)
   
@@ -34,6 +36,7 @@ mod_clone_tables_ui <- function(id) {
 #' clone_tables Server Function
 #'
 #' @noRd
+
 mod_clone_tables_server <- function(input, output, session, conn) {
   ns <- session$ns
   

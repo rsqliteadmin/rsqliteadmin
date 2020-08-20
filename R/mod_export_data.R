@@ -9,7 +9,7 @@
 #' @import shinyFiles
 #' @importFrom shiny NS
 #' @importFrom RSQLite dbGetQuery dbListTables
-#' @importFrom readr write_delim
+#' @importFrom data.table fwrite
 
 mod_export_data_ui <- function(id) {
   ns <- NS(id)
@@ -241,8 +241,6 @@ mod_export_data_server <- function(input, output, session, conn) {
                      ".",
                      extension)
             # Never overwrite a file, always append.
-            start <- Sys.time()
-            print(start)
             if (isTRUE(info$include_column_names[[i]])) {
               # scipen has been set too high so that all values are
               # written as it is and are not changed to scientific
@@ -286,10 +284,6 @@ mod_export_data_server <- function(input, output, session, conn) {
               if (nrow(data) < input$chunk_size)
                 break
             }
-            end <- Sys.time()
-            print(end - start)
-            print(start)
-            print(end)
           }
           else
             showNotification(
@@ -320,3 +314,4 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
+

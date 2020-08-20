@@ -6,7 +6,15 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @import DT
+#' @import disk.frame
+#' @import shinyFiles
+#' @importFrom shiny NS
+#' @importFrom fs path_home
+#' @importFrom tools file_path_sans_ext
+#' @importFrom RSQLite dbWriteTable
+#' @importFrom data.table fread
+
 mod_import_tables_ui <- function(id) {
   ns <- NS(id)
   
@@ -51,21 +59,19 @@ mod_import_tables_ui <- function(id) {
     )),
     uiOutput(ns("display_header_ui")),
     br(),
-    fluidRow(
-      column(
-        width = 2,
-        radioButtons(
-          inputId = ns("import_type"),
-          label = h3("Import from file:"),
-          choices = c(
-            "All Columns",
-            "Columns Selected in Table",
-            "Columns from List",
-            "Columns by Name"
-          )
+    fluidRow(column(
+      width = 2,
+      radioButtons(
+        inputId = ns("import_type"),
+        label = h3("Import from file:"),
+        choices = c(
+          "All Columns",
+          "Columns Selected in Table",
+          "Columns from List",
+          "Columns by Name"
         )
       )
-    ),
+    )),
     
     fluidRow(
       column(width = 2,
@@ -250,7 +256,8 @@ mod_import_tables_server <- function(input, output, session, conn) {
             sep_regex <-
               regexec("\\s+\\d+\\.\\d+\\w* \\([ ]*\\d+%\\) sep='(.{1,3})'",
                       fread_output)
-            sep_capture_groups <- regmatches(fread_output, sep_regex)
+            sep_capture_groups <-
+              regmatches(fread_output, sep_regex)
             delimiter <- sep_capture_groups[[1]][2]
           })
           # if (identical(delimiter, "\t"))
@@ -268,7 +275,6 @@ mod_import_tables_server <- function(input, output, session, conn) {
             inputId = "delimiter",
             value = info$delimiter
           )
-          print(info$delimiter)
         }
       },
       error = function(err) {
@@ -426,19 +432,14 @@ mod_import_tables_server <- function(input, output, session, conn) {
       for (i in info$file_names) {
         if (info$import_type[[i]] == "All Columns") {
           tryCatch({
-            start <- Sys.time()
-            print(start)
             withProgress(message = "Import in Progress", expr =  {
               temp_df <-
                 disk.frame::csv_to_disk.frame(infile = info$file_paths[[i]],
                                               sep = info$delimiter)
               chunk_ids <- disk.frame::get_chunk_ids(temp_df)
-              print(chunk_ids)
-              print(disk.frame::nrow(temp_df))
               for (chunk in chunk_ids) {
-                print(chunk)
-                temp_chunk <- disk.frame::get_chunk(temp_df, as.numeric(chunk))
-                print(disk.frame::nrow(temp_chunk))
+                temp_chunk <-
+                  disk.frame::get_chunk(temp_df, as.numeric(chunk))
                 # Never overwrite data, always append.
                 RSQLite::dbWriteTable(conn$active_db,
                                       info$table_names[[i]],
@@ -454,9 +455,6 @@ mod_import_tables_server <- function(input, output, session, conn) {
               duration = 3,
               type = "message"
             )
-            end <- Sys.time()
-            print(end-start)
-            print(end)
             action_import_tables$imported_tables <-
               action_import_tables$imported_tables + 1
           },
@@ -643,3 +641,4 @@ mod_import_tables_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_import_tables_server, "import_tables_ui_1")
+

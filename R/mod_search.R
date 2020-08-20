@@ -25,27 +25,36 @@ mod_search_ui <- function(id) {
         inputId = ns("display_columns"),
         label = "Select columns to display:",
         choices = NULL
-      )),
-    fluidRow(
-      column(width = 3, 
-      radioButtons(
-        inputId = ns("search_type"),
-        label = "",
-        choices = c(
-          "Use SQLite Style Wildcard Characters",
-          "Use UNIX Style Wildcard Characters",
-          "Use Regex"
-        )
-      )),
-      column(width = 4, conditionalPanel(
-        condition = paste0("input['", ns("search_type"), "'] == 'Use SQLite Style Wildcard Characters'"),
-        checkboxInput(inputId = ns("escape_characters"), 
-                      label = "Escape % and _ characters.")
-      ))
+      )
     ),
     fluidRow(
-             actionButton(inputId = ns("search_button"),
-                          label = "Search")),
+      column(width = 3,
+             radioButtons(
+               inputId = ns("search_type"),
+               label = "",
+               choices = c(
+                 "Use SQLite Style Wildcard Characters",
+                 "Use UNIX Style Wildcard Characters",
+                 "Use Regex"
+               )
+             )),
+      column(
+        width = 4,
+        conditionalPanel(
+          condition = paste0(
+            "input['",
+            ns("search_type"),
+            "'] == 'Use SQLite Style Wildcard Characters'"
+          ),
+          checkboxInput(inputId = ns("escape_characters"),
+                        label = "Escape % and _ characters.")
+        )
+      )
+    ),
+    fluidRow(actionButton(
+      inputId = ns("search_button"),
+      label = "Search"
+    )),
     fluidRow(uiOutput(ns(
       "search_results_ui"
     )))
@@ -59,7 +68,7 @@ mod_search_ui <- function(id) {
 mod_search_server <- function(input, output, session, conn) {
   ns <- session$ns
   
-  info<- reactiveValues(data = NULL)
+  info <- reactiveValues(data = NULL)
   
   output$search_results_ui <- renderUI({
     column(
@@ -107,37 +116,49 @@ mod_search_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$search_button, {
-    if(input$search_string==""){
+    if (input$search_string == "") {
       showNotification(ui = "Please enter a search query.",
                        duration = 3,
                        type = "error")
     }
-    else if(is.null(input$display_columns))
+    else if (is.null(input$display_columns))
       showNotification(ui = "Please select columns to display.",
                        duration = 3,
                        type = "error")
-    else if(input$search_type=="Use SQLite Style Wildcard Characters"){
-      info$data<-RSQLite::dbGetQuery(conn$active_db,
-                          search_query_sqlite(input$display_columns,
-                                              input$search_columns,
-                                              conn$active_table,
-                                              input$search_string,
-                                              input$escape_characters))
+    else if (input$search_type == "Use SQLite Style Wildcard Characters") {
+      info$data <- RSQLite::dbGetQuery(
+        conn$active_db,
+        search_query_sqlite(
+          input$display_columns,
+          input$search_columns,
+          conn$active_table,
+          input$search_string,
+          input$escape_characters
+        )
+      )
     }
-    else if(input$search_type=="Use UNIX Style Wildcard Characters"){
-      info$data<-RSQLite::dbGetQuery(conn$active_db,
-                                     search_query_unix(input$display_columns,
-                                                         input$search_columns,
-                                                         conn$active_table,
-                                                         input$search_string))
+    else if (input$search_type == "Use UNIX Style Wildcard Characters") {
+      info$data <- RSQLite::dbGetQuery(
+        conn$active_db,
+        search_query_unix(
+          input$display_columns,
+          input$search_columns,
+          conn$active_table,
+          input$search_string
+        )
+      )
     }
-    else if(input$search_type=="Use Regex"){
+    else if (input$search_type == "Use Regex") {
       RSQLite::initRegExp(conn$active_db)
-      info$data<-RSQLite::dbGetQuery(conn$active_db,
-                                     search_query_regex(input$display_columns,
-                                                       input$search_columns,
-                                                       conn$active_table,
-                                                       input$search_string))
+      info$data <- RSQLite::dbGetQuery(
+        conn$active_db,
+        search_query_regex(
+          input$display_columns,
+          input$search_columns,
+          conn$active_table,
+          input$search_string
+        )
+      )
     }
   })
 }
@@ -147,3 +168,4 @@ mod_search_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_search_server, "search_ui_1")
+
