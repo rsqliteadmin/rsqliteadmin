@@ -14,7 +14,7 @@ app_server <- function(input, output, session) {
       action_table_structure,
       action_query,
       action_create_table,
-      action_import_table,
+      action_import_tables,
       action_clone_tables
     )
   callModule(mod_manage_dashboard_body_server,
@@ -29,8 +29,6 @@ app_server <- function(input, output, session) {
     action_table_structure,
     action_query
   )
-  action_import_table <-
-    callModule(mod_import_table_server, "import_table", conn)
   action_table_structure <-
     callModule(mod_table_structure_server,
                "table_structure",
