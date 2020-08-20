@@ -29,6 +29,11 @@ mod_import_tables_ui <- function(id) {
       column(width = 6,
              verbatimTextOutput(ns("file_selected")))
     ),
+    fluidRow(column(
+      width = 4,
+      textInput(inputId = ns("delimiter"),
+                label = "Separator")
+    )),
     fluidRow(
       selectInput(
         inputId = ns("file_list"),
@@ -36,11 +41,6 @@ mod_import_tables_ui <- function(id) {
         choices = NULL
       )
     ),
-    fluidRow(column(
-      width = 4,
-      textInput(inputId = ns("delimiter"),
-                label = "Separator")
-    )),
     fluidRow(column(
       width = 4,
       textInput(
@@ -53,10 +53,10 @@ mod_import_tables_ui <- function(id) {
     br(),
     fluidRow(
       column(
-        width = 4,
+        width = 2,
         radioButtons(
           inputId = ns("import_type"),
-          label = "Import from the file:",
+          label = h3("Import from file:"),
           choices = c(
             "All Columns",
             "Columns Selected in Table",
@@ -64,7 +64,10 @@ mod_import_tables_ui <- function(id) {
             "Columns by Name"
           )
         )
-      ),
+      )
+    ),
+    
+    fluidRow(
       column(width = 2,
              actionButton(
                inputId = ns("checkbox_columns_button"),
@@ -76,7 +79,7 @@ mod_import_tables_ui <- function(id) {
                label = "Select by Name"
              ))
     ),
-    
+    br(),
     fluidRow(column(
       width = 1,
       actionButton(inputId = ns("import"),
@@ -156,6 +159,36 @@ mod_import_tables_server <- function(input, output, session, conn) {
     }
   })
   
+  observeEvent(input$table_name, {
+    if (input$file_list != "") {
+      info$table_names[[input$file_list]] <- input$table_name
+    }
+  })
+  
+  observeEvent(input$delimiter, {
+    tryCatch({
+      if (isTRUE(grepl("\\", input$delimiter, fixed = TRUE)))
+        info$delimiter <- eval(parse(text = sub(
+          "\\", "", deparse(input$delimiter), fixed = TRUE
+        )))
+      else
+        info$delimiter <- input$delimiter
+      
+      info$header_data <-
+        data.table::fread(info$file_paths[[input$file_list]],
+                          nrows = 5,
+                          sep = info$delimiter)
+    },
+    error = function(err) {
+      info$header_data <- NULL
+      showNotification(
+        ui =  paste0("Please enter a valid separator."),
+        duration = 3,
+        type = "error"
+      )
+    })
+  }, ignoreInit = TRUE)
+  
   observeEvent(input$file_button, {
     tryCatch({
       paths <-
@@ -189,18 +222,16 @@ mod_import_tables_server <- function(input, output, session, conn) {
           info$file_paths <- NULL
           info$import_type <- NULL
           info$header_selected_columns = list()
-          info$header_selected_columns_index = list()
           info$checkbox_selected_columns = list()
           info$specify_columns = list()
           
           # By default, import type for every table is all columns.
           j = 1
           for (i in info$file_names) {
-            info$table_names[[i]] <- i
+            info$table_names[[i]] <- tools::file_path_sans_ext(i)
             info$file_paths[[i]] <- info$file_data$datapath[[j]]
             info$import_type[[i]] <- "All Columns"
             info$header_selected_columns[[i]] <- NULL
-            info$header_selected_columns_index[[i]] <- NULL
             info$checkbox_selected_columns[[i]] <- NULL
             info$specify_columns[[i]] <- NULL
             j = j + 1
@@ -210,24 +241,34 @@ mod_import_tables_server <- function(input, output, session, conn) {
           # Separator is common for all files to be imported.
           # Reference here: https://stackoverflow.com/a/50121613/
           # Reference here: https://stackoverflow.com/a/16563900/
-          fread_output <-
-            capture.output(data.table::fread(info$file_data$datapath[1], verbose = TRUE) %>% {
-              NULL
-            }) %>%
-            .[grepl('%) sep=', .)]
-          sep_regex <-
-            regexec("\\s+\\d+\\.\\d+\\w* \\([ ]*\\d+%\\) sep='(.{1,3})'",
-                    fread_output)
-          sep_capture_groups <- regmatches(fread_output, sep_regex)
-          info$delimiter <- sep_capture_groups[[1]][2]
-          
-          if (identical(info$delimiter, "\t"))
-            info$delimiter <- "\\t"
+          withProgress(message = "Processing File", expr =  {
+            fread_output <-
+              capture.output(data.table::fread(info$file_data$datapath[1], verbose = TRUE) %>% {
+                NULL
+              }) %>%
+              .[grepl('%) sep=', .)]
+            sep_regex <-
+              regexec("\\s+\\d+\\.\\d+\\w* \\([ ]*\\d+%\\) sep='(.{1,3})'",
+                      fread_output)
+            sep_capture_groups <- regmatches(fread_output, sep_regex)
+            delimiter <- sep_capture_groups[[1]][2]
+          })
+          # if (identical(delimiter, "\t"))
+          #   info$delimiter <- "\\t"
+          # else
+          #   info$delimiter <- delimiter
+          if (isTRUE(grepl("\\", delimiter, fixed = TRUE)))
+            info$delimiter <- eval(parse(text = sub(
+              "\\", "", deparse(delimiter), fixed = TRUE
+            )))
+          else
+            info$delimiter <- delimiter
           updateTextInput(
             session = session,
             inputId = "delimiter",
             value = info$delimiter
           )
+          print(info$delimiter)
         }
       },
       error = function(err) {
@@ -242,17 +283,19 @@ mod_import_tables_server <- function(input, output, session, conn) {
   
   observeEvent(input$file_list, {
     if (input$file_list != "") {
-      info$header_data <-
-        data.table::fread(info$file_paths[[input$file_list]],
-                          nrows = 5,
-                          sep = info$delimiter)
+      withProgress(message = "Processing File", expr =  {
+        info$header_data <-
+          data.table::fread(info$file_paths[[input$file_list]],
+                            nrows = 5,
+                            sep = info$delimiter)
+      })
       
       output$display_header <- DT::renderDT(expr = {
         DT::datatable(
           data = info$header_data,
           selection = list(
             target = "column",
-            selected = info$header_selected_columns_index[[input$file_list]]
+            selected = info$header_selected_columns[[input$file_list]]
           ),
           plugins = "ellipsis",
           options = list(dom = 't',
@@ -285,10 +328,8 @@ mod_import_tables_server <- function(input, output, session, conn) {
     input$display_header_columns_selected,
     {
       if (input$file_list != "") {
-        info$header_selected_columns_index[[input$file_list]] <-
-          input$display_header_columns_selected
         info$header_selected_columns[[input$file_list]] <-
-          colnames(info$header_data)[input$display_header_columns_selected]
+          input$display_header_columns_selected
       }
     },
     ignoreNULL = FALSE,
@@ -320,6 +361,22 @@ mod_import_tables_server <- function(input, output, session, conn) {
                      label = "Select/Deselect All")
       ))
     }
+  })
+  
+  observeEvent(input$select_all, {
+    if (input$select_all %% 2 == 0)
+      updateCheckboxGroupInput(
+        session = session,
+        inputId = "checkbox_columns",
+        choices = colnames(info$header_data)
+      )
+    else
+      updateCheckboxGroupInput(
+        session = session,
+        inputId = "checkbox_columns",
+        choices = colnames(info$header_data),
+        selected = colnames(info$header_data)
+      )
   })
   
   observeEvent(input$checkbox_columns,
@@ -360,55 +417,28 @@ mod_import_tables_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$import, {
-    tryCatch({
-      if (is.null(info$file_data)) {
-        showNotification(ui =  "No file selected.",
-                         duration = 5,
-                         type = "error")
-      }
-      else{
-        for (i in info$file_names) {
-          if (info$import_type[[i]] == "All Columns") {
-            temp_df <-
-              disk.frame::csv_to_disk.frame(infile = info$file_paths[[i]],
-                                            sep = info$delimiter)
-            chunk_ids <- disk.frame::get_chunk_ids(temp_df)
-            for (chunk in chunk_ids) {
-              temp_chunk <- disk.frame::get_chunk(temp_df, as.numeric(chunk))
-              # Never overwrite data, always append.
-              RSQLite::dbWriteTable(conn$active_db,
-                                    info$table_names[[i]],
-                                    temp_chunk,
-                                    append = TRUE)
-            }
-            disk.frame::delete(temp_df)
-            showNotification(
-              ui = paste0("File ",
-                          i,
-                          " Imported Successfully"),
-              duration = 3,
-              type = "message"
-            )
-          }
-          else if(info$import_type[[i]] == "Columns Selected in Table"){
-            if(is.null(info$header_selected_columns[[i]])||
-               identical(info$header_selected_columns[[i]], character(0))){
-              showNotification(
-                ui = paste0("No columns in table selected for file ", i, 
-                            ". Data of this file not imported."),
-                duration = 5,
-                type = "error"
-              )
-            }
-            else{
-              print(info$header_selected_columns[[i]])
+    if (is.null(info$file_data)) {
+      showNotification(ui =  "No file selected.",
+                       duration = 5,
+                       type = "error")
+    }
+    else{
+      for (i in info$file_names) {
+        if (info$import_type[[i]] == "All Columns") {
+          tryCatch({
+            start <- Sys.time()
+            print(start)
+            withProgress(message = "Import in Progress", expr =  {
               temp_df <-
                 disk.frame::csv_to_disk.frame(infile = info$file_paths[[i]],
-                                              sep = info$delimiter,
-                                              select = info$header_selected_columns_index[[i]])
+                                              sep = info$delimiter)
               chunk_ids <- disk.frame::get_chunk_ids(temp_df)
+              print(chunk_ids)
+              print(disk.frame::nrow(temp_df))
               for (chunk in chunk_ids) {
+                print(chunk)
                 temp_chunk <- disk.frame::get_chunk(temp_df, as.numeric(chunk))
+                print(disk.frame::nrow(temp_chunk))
                 # Never overwrite data, always append.
                 RSQLite::dbWriteTable(conn$active_db,
                                       info$table_names[[i]],
@@ -416,6 +446,61 @@ mod_import_tables_server <- function(input, output, session, conn) {
                                       append = TRUE)
               }
               disk.frame::delete(temp_df)
+            })
+            showNotification(
+              ui = paste0("File ",
+                          i,
+                          " Imported Successfully"),
+              duration = 3,
+              type = "message"
+            )
+            end <- Sys.time()
+            print(end-start)
+            print(end)
+            action_import_tables$imported_tables <-
+              action_import_tables$imported_tables + 1
+          },
+          error = function(err) {
+            showNotification(
+              ui = paste0(err, ". Data of this file not imported."),
+              duration = 5,
+              type = "error"
+            )
+          })
+        }
+        else if (info$import_type[[i]] == "Columns Selected in Table") {
+          tryCatch({
+            if (is.null(info$header_selected_columns[[i]]) ||
+                identical(info$header_selected_columns[[i]], character(0))) {
+              showNotification(
+                ui = paste0(
+                  "No columns in table selected for file ",
+                  i,
+                  ". Data of this file not imported."
+                ),
+                duration = 5,
+                type = "error"
+              )
+            }
+            else{
+              withProgress(message = "Import in Progress", expr =  {
+                temp_df <-
+                  disk.frame::csv_to_disk.frame(
+                    infile = info$file_paths[[i]],
+                    sep = info$delimiter,
+                    select = info$header_selected_columns[[i]]
+                  )
+                chunk_ids <- disk.frame::get_chunk_ids(temp_df)
+                for (chunk in chunk_ids) {
+                  temp_chunk <- disk.frame::get_chunk(temp_df, as.numeric(chunk))
+                  # Never overwrite data, always append.
+                  RSQLite::dbWriteTable(conn$active_db,
+                                        info$table_names[[i]],
+                                        temp_chunk,
+                                        append = TRUE)
+                }
+                disk.frame::delete(temp_df)
+              })
               showNotification(
                 ui = paste0("File ",
                             i,
@@ -423,18 +508,131 @@ mod_import_tables_server <- function(input, output, session, conn) {
                 duration = 3,
                 type = "message"
               )
+              action_import_tables$imported_tables <-
+                action_import_tables$imported_tables + 1
             }
-          }
+          },
+          error = function(err) {
+            showNotification(
+              ui = paste0(err, ". Data of this file not imported."),
+              duration = 5,
+              type = "error"
+            )
+          })
+        }
+        else if (info$import_type[[i]] == "Columns from List") {
+          tryCatch({
+            if (is.null(info$checkbox_selected_columns[[i]]) ||
+                identical(info$checkbox_selected_columns[[i]], character(0))) {
+              showNotification(
+                ui = paste0(
+                  "No columns in list selected for file ",
+                  i,
+                  ". Data of this file not imported."
+                ),
+                duration = 5,
+                type = "error"
+              )
+            }
+            else{
+              withProgress(message = "Import in Progress", expr =  {
+                temp_df <-
+                  disk.frame::csv_to_disk.frame(
+                    infile = info$file_paths[[i]],
+                    sep = info$delimiter,
+                    select = info$checkbox_selected_columns[[i]]
+                  )
+                chunk_ids <- disk.frame::get_chunk_ids(temp_df)
+                for (chunk in chunk_ids) {
+                  temp_chunk <- disk.frame::get_chunk(temp_df, as.numeric(chunk))
+                  # Never overwrite data, always append.
+                  RSQLite::dbWriteTable(conn$active_db,
+                                        info$table_names[[i]],
+                                        temp_chunk,
+                                        append = TRUE)
+                }
+                disk.frame::delete(temp_df)
+              })
+              showNotification(
+                ui = paste0("File ",
+                            i,
+                            " Imported Successfully"),
+                duration = 3,
+                type = "message"
+              )
+              action_import_tables$imported_tables <-
+                action_import_tables$imported_tables + 1
+            }
+          },
+          error = function(err) {
+            showNotification(
+              ui = paste0(err, ". Data of this file not imported."),
+              duration = 5,
+              type = "error"
+            )
+          })
+        }
+        else if (info$import_type[[i]] == "Columns by Name") {
+          tryCatch({
+            if (is.null(info$specify_columns[[i]]) ||
+                identical(info$specify_columns[[i]], character(0)) ||
+                info$specify_columns[[i]] == "") {
+              showNotification(
+                ui = paste0(
+                  "No columns specified for file ",
+                  i,
+                  ". Data of this file not imported."
+                ),
+                duration = 5,
+                type = "error"
+              )
+            }
+            else{
+              withProgress(message = "Import in Progress", expr =  {
+                col_names <- unlist(strsplit(input$specify_columns, "\\,\\s*"))
+                temp_df <-
+                  disk.frame::csv_to_disk.frame(
+                    infile = info$file_paths[[i]],
+                    sep = info$delimiter,
+                    select = col_names
+                  )
+                chunk_ids <- disk.frame::get_chunk_ids(temp_df)
+                for (chunk in chunk_ids) {
+                  temp_chunk <- disk.frame::get_chunk(temp_df, as.numeric(chunk))
+                  # Never overwrite data, always append.
+                  RSQLite::dbWriteTable(conn$active_db,
+                                        info$table_names[[i]],
+                                        temp_chunk,
+                                        append = TRUE)
+                }
+                disk.frame::delete(temp_df)
+              })
+              showNotification(
+                ui = paste0("File ",
+                            i,
+                            " Imported Successfully"),
+                duration = 3,
+                type = "message"
+              )
+              action_import_tables$imported_tables <-
+                action_import_tables$imported_tables + 1
+            }
+          },
+          error = function(err) {
+            showNotification(
+              ui = paste0(err, ". Data of this file not imported."),
+              duration = 5,
+              type = "error"
+            )
+          },
+          warning = function(war) {
+            showNotification(ui = toString(war),
+                             duration = 5,
+                             type = "error")
+          })
         }
       }
-    },
-    error = function(err) {
-      showNotification(
-        ui = paste0(err, ". Data of this file not imported."),
-        duration = 5,
-        type = "error"
-      )
-    })
+    }
   })
   
   return(action_import_tables)

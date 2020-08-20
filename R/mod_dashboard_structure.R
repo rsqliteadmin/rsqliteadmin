@@ -59,7 +59,7 @@ mod_dashboard_structure_server <-
            action_manage_tables,
            action_query,
            action_create_table,
-           action_import_table,
+           action_import_tables,
            action_clone_tables) {
     ns <- session$ns
     
@@ -412,7 +412,7 @@ mod_dashboard_structure_server <-
     
     # Update table list when a new table is imported
     
-    observeEvent(action_import_table$imported_table, {
+    observeEvent(action_import_tables$imported_tables, {
       db_menu <-
         update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
       output$sidebar_ui <-
