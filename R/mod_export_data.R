@@ -30,22 +30,35 @@ mod_export_data_ui <- function(id) {
                "directory_selected"
              )))
     ),
-    fluidRow(column(
-      width = 4,
-      textInput(
-        inputId = ns("delimiter"),
-        label = "Separator",
-        value = ","
+    br(),
+    fluidRow(
+      column(
+        width = 2,
+        textInput(
+          inputId = ns("delimiter"),
+          label = "Separator",
+          value = ","
+        )
+      ),
+      column(
+        width = 3,
+        textInput(
+          inputId = ns("missing_values_string"),
+          label = "String used for missing values.",
+          value = "NA"
+        )
+      ),
+      column(
+        width = 4,
+        numericInput(
+          inputId = ns("chunk_size"),
+          label = "Chunk Size",
+          value = 1000000,
+          min = 100,
+          step = 10000
+        )
       )
     ),
-    column(
-      width = 4,
-      textInput(
-        inputId = ns("missing_values_string"),
-        label = "String used for missing values.",
-        value = "NA"
-      )
-    )),
     checkboxGroupInput(inputId = ns("selected_tables"),
                        label = "Select table(s) to export."),
     selectInput(
@@ -218,7 +231,7 @@ mod_export_data_server <- function(input, output, session, conn) {
             data <- RSQLite::dbGetQuery(
               conn$active_db,
               export_data_fetch_query(i,
-                                      1000,
+                                      input$chunk_size,
                                       offset,
                                       info$column_list[[i]])
             )
@@ -228,46 +241,55 @@ mod_export_data_server <- function(input, output, session, conn) {
                      ".",
                      extension)
             # Never overwrite a file, always append.
+            start <- Sys.time()
+            print(start)
             if (isTRUE(info$include_column_names[[i]])) {
-              readr::write_delim(
+              # scipen has been set too high so that all values are
+              # written as it is and are not changed to scientific
+              # notation.
+              data.table::fwrite(
                 x = data,
-                path = file_path,
-                delim = info$delimiter,
-                append = TRUE,
-                col_names = TRUE,
-                na = input$missing_values_string
+                file = file_path,
+                append = FALSE,
+                sep = info$delimiter,
+                col.names = TRUE,
+                scipen = 100
               )
             }
             else{
-              readr::write_delim(
+              data.table::fwrite(
                 x = data,
-                path = file_path,
-                delim = info$delimiter,
-                append = TRUE,
-                col_names = FALSE,
-                na = input$missing_values_string
+                file = file_path,
+                append = FALSE,
+                sep = info$delimiter,
+                col.names = FALSE,
+                scipen = 100
               )
             }
             while (TRUE) {
-              offset <- offset + 1000
+              offset <- offset + input$chunk_size
               data <- RSQLite::dbGetQuery(
                 conn$active_db,
                 export_data_fetch_query(i,
-                                        1000,
+                                        input$chunk_size,
                                         offset,
                                         info$column_list[[i]])
               )
-              readr::write_delim(
+              data.table::fwrite(
                 x = data,
-                path = file_path,
-                delim = info$delimiter,
+                file = file_path,
                 append = TRUE,
-                col_names = FALSE,
-                na = input$missing_values_string
+                sep = info$delimiter,
+                col.names = FALSE,
+                scipen = 100
               )
-              if (nrow(data) < 1000)
+              if (nrow(data) < input$chunk_size)
                 break
             }
+            end <- Sys.time()
+            print(end - start)
+            print(start)
+            print(end)
           }
           else
             showNotification(
@@ -298,4 +320,3 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
-
