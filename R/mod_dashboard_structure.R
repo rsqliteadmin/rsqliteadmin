@@ -59,7 +59,8 @@ mod_dashboard_structure_server <-
            action_manage_tables,
            action_query,
            action_create_table,
-           action_import_table) {
+           action_import_tables,
+           action_clone_tables) {
     ns <- session$ns
     
     # conn - stores the information about database
@@ -385,9 +386,47 @@ mod_dashboard_structure_server <-
       })
     })
     
+    observeEvent(action_query$data_updated_recent, {
+      tryCatch({
+        conn$db_list <- db_list(conn$directory)
+        if (length(conn$db_list) == 0) {
+          output$sidebar_ui <- shinydashboard::renderMenu({
+            db_menu <- list()
+            db_menu[[1]] <-
+              shinydashboard::menuItem(text = "No databases in current folder.",
+                                       icon = icon("search", lib = "glyphicon"))
+            return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
+          })
+        }
+        else{
+          output$sidebar_ui <- shinydashboard::renderMenu({
+            db_menu <- update_sidebar_db(conn$db_list)
+            return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
+            shinydashboard::updateTabItems(session,
+                                           inputId = 'sidebar_menu',
+                                           selected = input$sidebar_menu)
+          })
+        }
+      })
+    })
+    
     # Update table list when a new table is imported
     
-    observeEvent(action_import_table$imported_table, {
+    observeEvent(action_import_tables$imported_tables, {
+      db_menu <-
+        update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
+      shinydashboard::updateTabItems(session,
+                                     inputId = 'sidebar_menu',
+                                     selected = input$sidebar_menu)
+    }, ignoreInit = TRUE)
+    
+    # Update table list when tables are cloned
+    
+    observeEvent(action_clone_tables$tables_cloned, {
       db_menu <-
         update_sidebar_table(input$sidebar_menu, conn$active_db, conn$db_list)
       output$sidebar_ui <-

@@ -1,8 +1,2 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^data-raw$
-dev_history.R
-^dev$
-$run_dev.*
-^doc$
-^Meta$

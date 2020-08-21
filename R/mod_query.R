@@ -35,6 +35,8 @@ mod_query_ui <- function(id) {
                    label = "Save Query"),
       actionButton(inputId = ns("saved_queries"),
                    label = "Saved Queries"),
+      actionButton(inputId = ns("recent_queries"),
+                   label = "Recent Queries"),
       br(),
       br(),
       verbatimTextOutput(ns("display_error"))
@@ -59,19 +61,31 @@ mod_query_server <- function(input, output, session, conn) {
   
   info <- reactiveValues(data = NULL,
                          error = NULL,
-                         saved_data = NULL)
+                         saved_data = NULL,
+                         recent_data = NULL)
   
   #action_query$data_updated - updates when a query is executed
   #                            to notify other modules
   
   action_query <- reactiveValues(data_updated = NULL,
-                                 data_updated_save = NULL)
+                                 data_updated_save = NULL,
+                                 data_updated_recent = NULL)
   
   conn_save_db <- RSQLite::dbConnect(
     RSQLite::SQLite(),
     system.file(
       "extdata",
       "saved_queries.db",
+      package = "rsqliteadmin",
+      mustWork = TRUE
+    )
+  )
+  
+  conn_recent_db <- RSQLite::dbConnect(
+    RSQLite::SQLite(),
+    system.file(
+      "extdata",
+      "recent_queries.db",
       package = "rsqliteadmin",
       mustWork = TRUE
     )
@@ -119,6 +133,9 @@ mod_query_server <- function(input, output, session, conn) {
                            type = "message")
           info$error <- NULL
         }
+        active_db_path <- RSQLite::dbGetInfo(conn$active_db)$dbname
+        active_db_name <- basename(active_db_path)
+        RSQLite::dbExecute(conn_recent_db, recent_query(query, active_db_name))
       },
       error = function(err) {
         info$error <- toString(err)
@@ -144,6 +161,92 @@ mod_query_server <- function(input, output, session, conn) {
         )
       ))
     )
+  })
+  
+  output$display_recent_queries <- DT::renderDT(expr = {
+    DT::datatable(
+      data = info$recent_data[, c(-1,-2)],
+      rownames = FALSE,
+      selection = "single",
+      plugins = "ellipsis",
+      options = list(columnDefs = list(
+        list(
+          targets = "_all",
+          render = DT::JS("$.fn.dataTable.render.ellipsis(75)")
+        )
+      ))
+    )
+  })
+  
+  observeEvent(input$recent_queries, {
+    info$recent_data <- RSQLite::dbGetQuery(conn_recent_db,
+                                           recent_data_fetch_query())
+    showModal(
+      modalDialog(
+        size = "l",
+        DT::DTOutput(ns("display_recent_queries")),
+        shinyAce::aceEditor(
+          outputId = ns("ace_recent"),
+          placeholder = "",
+          mode = "sql",
+          height = "200px"
+        ),
+        actionButton(inputId = ns("execute_recent"),
+                     label = "Execute Query")
+      )
+    )
+  })
+  
+  observeEvent(input$display_recent_queries_rows_selected, {
+    shinyAce::updateAceEditor(
+      session = session,
+      editorId = "ace_recent",
+      value = info$recent_data$Query[input$display_recent_queries_rows_selected]
+    )
+  })
+  
+  observeEvent(input$execute_recent, {
+    if (!is.null(conn$active_db)) {
+      active_db_path <- RSQLite::dbGetInfo(conn$active_db)$dbname
+      active_db_name <- basename(active_db_path)
+      print(info$recent_data$Database[input$display_recent_queries_rows_selected])
+      print(active_db_name)
+      if (!identical(info$recent_data$Database[input$display_recent_queries_rows_selected], active_db_name))
+        showNotification(ui = "Warning: Currently active database not same as originally saved database.",
+                         duration = 3,
+                         type = "warning")
+      query <- input$ace_recent
+      query <- gsub("\n", " ", query)
+      # Queries with "SELECT" string are executed with dbGetQuery and
+      # others with dbExecuteQuery
+      tryCatch({
+        if (isTRUE(grepl("select", query, ignore.case = TRUE))) {
+          info$data <- RSQLite::dbGetQuery(conn$active_db, query)
+          showNotification(ui = "Query Completed.",
+                           duration = 5,
+                           type = "message")
+          info$error <- NULL
+        }
+        else{
+          RSQLite::dbExecute(conn$active_db, query)
+          action_query$data_updated_recent <- input$execute_recent
+          showNotification(ui = "Query Completed.",
+                           duration = 3,
+                           type = "message")
+          info$error <- NULL
+        }
+      },
+      error = function(err) {
+        info$error <- toString(err)
+      })
+      removeModal()
+    }
+    else{
+      showNotification(ui = "No database selected.",
+                       duration = 3,
+                       type = "error")
+    }
+    
   })
   
   observeEvent(input$saved_queries, {

@@ -421,7 +421,7 @@ mod_create_table_server <- function(input, output, session, conn) {
         )
       
       # rbind() messes with column names
-      # Reference here: https://stackoverflow.com/questions/5231540/r-losing-column-names-when-adding-rows-to-an-empty-data-frame
+      # Reference here: https://stackoverflow.com/q/5231540/
       
       info$new_table_columns[nrow(info$new_table_columns) + 1, ] <-
         c(
