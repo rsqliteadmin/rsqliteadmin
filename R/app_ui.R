@@ -8,14 +8,7 @@
 app_ui <- function(request) {
   tagList(
     golem_add_external_resources(),
-    # Reference Here: https://stackoverflow.com/a/31629455
     fluidPage(
-      tags$head(tags$style(
-        HTML(".sidebar {
-                      overflow-y: scroll;
-                      overflow-x: scroll;
-                    }")
-      )),
       mod_dashboard_structure_ui("dashboard_structure")
     )
   )
