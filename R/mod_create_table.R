@@ -93,7 +93,7 @@ mod_create_table_server <- function(input, output, session, conn) {
   output$display_new_table_modal <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = info$new_table_columns[, c(-1, -4:-10)],
+        data = info$new_table_columns[, c(-1,-4:-10)],
         rownames = FALSE,
         selection = "multiple"
       )
@@ -423,7 +423,7 @@ mod_create_table_server <- function(input, output, session, conn) {
       # rbind() messes with column names
       # Reference here: https://stackoverflow.com/questions/5231540/r-losing-column-names-when-adding-rows-to-an-empty-data-frame
       
-      info$new_table_columns[nrow(info$new_table_columns) + 1, ] <-
+      info$new_table_columns[nrow(info$new_table_columns) + 1,] <-
         c(
           column_details_query,
           input$column_name,
@@ -517,7 +517,7 @@ mod_create_table_server <- function(input, output, session, conn) {
                        type = "error")
     else{
       info$new_table_columns <-
-        info$new_table_columns[-as.numeric(input$display_new_table_rows_selected), ]
+        info$new_table_columns[-as.numeric(input$display_new_table_rows_selected),]
     }
   })
   

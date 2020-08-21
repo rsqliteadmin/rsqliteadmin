@@ -25,21 +25,15 @@ mod_manage_dashboard_body_server <-
     
     output$body_ui <- renderUI({
       if (identical(conn$state, "Database"))
-        return(
-          tabsetPanel(
-            mod_manage_databases_ui("manage_databases"),
-            mod_create_table_ui("create_table"),
-            mod_import_table_ui("import_table"),
-            mod_query_ui("query"),
-            mod_export_data_ui("export_data"),
-            mod_search_ui("search")
-          )
-        )
+        return(tabsetPanel(
+          mod_manage_databases_ui("manage_databases"),
+          mod_create_table_ui("create_table"),
+          mod_query_ui("query")
+        ))
       else if (identical(conn$state, "Table"))
         return(tabsetPanel(
           mod_view_tables_ui("view_tables"),
-          mod_table_structure_ui("table_structure"),
-          mod_triggers_ui("triggers")
+          mod_table_structure_ui("table_structure")
         ))
       else
         return(p("No Database Selected"))

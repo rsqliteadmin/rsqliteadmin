@@ -22,7 +22,7 @@ data_fetch_query <- function(active_table = NULL,
                              number_rows = NULL,
                              offset = NULL) {
   res <- paste0(
-    'SELECT rowid AS row_id, * FROM "',
+    'SELECT rowid AS row_id, ROW_NUMBER() OVER(ORDER BY rowid) AS row_number, * FROM "',
     active_table,
     '" LIMIT ',
     number_rows,
@@ -69,6 +69,7 @@ delete_query <- function(active_table, rowid) {
                 active_table,
                 '" WHERE rowid = ',
                 rowid)
+  print(res)
   return(res)
 }
 
@@ -274,80 +275,7 @@ add_column_query <- function(active_table = NULL,
                 active_table,
                 '" ADD COLUMN ',
                 column_details_query)
+  print(res)
   return(res)
 }
-
-## Functions for module triggers
-
-get_triggers_query <- function(active_table) {
-  res <-
-    paste0(
-      "SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name = \"",
-      active_table,
-      "\";"
-    )
-  return(res)
-}
-
-create_trigger_query <-
-  function(name,
-           when,
-           action,
-           table_name,
-           pre_condition,
-           logic) {
-    res <- paste0("CREATE TRIGGER \"",
-                  name,
-                  "\" ",
-                  when,
-                  " ",
-                  action,
-                  " ON \"",
-                  table_name,
-                  "\" FOR EACH ROW ")
-    if (pre_condition != "") {
-      res <- paste0(res, "WHEN ", pre_condition, " ")
-    }
-    
-    res <- paste0(res,
-                  "BEGIN ",
-                  logic,
-                  " END;")
-    return(res)
-  }
-
-drop_trigger_query <- function(trigger_name) {
-  res <- paste0("DROP TRIGGER \"",
-                trigger_name,
-                "\";")
-}
-
-table_structure_query <- function(table_name) {
-  res <- paste0("pragma table_info('", table_name, "');")
-  return(res)
-}
-
-## Functions for module export_data
-
-export_data_fetch_query <- function(table_name = NULL,
-                                    number_rows = NULL,
-                                    offset = NULL,
-                                    column_list = NULL) {
-  res <- "SELECT "
-  for (i in column_list) {
-    res <- paste0(res, "\"", i, "\", ")
-  }
-  # Remove the last comma.
-  res <- substr(res, 1, nchar(res) - 2)
-  res <- paste0(res,
-                ' FROM "',
-                table_name,
-                '" LIMIT ',
-                number_rows,
-                ' OFFSET ',
-                offset,
-                ';')
-  return(res)
-}
-
 
