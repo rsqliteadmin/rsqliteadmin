@@ -291,8 +291,8 @@ mod_view_tables_server <-
     })
     
     # Edit table cells.
-    # Reference here - https://stackoverflow.com/questions/13638377/test-for-numeric-elements-in-a-character-string
-    # Reference here - https://stackoverflow.com/questions/38316013/update-rows-of-a-shiny-datatable-while-maintaining-position
+    # Reference here - https://stackoverflow.com/q/13638377/
+    # Reference here - https://stackoverflow.com/q/38316013/
     
     
     observeEvent(input$display_table_cell_edit, {

@@ -487,3 +487,4 @@ recent_data_fetch_query <- function() {
   res <- "SELECT rowid AS row_id, * FROM \"history\" ORDER BY \"id\" DESC;"
   return(res)
 }
+

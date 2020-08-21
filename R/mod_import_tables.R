@@ -684,3 +684,4 @@ mod_import_tables_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_import_tables_server, "import_tables_ui_1")
+
