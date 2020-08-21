@@ -57,6 +57,13 @@ mod_import_tables_ui <- function(id) {
         placeholder = "Enter Table Name"
       )
     )),
+    fluidRow(column(
+      width = 4,
+      checkboxInput(
+        inputId = ns("column_names_present"),
+        label = "File contains column names."
+      )
+    )),
     uiOutput(ns("display_header_ui")),
     br(),
     fluidRow(column(
@@ -110,6 +117,7 @@ mod_import_tables_server <- function(input, output, session, conn) {
     header_selected_columns_index = list(),
     checkbox_selected_columns = list(),
     specify_columns = list(),
+    column_names_present = list(),
     header_data = NULL,
     delimiter = NULL
   )
@@ -230,6 +238,7 @@ mod_import_tables_server <- function(input, output, session, conn) {
           info$header_selected_columns = list()
           info$checkbox_selected_columns = list()
           info$specify_columns = list()
+          info$column_names_present = list()
           
           # By default, import type for every table is all columns.
           j = 1
@@ -240,6 +249,7 @@ mod_import_tables_server <- function(input, output, session, conn) {
             info$header_selected_columns[[i]] <- NULL
             info$checkbox_selected_columns[[i]] <- NULL
             info$specify_columns[[i]] <- NULL
+            info$column_names_present[[i]] <- TRUE
             j = j + 1
           }
           
@@ -290,10 +300,13 @@ mod_import_tables_server <- function(input, output, session, conn) {
   observeEvent(input$file_list, {
     if (input$file_list != "") {
       withProgress(message = "Processing File", expr =  {
-        info$header_data <-
-          data.table::fread(info$file_paths[[input$file_list]],
-                            nrows = 5,
-                            sep = info$delimiter)
+          info$header_data <-
+            data.table::fread(
+              info$file_paths[[input$file_list]],
+              nrows = 5,
+              sep = info$delimiter,
+              header = info$column_names_present[[input$file_list]]
+            )
       })
       
       output$display_header <- DT::renderDT(expr = {
@@ -326,8 +339,32 @@ mod_import_tables_server <- function(input, output, session, conn) {
         selected = info$import_type[[input$file_list]]
       )
       
+      updateCheckboxInput(
+        session = session,
+        inputId = "column_names_present",
+        value = info$column_names_present[[input$file_list]]
+      )
     }
     
+  })
+  
+  observeEvent(input$column_names_present, {
+    info$header_data <- NULL
+    
+    if (input$file_list != "") {
+      info$column_names_present[[input$file_list]] <-
+        input$column_names_present
+      
+      withProgress(message = "Processing File", expr =  {
+        info$header_data <-
+          data.table::fread(
+            info$file_paths[[input$file_list]],
+            nrows = 5,
+            sep = info$delimiter,
+            header = info$column_names_present[[input$file_list]]
+          )
+      })
+    }
   })
   
   observeEvent(
@@ -434,8 +471,11 @@ mod_import_tables_server <- function(input, output, session, conn) {
           tryCatch({
             withProgress(message = "Import in Progress", expr =  {
               temp_df <-
-                disk.frame::csv_to_disk.frame(infile = info$file_paths[[i]],
-                                              sep = info$delimiter)
+                disk.frame::csv_to_disk.frame(
+                  infile = info$file_paths[[i]],
+                  sep = info$delimiter,
+                  header = info$column_names_present[[i]]
+                )
               chunk_ids <- disk.frame::get_chunk_ids(temp_df)
               for (chunk in chunk_ids) {
                 temp_chunk <-
@@ -486,7 +526,8 @@ mod_import_tables_server <- function(input, output, session, conn) {
                   disk.frame::csv_to_disk.frame(
                     infile = info$file_paths[[i]],
                     sep = info$delimiter,
-                    select = info$header_selected_columns[[i]]
+                    select = info$header_selected_columns[[i]],
+                    header = info$column_names_present[[i]]
                   )
                 chunk_ids <- disk.frame::get_chunk_ids(temp_df)
                 for (chunk in chunk_ids) {
@@ -538,7 +579,8 @@ mod_import_tables_server <- function(input, output, session, conn) {
                   disk.frame::csv_to_disk.frame(
                     infile = info$file_paths[[i]],
                     sep = info$delimiter,
-                    select = info$checkbox_selected_columns[[i]]
+                    select = info$checkbox_selected_columns[[i]],
+                    header = info$column_names_present[[i]]
                   )
                 chunk_ids <- disk.frame::get_chunk_ids(temp_df)
                 for (chunk in chunk_ids) {
@@ -592,6 +634,7 @@ mod_import_tables_server <- function(input, output, session, conn) {
                   disk.frame::csv_to_disk.frame(
                     infile = info$file_paths[[i]],
                     sep = info$delimiter,
+                    header = info$column_names_present[[i]],
                     select = col_names
                   )
                 chunk_ids <- disk.frame::get_chunk_ids(temp_df)
@@ -641,4 +684,3 @@ mod_import_tables_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_import_tables_server, "import_tables_ui_1")
-
