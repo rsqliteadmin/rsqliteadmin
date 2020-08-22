@@ -66,7 +66,7 @@ mod_dashboard_structure_server <-
     # conn - stores the information about database
     # conn$active_db - the current active database selected by the user.
     # conn$db_name - string containing the name of current active database. To
-    #                support current functionality, right now a random string has been
+    #                support current functionality, right now a
     #                random string has been assigned to this variable.
     # conn$active_table - the current active table selected by user.
     # conn$directory - string containing path to the current directory
@@ -95,17 +95,43 @@ mod_dashboard_structure_server <-
       return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
     })
     
+    
+    
     # Select active database/active table and establish an RSQLite connection.
     
     observeEvent(input$sidebar_menu, {
+      # print(input$sidebarItemExpanded)
       if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE)))
       {
+        # print("db grepled")
         selected_db_index <- strtoi(substr(
           input$sidebar_menu,
           start = 4,
           stop = nchar(input$sidebar_menu)
         ))
         selected_db <- conn$db_list[selected_db_index]
+        print(selected_db)
+        
+        if (!is.null(conn$active_db)) {
+        conn$active_db <- NULL
+        conn$active_db <-
+          RSQLite::dbConnect(RSQLite::SQLite(),
+                             paste0(conn$directory, selected_db))
+        }
+        # conn$active_table has to be set to NULL because viewing tables
+        # depends on it. So say if there are two databases with a table
+        # of same name but different data, and if you switch back and
+        # forth between those tables, then data won't be refreshed
+        # unless conn$active_table is changed. Since switching between
+        # those tables would first require to switch between databases
+        # in order to tables to be displayed, therefore this is the 
+        # optimum place to set it to NULL. Also, changing it to NULL
+        # when a database has been clicked on is O.K. since no operations
+        # when a database is selected depend on conn$active_table.
+        
+        # In the future too, for this to be compatible, no operations
+        # when a database is selected should depend on conn$active_table.
+        conn$active_table <- NULL
         
         if (conn$db_name != selected_db) {
           if (!is.null(conn$directory)) {
