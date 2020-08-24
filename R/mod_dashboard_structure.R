@@ -78,6 +78,8 @@ mod_dashboard_structure_server <-
     conn <- reactiveValues(
       active_db = NULL,
       db_name = "a34n4wi4nsi1sf39dvbKNFDIDN",
+      active_db_tabName = NULL,
+      active_table_tabName = NULL,
       active_table = NULL,
       directory = NULL,
       db_list  = NULL,
@@ -100,17 +102,15 @@ mod_dashboard_structure_server <-
     # Select active database/active table and establish an RSQLite connection.
     
     observeEvent(input$sidebar_menu, {
-      # print(input$sidebarItemExpanded)
       if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE)))
       {
-        # print("db grepled")
         selected_db_index <- strtoi(substr(
           input$sidebar_menu,
           start = 4,
           stop = nchar(input$sidebar_menu)
         ))
         selected_db <- conn$db_list[selected_db_index]
-        print(selected_db)
+        conn$active_db_tabName <- input$sidebar_menu
         
         # conn$active_table has to be set to NULL because viewing tables
         # depends on it. So say if there are two databases with a table
@@ -126,6 +126,7 @@ mod_dashboard_structure_server <-
         # In the future too, for this to be compatible, no operations
         # when a database is selected should depend on conn$active_table.
         conn$active_table <- NULL
+        conn$active_table_tabName <- NULL
         
         if (conn$db_name != selected_db) {
           if (!is.null(conn$directory)) {
@@ -172,6 +173,7 @@ mod_dashboard_structure_server <-
           stop = nchar(input$sidebar_menu)
         ))
         conn$active_table <- table_list[selected_table_index]
+        conn$active_table_tabName = input$sidebar_menu
       }
       
       if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE)))
@@ -336,11 +338,16 @@ mod_dashboard_structure_server <-
     # Update table list when a table is dropped.
     
     observeEvent(action_manage_tables$dropped_table, {
-      db_menu <- update_sidebar_db(conn$db_list)
+      db_menu <-
+        update_sidebar_table(conn$active_db_tabName, conn$active_db, conn$db_list)
+
       output$sidebar_ui <-
         shinydashboard::renderMenu({
           shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
         })
+      shinydashboard::updateTabItems(session,
+                                     inputId = 'sidebar_menu',
+                                     selected = conn$active_db_tabName)
     })
     
     # Update table list when a table is renamed.
