@@ -118,7 +118,7 @@ mod_dashboard_structure_server <-
         # forth between those tables, then data won't be refreshed
         # unless conn$active_table is changed. Since switching between
         # those tables would first require to switch between databases
-        # in order to tables to be displayed, therefore this is the 
+        # in order to tables to be displayed, therefore this is the
         # optimum place to set it to NULL. Also, changing it to NULL
         # when a database has been clicked on is O.K. since no operations
         # when a database is selected depend on conn$active_table.
@@ -338,9 +338,9 @@ mod_dashboard_structure_server <-
     # Update table list when a table is dropped.
     
     observeEvent(action_manage_tables$dropped_table, {
-      db_menu <-
-        update_sidebar_table(conn$active_db_tabName, conn$active_db, conn$db_list)
-
+      db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                      conn$active_db,
+                                      conn$db_list)
       output$sidebar_ui <-
         shinydashboard::renderMenu({
           shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
@@ -353,14 +353,16 @@ mod_dashboard_structure_server <-
     # Update table list when a table is renamed.
     
     observeEvent(action_manage_tables$renamed_table, {
-      db_menu <- update_sidebar_db(conn$db_list)
+      db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                      conn$active_db,
+                                      conn$db_list)
       output$sidebar_ui <-
         shinydashboard::renderMenu({
           shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
         })
       shinydashboard::updateTabItems(session,
                                      inputId = 'sidebar_menu',
-                                     selected = input$sidebar_menu)
+                                     selected = conn$active_db_tabName)
     })
     
     # Update database list when a query is executed
@@ -379,11 +381,13 @@ mod_dashboard_structure_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- update_sidebar_db(conn$db_list)
+            db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                            conn$active_db,
+                                            conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
             shinydashboard::updateTabItems(session,
                                            inputId = 'sidebar_menu',
-                                           selected = input$sidebar_menu)
+                                           selected = conn$active_db_tabName)
           })
         }
       })
@@ -403,11 +407,13 @@ mod_dashboard_structure_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- update_sidebar_db(conn$db_list)
+            db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                            conn$active_db,
+                                            conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
             shinydashboard::updateTabItems(session,
                                            inputId = 'sidebar_menu',
-                                           selected = input$sidebar_menu)
+                                           selected = conn$active_db_tabName)
           })
         }
       })
@@ -427,11 +433,13 @@ mod_dashboard_structure_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- update_sidebar_db(conn$db_list)
+            db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                            conn$active_db,
+                                            conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
             shinydashboard::updateTabItems(session,
                                            inputId = 'sidebar_menu',
-                                           selected = input$sidebar_menu)
+                                           selected = conn$active_db_tabName)
           })
         }
       })
@@ -475,4 +483,3 @@ mod_dashboard_structure_server <-
 
 ## To be copied in the server
 # callModule(mod_dashboard_structure_server, "dashboard_structure_ui_1")
-
