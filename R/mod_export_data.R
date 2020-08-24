@@ -152,13 +152,14 @@ mod_export_data_server <- function(input, output, session, conn) {
       inputId = "file_name",
       value = info$file_name_list[[input$table_list]]
     )
-    updateCheckboxGroupInput(
-      session = session,
-      inputId = "selected_columns",
-      choices = RSQLite::dbGetQuery(conn$active_db,
-                                    table_structure_query(input$table_list))$name,
-      selected = info$column_list[[input$table_list]]
-    )
+    if(!is.null(conn$active_db))
+      updateCheckboxGroupInput(
+        session = session,
+        inputId = "selected_columns",
+        choices = RSQLite::dbGetQuery(conn$active_db,
+                                      table_structure_query(input$table_list))$name,
+        selected = info$column_list[[input$table_list]]
+      )
     updateCheckboxInput(
       session = session,
       inputId = "include_column_names",
