@@ -112,12 +112,6 @@ mod_dashboard_structure_server <-
         selected_db <- conn$db_list[selected_db_index]
         print(selected_db)
         
-        if (!is.null(conn$active_db)) {
-        conn$active_db <- NULL
-        conn$active_db <-
-          RSQLite::dbConnect(RSQLite::SQLite(),
-                             paste0(conn$directory, selected_db))
-        }
         # conn$active_table has to be set to NULL because viewing tables
         # depends on it. So say if there are two databases with a table
         # of same name but different data, and if you switch back and
