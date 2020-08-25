@@ -18,9 +18,6 @@ mod_dashboard_structure_ui <- function(id) {
     shinydashboard::dashboardHeader(
       title = "RSQLiteAdmin",
       tags$li(
-        tags$head(
-          tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-        ),
         class = "dropdown",
         shinyFiles::shinyDirButton(
           id = ns("set_directory"),
