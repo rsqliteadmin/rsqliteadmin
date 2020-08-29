@@ -71,6 +71,8 @@ mod_dashboard_structure_server <-
     # conn$db_list - List of all databases in current directory
     # conn$state - Stores if a Database or a Table is selected
     #              currently so that tabs according to that can be shown.
+    # conn$input_sidebar_menu - Changes whenever selection is changed in
+    #                           sidebar menu to notify other modules.
     
     conn <- reactiveValues(
       active_db = NULL,
@@ -80,7 +82,8 @@ mod_dashboard_structure_server <-
       active_table = NULL,
       directory = NULL,
       db_list  = NULL,
-      state = NULL
+      state = NULL,
+      input_sidebar_menu = NULL
     )
     
     observeEvent(session, {
@@ -99,6 +102,7 @@ mod_dashboard_structure_server <-
     # Select active database/active table and establish an RSQLite connection.
     
     observeEvent(input$sidebar_menu, {
+      conn$input_sidebar_menu <- input$sidebar_menu
       if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE)))
       {
         selected_db_index <- strtoi(substr(

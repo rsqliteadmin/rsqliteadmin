@@ -115,7 +115,7 @@ mod_export_data_server <- function(input, output, session, conn) {
     return(info$save_directory)
   })
   
-  observeEvent(conn$active_db, {
+  observeEvent(list(conn$active_db, conn$input_sidebar_menu), {
     if (!is.null(conn$active_db)) {
       updateCheckboxGroupInput(
         session = session,
