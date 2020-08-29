@@ -45,7 +45,7 @@ mod_manage_dashboard_body_server <-
           )
         )
       else
-        return(p("No Database Selected"))
+        return(p("No Database Selected. Set a database directory to View/Create Databases."))
     })
   }
 
