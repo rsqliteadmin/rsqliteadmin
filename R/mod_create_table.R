@@ -371,6 +371,29 @@ mod_create_table_server <- function(input, output, session, conn) {
     )
   })
   
+  observeEvent(input$foreign_key, {
+    if (!is.null(conn$active_db)) {
+      updateSelectInput(
+        session = session,
+        inputId = "foreign_table_foreign_key",
+        choices = RSQLite::dbListTables(conn$active_db)
+      )
+    }
+  })
+  
+  observeEvent(input$foreign_table_foreign_key, {
+    if (input$foreign_table_foreign_key != "") {
+      updateSelectInput(
+        session = session,
+        inputId = "foreign_column_foreign_key",
+        choices = RSQLite::dbGetQuery(
+          conn$active_db,
+          table_structure_query(input$foreign_table_foreign_key)
+        )$name
+      )
+    }
+  })
+  
   observeEvent(input$confirm_column, {
     if (input$column_name == "")
       showNotification(ui = "Please enter column name.",
