@@ -104,7 +104,7 @@ mod_view_tables_server <-
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
-          data = table_info$data[, -c(1), drop = FALSE],
+          data = table_info$data[,-c(1), drop = FALSE],
           editable = "cell",
           rownames = FALSE,
           selection = "multiple",
@@ -214,10 +214,16 @@ mod_view_tables_server <-
                              0)
           )
       })
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = 1)
     })
     
     observeEvent(input$footer, {
       table_info$offset <- table_info$total_rows - table_info$number_rows
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
       withProgress(message = "Processing", expr =  {
         table_info$data <-
           RSQLite::dbGetQuery(
@@ -233,6 +239,9 @@ mod_view_tables_server <-
     
     observeEvent(input$fetch_previous, {
       table_info$offset = max(table_info$offset - table_info$number_rows, 0)
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
       withProgress(message = "Processing", expr =  {
         table_info$data <-
           RSQLite::dbGetQuery(
@@ -256,6 +265,9 @@ mod_view_tables_server <-
           table_info$offset + table_info$number_rows,
           table_info$total_rows - table_info$number_rows
         )
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
       withProgress(message = "Processing", expr =  {
         table_info$data <-
           RSQLite::dbGetQuery(
@@ -270,6 +282,10 @@ mod_view_tables_server <-
     })
     
     observeEvent(input$fetch_all, {
+      table_info$offset <- 0
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
       withProgress(message = "Processing", expr =  {
         table_info$data <-
           RSQLite::dbGetQuery(
@@ -562,4 +578,3 @@ mod_view_tables_server <-
 
 ## To be copied in the server
 # callModule(mod_view_tables_server, "view_tables_ui_1")
-
