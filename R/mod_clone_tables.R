@@ -48,7 +48,7 @@ mod_clone_tables_server <- function(input, output, session, conn) {
   
   action_clone_tables <- reactiveValues(tables_cloned = NULL)
   
-  observeEvent(conn$active_db, {
+  observeEvent(list(conn$active_db, conn$input_sidebar_menu), {
     if (!is.null(conn$active_db)) {
       updateCheckboxGroupInput(
         session = session,
