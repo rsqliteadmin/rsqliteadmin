@@ -49,7 +49,7 @@ mod_table_structure_ui <- function(id) {
 #' @noRd
 
 mod_table_structure_server <-
-  function(input, output, session, conn, action_query) {
+  function(input, output, session, conn) {
     ns <- session$ns
     
     # info$table_structure - Information about table structure.
@@ -519,16 +519,6 @@ mod_table_structure_server <-
           choices = RSQLite::dbListTables(conn$active_db)
         )
       }
-    })
-    
-    observeEvent(action_query$data_updated, {
-      tryCatch({
-        query <- paste0("pragma table_info('", conn$active_table, "');")
-        if (conn$active_table != "") {
-          info$table_structure <-
-            RSQLite::dbGetQuery(conn$active_db, query)
-        }
-      })
     })
     
     return(action_table_structure)

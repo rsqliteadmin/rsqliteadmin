@@ -556,21 +556,6 @@ mod_view_tables_server <-
         )
     })
     
-    # Refresh data when a query is executed affecting data.
-    
-    observeEvent(action_query$data_updated, {
-      tryCatch({
-        table_info$data <-
-          RSQLite::dbGetQuery(
-            conn$active_db,
-            data_fetch_query(
-              conn$active_table,
-              table_info$number_rows,
-              table_info$offset
-            )
-          )
-      })
-    })
   }
 
 ## To be copied in the UI

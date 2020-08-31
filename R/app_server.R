@@ -32,8 +32,7 @@ app_server <- function(input, output, session) {
   action_table_structure <-
     callModule(mod_table_structure_server,
                "table_structure",
-               conn,
-               action_query)
+               conn)
   action_query <- callModule(mod_query_server, "query", conn)
   action_create_table <-
     callModule(mod_create_table_server, "create_table", conn)
