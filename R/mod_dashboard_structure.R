@@ -22,7 +22,8 @@ mod_dashboard_structure_ui <- function(id) {
         shinyFiles::shinyDirButton(
           id = ns("set_directory"),
           label = "Set database directory",
-          title = "Select a folder"
+          title = "Select a folder",
+          icon = icon("cog", lib = "font-awesome")
         )
       ),
       tags$li(
@@ -30,16 +31,17 @@ mod_dashboard_structure_ui <- function(id) {
         actionButton(
           inputId =  ns("create_db"),
           label =  "Create a new database",
-          icon("paper-plane")
+          icon = icon("plus-square", lib = "font-awesome")
         )
       )
     ),
     shinydashboard::dashboardSidebar(shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))),
     shinydashboard::dashboardBody(
-      mod_manage_dashboard_body_ui("manage_dashboard_body"),
-      tags$head(
-        tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-      )
+      mod_manage_dashboard_body_ui("manage_dashboard_body")
+      # bootstraplib::bs_theme_new(bootswatch = "cerulean")
+      # tags$head(
+      #   tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+      # )
     )
   )
 }

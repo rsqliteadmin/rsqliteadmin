@@ -12,23 +12,105 @@
 }
 
 body {
-    overflow-y: hidden; 
     width: 100%;
+    font-family: system-ui;
+    color: black;
+}
+
+/* Dashboard Body */
+
+.content-wrapper {
+  background-color: #d3ecff;
+}
+
+/* Dashboard Sidebar */
+
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+  background-color: white;
+}
+
+.sidebar-menu .active {
+  Background: #2ea4fe;
+}
+
+.skin-blue .sidebar-menu>li.active>a, .sidebar-menu>li[class=""]>a, .skin-blue .sidebar-menu>li:hover>a {
+    color: white;
+    background: #2ea4fe;
+    border-left-color: #2ea4fe;
+}
+
+.skin-blue .sidebar-menu>li>.treeview-menu {
+    background: #222222;
+}
+
+.skin-blue .sidebar a {
+    color: black;
+}
+
+.skin-blue .treeview-menu>li>a {
+    color: white;
+}
+
+/* Dashboard Header */
+
+.skin-blue .main-header .navbar {
+    background-color: #0e2326;
+}
+
+.skin-blue .main-header .logo {
+    background-color: #0e2326;
+    color: #fff;
+}
+
+/* Navigation Bar(tabpanels) */
+
+.main-header .navbar {
+  height: 50px;
+}
+
+.main-header .logo {
+    height: 50px;
+    font-size: 30px;
+}
+
+.nav-tabs>li>a {
+    color: black;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li:hover>a {
+    color: white;
+    background-color: #2ea4fe;
+}
+
+.tab-content>.active {
+  padding-left: 20px;
+}
+
+.btn-default {
+    background-color: #00a65a;
+    color: #ffffff;
+    border-color: #ddd;
 }
 
 /* mod_dashboard_structure */
 
-.shinyDirectories {
+.shinyDirectories#dashboard_structure-set_directory {
 	color: #fff;
-	padding: 9%;
-	background-color: #337ab7;
+	height: 50px;
+	background-color: #2ea4fe;
 	border-color: #2e6da4;
+}
+
+.shinyDirectories#export_data-save_directory {
+	background-color: #00a65a;
+  color: #ffffff;
+  border-color: #ddd;
 }
 
 #dashboard_structure-create_db {
 	color: #fff;
-	padding: 8.4%;
-	background-color: #337ab7;
+	height: 50px;
+	background-color: #2ea4fe;
 	border-color: #2e6da4;
 }
 

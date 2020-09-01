@@ -9,6 +9,7 @@ app_ui <- function(request) {
   tagList(
     golem_add_external_resources(),
     fluidPage(
+      theme = "style.css",
       mod_dashboard_structure_ui("dashboard_structure")
     )
   )

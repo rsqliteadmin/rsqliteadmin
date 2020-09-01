@@ -39,7 +39,7 @@ update_sidebar_db <- function(db_list) {
         shinydashboard::menuItem(
           text = db_list[i],
           tabName = paste0("db_", i),
-          icon = icon("search", lib = "glyphicon")
+          icon = icon("database", lib = "font-awesome")
         ),
         paste0("db_", i)
       )
@@ -69,11 +69,12 @@ update_sidebar_table <-
             shinydashboard::menuItem(
               text = db_list[i],
               tabName = paste0("db_", i),
-              icon = icon("search", lib = "glyphicon"),
+              icon = icon("database", lib = "font-awesome"),
               startExpanded = TRUE,
               lapply(1:length(table_list), function(i) {
                 shinydashboard::menuSubItem(text = table_list[i],
-                                            tabName = paste0("table_", i))
+                                            tabName = paste0("table_", i),
+                                            icon = icon("table", lib = "font-awesome"))
               })
             ),
             paste0("db_", i)
@@ -85,7 +86,7 @@ update_sidebar_table <-
             shinydashboard::menuItem(
               text = db_list[i],
               tabName = paste0("db_", i),
-              icon = icon("search", lib = "glyphicon")
+              icon = icon("database", lib = "font-awesome")
             ),
             paste0("db_", i)
           )
