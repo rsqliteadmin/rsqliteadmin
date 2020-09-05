@@ -14,12 +14,11 @@
 mod_create_table_ui <- function(id) {
   ns <- NS(id)
   tabPanel(title = "Create Table",
-           br(),
            column(
              width = 12,
-             fluidRow(p(h2(
-               "Create a new Table"
-             ))),
+             fluidRow(h2(
+               "Create a New Table"
+             )),
              fluidRow(textInput(
                inputId = ns("new_table_name"),
                label = p("Enter New Table Name")
@@ -42,7 +41,8 @@ mod_create_table_ui <- function(id) {
                                 label = "Create New Table")
                  )
                )
-             ))
+             )),
+             br()
            ))
 }
 

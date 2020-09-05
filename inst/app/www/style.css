@@ -144,11 +144,11 @@ label {
 	border-color: #2e6da4;
 }
 
-/* mod_dashboard_structure */
+/* mod_import_new_tables */
 
-
-
-/* mod_dashboard_structure */
+.shiny-text-output {
+  margin-left: 10px;
+}
 
 /* mod_query */
 
@@ -156,7 +156,6 @@ label {
 	overflow-y: scroll;
 	overflow-x: scroll;
 }
-
 
 /* mod_view_tables */
 
