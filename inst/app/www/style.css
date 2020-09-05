@@ -46,10 +46,6 @@ label {
   padding-right: 0;
 }
 
-.wrapper {
-  overflow-y:hidden;
-}
-
 .btn {
   margin-right: 10px;
 }
@@ -157,7 +153,6 @@ label {
 /* mod_query */
 
 #query_results {
-	height: 500px;
 	overflow-y: scroll;
 	overflow-x: scroll;
 }

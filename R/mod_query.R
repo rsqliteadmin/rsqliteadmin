@@ -16,36 +16,36 @@
 
 mod_query_ui <- function(id) {
   ns <- NS(id)
-  tabPanel(
-    title = "Query",
-    br(),
-    # shinyjqui to make it resizable
-    fluidRow(shinyjqui::jqui_resizable(
-      shinyAce::aceEditor(
-        outputId = ns("ace"),
-        placeholder = "Enter query here.",
-        mode = "sql",
-        height = "200px"
-      )
-    )),
-    fluidRow(
-      actionButton(inputId = ns("execute"),
-                   label = "Execute Query"),
-      actionButton(inputId = ns("save_query"),
-                   label = "Save Query"),
-      actionButton(inputId = ns("saved_queries"),
-                   label = "Saved Queries"),
-      actionButton(inputId = ns("recent_queries"),
-                   label = "Recent Queries"),
-      br(),
-      br(),
-      verbatimTextOutput(ns("display_error"))
-    ),
-    br(),
-    fluidRow(uiOutput(ns(
-      "query_results_ui"
-    )))
-  )
+  tabPanel(title = "Query",
+           br(),
+           column(
+             width = 12,
+             # shinyjqui to make it resizable
+             fluidRow(shinyjqui::jqui_resizable(
+               shinyAce::aceEditor(
+                 outputId = ns("ace"),
+                 placeholder = "Enter query here.",
+                 mode = "sql",
+                 height = "200px"
+               )
+             )),
+             fluidRow(
+               actionButton(inputId = ns("execute"),
+                            label = "Execute Query"),
+               actionButton(inputId = ns("save_query"),
+                            label = "Save Query"),
+               actionButton(inputId = ns("saved_queries"),
+                            label = "Saved Queries"),
+               actionButton(inputId = ns("recent_queries"),
+                            label = "Recent Queries"),
+             ),
+             br(),
+             fluidRow(verbatimTextOutput(ns("display_error"))),
+             br(),
+             fluidRow(uiOutput(ns(
+               "query_results_ui"
+             )))
+           ))
 }
 
 #' query Server Function
@@ -59,17 +59,21 @@ mod_query_server <- function(input, output, session, conn) {
   # info$error - stores error fetched from query
   # info$saved_data - stores data of saved queries
   
-  info <- reactiveValues(data = NULL,
-                         error = NULL,
-                         saved_data = NULL,
-                         recent_data = NULL)
+  info <- reactiveValues(
+    data = NULL,
+    error = NULL,
+    saved_data = NULL,
+    recent_data = NULL
+  )
   
   #action_query$data_updated - updates when a query is executed
   #                            to notify other modules
   
-  action_query <- reactiveValues(data_updated = NULL,
-                                 data_updated_save = NULL,
-                                 data_updated_recent = NULL)
+  action_query <- reactiveValues(
+    data_updated = NULL,
+    data_updated_save = NULL,
+    data_updated_recent = NULL
+  )
   
   conn_save_db <- RSQLite::dbConnect(
     RSQLite::SQLite(),
@@ -180,21 +184,19 @@ mod_query_server <- function(input, output, session, conn) {
   
   observeEvent(input$recent_queries, {
     info$recent_data <- RSQLite::dbGetQuery(conn_recent_db,
-                                           recent_data_fetch_query())
-    showModal(
-      modalDialog(
-        size = "l",
-        DT::DTOutput(ns("display_recent_queries")),
-        shinyAce::aceEditor(
-          outputId = ns("ace_recent"),
-          placeholder = "",
-          mode = "sql",
-          height = "200px"
-        ),
-        actionButton(inputId = ns("execute_recent"),
-                     label = "Execute Query")
-      )
-    )
+                                            recent_data_fetch_query())
+    showModal(modalDialog(
+      size = "l",
+      DT::DTOutput(ns("display_recent_queries")),
+      shinyAce::aceEditor(
+        outputId = ns("ace_recent"),
+        placeholder = "",
+        mode = "sql",
+        height = "200px"
+      ),
+      actionButton(inputId = ns("execute_recent"),
+                   label = "Execute Query")
+    ))
   })
   
   observeEvent(input$display_recent_queries_rows_selected, {
