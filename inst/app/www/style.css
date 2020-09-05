@@ -12,6 +12,7 @@ body {
 
 h1, h2, h3, .h1, .h2, .h3 {
   color: #20639b;
+  font-weight: bold;
 }
 
 label {
@@ -47,6 +48,10 @@ label {
 
 .wrapper {
   overflow-y:hidden;
+}
+
+.btn {
+  margin-right: 10px;
 }
 
 /* Dashboard Body */
@@ -115,10 +120,6 @@ label {
     background-color: #20639b;
 }
 
-.tab-content>.active {
-  padding-left: 20px;
-}
-
 .btn-default {
     background-color: #20639b;
     color: #ffffff;
@@ -147,6 +148,11 @@ label {
 	border-color: #2e6da4;
 }
 
+/* mod_dashboard_structure */
+
+
+
+/* mod_dashboard_structure */
 
 /* mod_query */
 
