@@ -238,7 +238,7 @@ mod_export_data_server <- function(input, output, session, conn) {
                        duration = 3,
                        type = "error")
     else if (is.null(info$delimiter))
-      sshowNotification(ui = "Please enter a valid separator.",
+      showNotification(ui = "Please enter a valid separator.",
                         duration = 10,
                         type = "error")
     else{
