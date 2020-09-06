@@ -15,67 +15,93 @@ mod_export_data_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     title = "Export Data",
-    br(),
-    fluidRow(
-      column(
-        width = 2,
-        shinyFiles::shinyDirButton(
-          id = ns("save_directory"),
-          label = "Saving Directory",
-          title = "Select a folder"
+    column(
+      width = 12,
+      fluidRow(column(width = 12,
+                      h2("Export Tables"))),
+      fluidRow(
+        column(
+          width = 1,
+          shinyFiles::shinyDirButton(
+            id = ns("save_directory"),
+            label = "Saving Directory",
+            title = "Select a Folder"
+          )
+        ),
+        column(width = 11,
+               verbatimTextOutput(ns(
+                 "directory_selected"
+               )))
+      ),
+      br(),
+      fluidRow(
+        column(
+          width = 2,
+          textInput(
+            inputId = ns("delimiter"),
+            label = "Separator",
+            value = ","
+          )
+        ),
+        column(
+          width = 3,
+          textInput(
+            inputId = ns("missing_values_string"),
+            label = "String Used for Missing Values.",
+            value = "NA"
+          )
+        ),
+        column(
+          width = 4,
+          numericInput(
+            inputId = ns("chunk_size"),
+            label = "Chunk Size",
+            value = 1000000,
+            min = 100,
+            step = 10000
+          )
         )
       ),
-      column(width = 10,
-             verbatimTextOutput(ns(
-               "directory_selected"
-             )))
-    ),
-    br(),
-    fluidRow(
-      column(
-        width = 2,
-        textInput(
-          inputId = ns("delimiter"),
-          label = "Separator",
-          value = ","
+      fluidRow(column(
+        width = 12,
+        tags$div(align = "left",
+                 class = "multicol",
+        checkboxGroupInput(inputId = ns("selected_tables"),
+                           label = "Select Table(s) to Export.")
         )
-      ),
-      column(
-        width = 3,
-        textInput(
-          inputId = ns("missing_values_string"),
-          label = "String used for missing values.",
-          value = "NA"
+      )),
+      fluidRow(column(
+        width = 12,
+        selectInput(
+          inputId = ns("table_list"),
+          label = "Edit Properties of: ",
+          choices = NULL
         )
-      ),
-      column(
-        width = 4,
-        numericInput(
-          inputId = ns("chunk_size"),
-          label = "Chunk Size",
-          value = 1000000,
-          min = 100,
-          step = 10000
+      )),
+      fluidRow(column(
+        width = 12, textInput(inputId = ns("file_name"),
+                              label = "File Name")
+      )),
+      fluidRow(column(
+        width = 12,
+        tags$div(align = "left",
+                 class = "multicol",
+        checkboxGroupInput(inputId = ns("selected_columns"),
+                           label = "Select Columns to Export"))
+      )),
+      fluidRow(column(
+        width = 12,
+        checkboxInput(
+          inputId = ns("include_column_names"),
+          label = "Include Column Names"
         )
-      )
-    ),
-    checkboxGroupInput(inputId = ns("selected_tables"),
-                       label = "Select table(s) to export."),
-    selectInput(
-      inputId = ns("table_list"),
-      label = "Edit Properties of: ",
-      choices = NULL
-    ),
-    textInput(inputId = ns("file_name"),
-              label = "File Name"),
-    checkboxGroupInput(inputId = ns("selected_columns"),
-                       label = "Select Columns to export."),
-    fluidRow(checkboxInput(
-      inputId = ns("include_column_names"),
-      label = "Include Column Names"
-    )),
-    actionButton(inputId = ns("export"),
-                 label = "Export")
+      )),
+      fluidRow(column(
+        width = 12, actionButton(inputId = ns("export"),
+                                 label = "Export")
+      )),
+      br()
+    )
   )
 }
 
@@ -152,7 +178,7 @@ mod_export_data_server <- function(input, output, session, conn) {
       inputId = "file_name",
       value = info$file_name_list[[input$table_list]]
     )
-    if(!is.null(conn$active_db))
+    if (!is.null(conn$active_db))
       updateCheckboxGroupInput(
         session = session,
         inputId = "selected_columns",
@@ -315,4 +341,3 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
-

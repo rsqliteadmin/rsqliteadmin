@@ -14,7 +14,7 @@ h1, h2, h3, .h1, .h2, .h3 {
   color: #20639b;
   font-weight: bold;
 }
-
+/*
 label {
     margin: 0 0 10px;
     margin-top: 0;
@@ -29,7 +29,7 @@ label {
     max-width: 100%;
     margin-bottom: 5px;
 }
-
+*/
 .shiny-notification {
 	position: fixed;
 	top: 87%;
@@ -146,8 +146,36 @@ label {
 
 /* mod_import_new_tables */
 
-.shiny-text-output {
+.shiny-text-output#import_tables-file_selected {
   margin-left: 10px;
+  padding: 7px;
+}
+
+/* mod_export_data */
+
+.shiny-text-output#export_data-directory_selected {
+  margin-left: 40px;
+  padding: 7px;
+}
+
+.multicol .shiny-options-group{
+  -webkit-column-count: 5; /* Chrome, Safari, Opera */
+  -moz-column-count: 5;    /* Firefox */
+  column-count: 5;
+  -webkit-column-gap: 250px;
+  column-gap: 250px;
+  -moz-column-fill: auto;
+  -column-fill: auto;
+  /*column-rule: 4px double #ff00ff;*/
+  }
+
+.checkbox{
+  margin-top: 0px !important;
+  -webkit-margin-after: 0px !important; 
+  }
+
+.control-label#export_data-selected_tables {
+  padding-bottom: 7px;
 }
 
 /* mod_query */
