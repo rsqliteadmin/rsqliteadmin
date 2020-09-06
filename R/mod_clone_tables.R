@@ -48,7 +48,7 @@ mod_clone_tables_server <- function(input, output, session, conn) {
   
   action_clone_tables <- reactiveValues(tables_cloned = NULL)
   
-  observeEvent(conn$active_db, {
+  observeEvent(list(conn$active_db, conn$input_sidebar_menu), {
     if (!is.null(conn$active_db)) {
       updateCheckboxGroupInput(
         session = session,
@@ -78,13 +78,14 @@ mod_clone_tables_server <- function(input, output, session, conn) {
       inputId = "new_table_name",
       value = info$table_name_list[[input$table_list]]
     )
-    updateCheckboxGroupInput(
-      session = session,
-      inputId = "selected_columns",
-      choices = RSQLite::dbGetQuery(conn$active_db,
-                                    table_structure_query(input$table_list))$name,
-      selected = info$column_list[[input$table_list]]
-    )
+    if (!is.null(conn$active_db))
+      updateCheckboxGroupInput(
+        session = session,
+        inputId = "selected_columns",
+        choices = RSQLite::dbGetQuery(conn$active_db,
+                                      table_structure_query(input$table_list))$name,
+        selected = info$column_list[[input$table_list]]
+      )
     updateCheckboxInput(
       session = session,
       inputId = "include_data",
@@ -94,13 +95,15 @@ mod_clone_tables_server <- function(input, output, session, conn) {
   
   observeEvent(input$new_table_name, {
     info$table_name_list[[input$table_list]] <- input$new_table_name
-    if (input$new_table_name %in% RSQLite::dbListTables(conn$active_db)) {
-      showNotification(
-        ui = "Table with this name already present in database.
-        Please enter a new name.",
-        duration = 3,
-        type = "error"
-      )
+    if (!is.null(conn$active_db)) {
+      if (input$new_table_name %in% RSQLite::dbListTables(conn$active_db)) {
+        showNotification(
+          ui = "Table with this name already present in database.
+          Please enter a new name.",
+          duration = 3,
+          type = "error"
+        )
+      }
     }
   })
   
@@ -118,54 +121,61 @@ mod_clone_tables_server <- function(input, output, session, conn) {
   
   observeEvent(input$clone, {
     tryCatch({
-      for (i in input$selected_tables) {
-        if (!is.null(info$column_list[[i]]))
-        {
-          if (info$table_name_list[[i]] %in% RSQLite::dbListTables(conn$active_db)) {
+      if (is.null(input$selected_tables)) {
+        showNotification(ui = "No table selected.",
+                         duration = 3,
+                         type = "error")
+      }
+      else{
+        for (i in input$selected_tables) {
+          if (!is.null(info$column_list[[i]]))
+          {
+            if (info$table_name_list[[i]] %in% RSQLite::dbListTables(conn$active_db)) {
+              showNotification(
+                ui = paste0(
+                  "Table with name ",
+                  info$table_name_list[[i]],
+                  " already present in database.
+                          This table not cloned."
+                ),
+                duration = 3,
+                type = "error"
+              )
+            }
+            else{
+              RSQLite::dbExecute(
+                conn$active_db,
+                clone_query(
+                  info$table_name_list[[i]],
+                  i,
+                  info$column_list[[i]],
+                  info$include_data[[i]]
+                )
+              )
+            }
+          }
+          else
             showNotification(
               ui = paste0(
-                "Table with name ",
-                info$table_name_list[[i]],
-                " already present in database.
-                          This table not cloned."
+                " No columns selected for table ",
+                i,
+                ". This table could not be cloned."
               ),
-              duration = 3,
+              duration = 10,
               type = "error"
             )
-          }
-          else{
-            RSQLite::dbExecute(
-              conn$active_db,
-              clone_query(
-                info$table_name_list[[i]],
-                i,
-                info$column_list[[i]],
-                info$include_data[[i]]
-              )
-            )
-          }
         }
-        else
-          showNotification(
-            ui = paste0(
-              " No columns selected for table ",
-              i,
-              ". This table could not be cloned."
-            ),
-            duration = 10,
-            type = "error"
-          )
+        action_clone_tables$tables_cloned <- input$clone
+        showNotification(ui = "Selected tables cloned successfully.",
+                         duration = 5,
+                         type = "message")
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_tables",
+          choices = RSQLite::dbListTables(conn$active_db),
+          selected = input$selected_tables
+        )
       }
-      action_clone_tables$tables_cloned <- input$clone
-      showNotification(ui = "Selected tables cloned successfully.",
-                       duration = 5,
-                       type = "message")
-      updateCheckboxGroupInput(
-        session = session,
-        inputId = "selected_tables",
-        choices = RSQLite::dbListTables(conn$active_db),
-        selected = input$selected_tables
-      )
     },
     error = function(err) {
       showNotification(

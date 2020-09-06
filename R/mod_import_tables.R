@@ -20,84 +20,74 @@ mod_import_tables_ui <- function(id) {
   
   tabPanel(
     title = "Import Tables",
-    br(),
-    fluidRow(p(h2(
-      strong("Import new Tables")
-    ))),
-    fluidRow(
-      column(
-        width = 1,
-        shinyFiles::shinyFilesButton(
-          id = ns("file_button"),
-          label = "Select File(s)",
-          title = "Select File(s)",
-          multiple = TRUE
-        )
+    column(
+      width = 12,
+      fluidRow(column(width = 12,
+                      h2(
+                        "Import New Tables"
+                      ))),
+      fluidRow(
+        column(
+          width = 1,
+          shinyFiles::shinyFilesButton(
+            id = ns("file_button"),
+            label = "Select File(s)",
+            title = "Select File(s)",
+            multiple = TRUE
+          )
+        ),
+        column(width = 11,
+               verbatimTextOutput(ns("file_selected")))
       ),
-      column(width = 6,
-             verbatimTextOutput(ns("file_selected")))
-    ),
-    fluidRow(column(
-      width = 4,
-      textInput(inputId = ns("delimiter"),
-                label = "Separator")
-    )),
-    fluidRow(
-      selectInput(
-        inputId = ns("file_list"),
-        label = "Edit Properties of:",
-        choices = NULL
-      )
-    ),
-    fluidRow(column(
-      width = 4,
-      textInput(
-        inputId = ns("table_name"),
-        label = h4(strong("Table Name")),
-        placeholder = "Enter Table Name"
-      )
-    )),
-    fluidRow(column(
-      width = 4,
-      checkboxInput(
-        inputId = ns("column_names_present"),
-        label = "File contains column names."
-      )
-    )),
-    uiOutput(ns("display_header_ui")),
-    br(),
-    fluidRow(column(
-      width = 2,
-      radioButtons(
-        inputId = ns("import_type"),
-        label = h3("Import from file:"),
-        choices = c(
-          "All Columns",
-          "Columns Selected in Table",
-          "Columns from List",
-          "Columns by Name"
+      fluidRow(column(
+        width = 4,
+        textInput(inputId = ns("delimiter"),
+                  label = "Separator")
+      )),
+      fluidRow(column(
+        width = 12,
+        selectInput(
+          inputId = ns("file_list"),
+          label = "Edit Properties of:",
+          choices = NULL
         )
-      )
-    )),
-    
-    fluidRow(
-      column(width = 2,
-             actionButton(
-               inputId = ns("checkbox_columns_button"),
-               label = "Select from List"
-             )),
-      column(width = 2,
-             actionButton(
-               inputId = ns("specify_columns_button"),
-               label = "Select by Name"
-             ))
+      )),
+      fluidRow(column(
+        width = 4,
+        textInput(
+          inputId = ns("table_name"),
+          label = "Table Name",
+          placeholder = "Enter Table Name"
+        )
+      )),
+      fluidRow(column(
+        width = 4,
+        checkboxInput(
+          inputId = ns("column_names_present"),
+          label = "File contains column names."
+        )
+      )),
+      uiOutput(ns("display_header_ui")),
+      br(),
+      fluidRow(column(
+        width = 12,
+        actionButton(
+          inputId = ns("checkbox_columns_button"),
+          label = "Select from List"
+        ),
+        actionButton(
+          inputId = ns("specify_columns_button"),
+          label = "Select by Name"
+        )
+      )),
+      br(),
+      fluidRow(column(
+        width = 1,
+        actionButton(inputId = ns("import"),
+                     label = "Import")
+      ))
     ),
-    br(),
-    fluidRow(column(
-      width = 1,
-      actionButton(inputId = ns("import"),
-                   label = "Import")
-    ))
+    br()
   )
 }
 
@@ -134,14 +124,33 @@ mod_import_tables_server <- function(input, output, session, conn) {
                               id = "file_button",
                               roots = roots)
   
+  
+  
   output$display_header_ui <- renderUI({
-    fluidRow(conditionalPanel(
-      condition = !is.null(info$file_data),
-      column(width = 12,
-             DT::DTOutput(ns(
-               "display_header"
-             )))
-    ))
+    column(width = 12,
+           fluidRow(
+             conditionalPanel(
+               condition = !is.null(info$file_data),
+               column(width = 12,
+                      DT::DTOutput(ns(
+                        "display_header"
+                      ))),
+               fluidRow(column(width = 12,
+                               fluidRow(
+                                 column(width = 2,
+                                        radioButtons(
+                                          inputId = ns("import_type"),
+                                          label = h3("Import from file:"),
+                                          choices = c(
+                                            "All Columns",
+                                            "Columns Selected in Table",
+                                            "Columns from List",
+                                            "Columns by Name"
+                                          )
+                                        ))
+                               )))
+             )
+           ))
   })
   
   output$display_header <- DT::renderDT(expr = {
@@ -300,13 +309,13 @@ mod_import_tables_server <- function(input, output, session, conn) {
   observeEvent(input$file_list, {
     if (input$file_list != "") {
       withProgress(message = "Processing File", expr =  {
-          info$header_data <-
-            data.table::fread(
-              info$file_paths[[input$file_list]],
-              nrows = 5,
-              sep = info$delimiter,
-              header = info$column_names_present[[input$file_list]]
-            )
+        info$header_data <-
+          data.table::fread(
+            info$file_paths[[input$file_list]],
+            nrows = 5,
+            sep = info$delimiter,
+            header = info$column_names_present[[input$file_list]]
+          )
       })
       
       output$display_header <- DT::renderDT(expr = {

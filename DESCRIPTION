@@ -1,8 +1,8 @@
 Package: rsqliteadmin
 Title: rsqliteadmin provides a GUI to manage sqlite databases inside R.
 Description: A comprehensive tool written in R Shiny to explore, manage and update SQLite Databases.
-Version: 0.4.0
-Date: 2020-08-21
+Version: 0.5.0
+Date: 2020-09-07
 Authors@R: c(
     person(
         "Vijay", "Barve",
@@ -34,7 +34,6 @@ Imports:
     config,
     golem,
     shiny,
-    thinkr,
     RSQLite,
     DT,
     shinythemes,
@@ -43,12 +42,12 @@ Imports:
     shinyAce,
     shinyjqui,
     shinydashboard,
-    readr,
-    reader,
-    disk.frame
+    disk.frame,
+    data.table
 RoxygenNote: 7.1.1
 URL: https://github.com/rsqliteadmin/rsqliteadmin
 BugReports: https://github.com/rsqliteadmin/rsqliteadmin/issues
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
 LazyData: true
+

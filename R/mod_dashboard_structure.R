@@ -18,14 +18,12 @@ mod_dashboard_structure_ui <- function(id) {
     shinydashboard::dashboardHeader(
       title = "RSQLiteAdmin",
       tags$li(
-        tags$head(
-          tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-        ),
         class = "dropdown",
         shinyFiles::shinyDirButton(
           id = ns("set_directory"),
           label = "Set database directory",
-          title = "Select a folder"
+          title = "Select a folder",
+          icon = icon("cog", lib = "font-awesome")
         )
       ),
       tags$li(
@@ -33,16 +31,17 @@ mod_dashboard_structure_ui <- function(id) {
         actionButton(
           inputId =  ns("create_db"),
           label =  "Create a new database",
-          icon("paper-plane")
+          icon = icon("plus-square", lib = "font-awesome")
         )
       )
     ),
     shinydashboard::dashboardSidebar(shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))),
     shinydashboard::dashboardBody(
-      mod_manage_dashboard_body_ui("manage_dashboard_body"),
-      tags$head(
-        tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-      )
+      mod_manage_dashboard_body_ui("manage_dashboard_body")
+      # bootstraplib::bs_theme_new(bootswatch = "cerulean")
+      # tags$head(
+      #   tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+      # )
     )
   )
 }
@@ -66,7 +65,7 @@ mod_dashboard_structure_server <-
     # conn - stores the information about database
     # conn$active_db - the current active database selected by the user.
     # conn$db_name - string containing the name of current active database. To
-    #                support current functionality, right now a random string has been
+    #                support current functionality, right now a
     #                random string has been assigned to this variable.
     # conn$active_table - the current active table selected by user.
     # conn$directory - string containing path to the current directory
@@ -74,14 +73,19 @@ mod_dashboard_structure_server <-
     # conn$db_list - List of all databases in current directory
     # conn$state - Stores if a Database or a Table is selected
     #              currently so that tabs according to that can be shown.
+    # conn$input_sidebar_menu - Changes whenever selection is changed in
+    #                           sidebar menu to notify other modules.
     
     conn <- reactiveValues(
       active_db = NULL,
       db_name = "a34n4wi4nsi1sf39dvbKNFDIDN",
+      active_db_tabName = NULL,
+      active_table_tabName = NULL,
       active_table = NULL,
       directory = NULL,
       db_list  = NULL,
-      state = NULL
+      state = NULL,
+      input_sidebar_menu = NULL
     )
     
     observeEvent(session, {
@@ -95,9 +99,12 @@ mod_dashboard_structure_server <-
       return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
     })
     
+    
+    
     # Select active database/active table and establish an RSQLite connection.
     
     observeEvent(input$sidebar_menu, {
+      conn$input_sidebar_menu <- input$sidebar_menu
       if (isTRUE(grepl("db", input$sidebar_menu, ignore.case = TRUE)))
       {
         selected_db_index <- strtoi(substr(
@@ -106,6 +113,23 @@ mod_dashboard_structure_server <-
           stop = nchar(input$sidebar_menu)
         ))
         selected_db <- conn$db_list[selected_db_index]
+        conn$active_db_tabName <- input$sidebar_menu
+        
+        # conn$active_table has to be set to NULL because viewing tables
+        # depends on it. So say if there are two databases with a table
+        # of same name but different data, and if you switch back and
+        # forth between those tables, then data won't be refreshed
+        # unless conn$active_table is changed. Since switching between
+        # those tables would first require to switch between databases
+        # in order to tables to be displayed, therefore this is the
+        # optimum place to set it to NULL. Also, changing it to NULL
+        # when a database has been clicked on is O.K. since no operations
+        # when a database is selected depend on conn$active_table.
+        
+        # In the future too, for this to be compatible, no operations
+        # when a database is selected should depend on conn$active_table.
+        conn$active_table <- NULL
+        conn$active_table_tabName <- NULL
         
         if (conn$db_name != selected_db) {
           if (!is.null(conn$directory)) {
@@ -152,6 +176,7 @@ mod_dashboard_structure_server <-
           stop = nchar(input$sidebar_menu)
         ))
         conn$active_table <- table_list[selected_table_index]
+        conn$active_table_tabName = input$sidebar_menu
       }
       
       if (isTRUE(grepl("table", input$sidebar_menu, ignore.case = TRUE)))
@@ -316,24 +341,31 @@ mod_dashboard_structure_server <-
     # Update table list when a table is dropped.
     
     observeEvent(action_manage_tables$dropped_table, {
-      db_menu <- update_sidebar_db(conn$db_list)
-      output$sidebar_ui <-
-        shinydashboard::renderMenu({
-          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
-        })
-    })
-    
-    # Update table list when a table is renamed.
-    
-    observeEvent(action_manage_tables$renamed_table, {
-      db_menu <- update_sidebar_db(conn$db_list)
+      db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                      conn$active_db,
+                                      conn$db_list)
       output$sidebar_ui <-
         shinydashboard::renderMenu({
           shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
         })
       shinydashboard::updateTabItems(session,
                                      inputId = 'sidebar_menu',
-                                     selected = input$sidebar_menu)
+                                     selected = conn$active_db_tabName)
+    })
+    
+    # Update table list when a table is renamed.
+    
+    observeEvent(action_manage_tables$renamed_table, {
+      db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                      conn$active_db,
+                                      conn$db_list)
+      output$sidebar_ui <-
+        shinydashboard::renderMenu({
+          shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu)
+        })
+      shinydashboard::updateTabItems(session,
+                                     inputId = 'sidebar_menu',
+                                     selected = conn$active_db_tabName)
     })
     
     # Update database list when a query is executed
@@ -352,11 +384,13 @@ mod_dashboard_structure_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- update_sidebar_db(conn$db_list)
+            db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                            conn$active_db,
+                                            conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
             shinydashboard::updateTabItems(session,
                                            inputId = 'sidebar_menu',
-                                           selected = input$sidebar_menu)
+                                           selected = conn$active_db_tabName)
           })
         }
       })
@@ -376,11 +410,13 @@ mod_dashboard_structure_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- update_sidebar_db(conn$db_list)
+            db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                            conn$active_db,
+                                            conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
             shinydashboard::updateTabItems(session,
                                            inputId = 'sidebar_menu',
-                                           selected = input$sidebar_menu)
+                                           selected = conn$active_db_tabName)
           })
         }
       })
@@ -400,11 +436,13 @@ mod_dashboard_structure_server <-
         }
         else{
           output$sidebar_ui <- shinydashboard::renderMenu({
-            db_menu <- update_sidebar_db(conn$db_list)
+            db_menu <- update_sidebar_table(conn$active_db_tabName,
+                                            conn$active_db,
+                                            conn$db_list)
             return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
             shinydashboard::updateTabItems(session,
                                            inputId = 'sidebar_menu',
-                                           selected = input$sidebar_menu)
+                                           selected = conn$active_db_tabName)
           })
         }
       })

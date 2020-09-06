@@ -104,7 +104,7 @@ mod_view_tables_server <-
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
-          data = table_info$data[, -c(1), drop = FALSE],
+          data = table_info$data[,-c(1), drop = FALSE],
           editable = "cell",
           rownames = FALSE,
           selection = "multiple",
@@ -160,16 +160,17 @@ mod_view_tables_server <-
     observeEvent(input$confirm_change_rows_fetched, {
       tryCatch({
         table_info$number_rows = input$change_rows_fetched
-        table_info$data <-
-          RSQLite::dbGetQuery(
-            conn$active_db,
-            data_fetch_query(
-              conn$active_table,
-              table_info$number_rows,
-              table_info$offset
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows,
+                table_info$offset
+              )
             )
-          )
-        
+        })
       },
       error = function(err) {
         showNotification(ui =  "Please specify a value first.",
@@ -183,15 +184,17 @@ mod_view_tables_server <-
     observeEvent(input$confirm_fetch_offset, {
       tryCatch({
         table_info$offset = input$fetch_offset - 1
-        table_info$data <-
-          RSQLite::dbGetQuery(
-            conn$active_db,
-            data_fetch_query(
-              conn$active_table,
-              table_info$number_rows,
-              table_info$offset
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows,
+                table_info$offset
+              )
             )
-          )
+        })
       },
       error = function(err) {
         showNotification(ui =  "Please specify a value first.",
@@ -202,39 +205,54 @@ mod_view_tables_server <-
     
     observeEvent(input$header, {
       table_info$offset <- 0
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(conn$active_table,
-                           table_info$number_rows,
-                           0)
-        )
+      withProgress(message = "Processing", expr =  {
+        table_info$data <-
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(conn$active_table,
+                             table_info$number_rows,
+                             0)
+          )
+      })
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = 1)
     })
     
     observeEvent(input$footer, {
       table_info$offset <- table_info$total_rows - table_info$number_rows
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$total_rows - table_info$number_rows
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
+      withProgress(message = "Processing", expr =  {
+        table_info$data <-
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(
+              conn$active_table,
+              table_info$number_rows,
+              table_info$total_rows - table_info$number_rows
+            )
           )
-        )
+      })
     })
     
     observeEvent(input$fetch_previous, {
       table_info$offset = max(table_info$offset - table_info$number_rows, 0)
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$offset
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
+      withProgress(message = "Processing", expr =  {
+        table_info$data <-
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(
+              conn$active_table,
+              table_info$number_rows,
+              table_info$offset
+            )
           )
-        )
+      })
     })
     
     # If  current offset is greater than total_rows-number_rows
@@ -247,32 +265,10 @@ mod_view_tables_server <-
           table_info$offset + table_info$number_rows,
           table_info$total_rows - table_info$number_rows
         )
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$offset
-          )
-        )
-    })
-    
-    observeEvent(input$fetch_all, {
-      table_info$data <-
-        RSQLite::dbGetQuery(conn$active_db,
-                            data_fetch_query(conn$active_table,
-                                             table_info$total_rows,
-                                             0))
-    })
-    
-    # Fetch data for active table.
-    
-    observeEvent(conn$active_table, {
-      if (conn$active_table != "") {
-        table_info$column_names <-
-          RSQLite::dbGetQuery(conn$active_db, column_names_query(conn$active_table))
-        
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
+      withProgress(message = "Processing", expr =  {
         table_info$data <-
           RSQLite::dbGetQuery(
             conn$active_db,
@@ -282,12 +278,51 @@ mod_view_tables_server <-
               table_info$offset
             )
           )
+      })
+    })
+    
+    observeEvent(input$fetch_all, {
+      table_info$offset <- 0
+      updateNumericInput(session = session,
+                         inputId = "fetch_offset",
+                         value = table_info$offset + 1)
+      withProgress(message = "Processing", expr =  {
+        table_info$data <-
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(conn$active_table,
+                             table_info$total_rows,
+                             0)
+          )
+      })
+    })
+    
+    # Fetch data for active table.
+    
+    observeEvent(conn$active_table, {
+      if (conn$active_table != "") {
+        table_info$column_names <-
+          RSQLite::dbGetQuery(conn$active_db, column_names_query(conn$active_table))
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows,
+                table_info$offset
+              )
+            )
+        })
         
         table_info$total_rows <-
           as.integer(RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table)))
       }
-      else
-        table_info$data <- NULL
+      else{
+        withProgress(message = "Processing", expr =  {
+          table_info$data <- NULL
+        })
+      }
     })
     
     # Edit table cells.
@@ -319,16 +354,17 @@ mod_view_tables_server <-
             duration = 15,
             type = "error"
           )
-          
-          table_info$data <-
-            RSQLite::dbGetQuery(
-              conn$active_db,
-              data_fetch_query(
-                conn$active_table,
-                table_info$number_rows,
-                table_info$offset
+          withProgress(message = "Processing", expr =  {
+            table_info$data <-
+              RSQLite::dbGetQuery(
+                conn$active_db,
+                data_fetch_query(
+                  conn$active_table,
+                  table_info$number_rows,
+                  table_info$offset
+                )
               )
-            )
+          })
         }
       )
     })
@@ -368,16 +404,17 @@ mod_view_tables_server <-
                            delete_query(conn$active_table,
                                         table_info$data$row_id[i]))
       }
-      
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$offset
+      withProgress(message = "Processing", expr =  {
+        table_info$data <-
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(
+              conn$active_table,
+              table_info$number_rows,
+              table_info$offset
+            )
           )
-        )
+      })
       showNotification(ui =  "Selected rows deleted successfully.",
                        duration = 3,
                        type = "message")
@@ -410,16 +447,17 @@ mod_view_tables_server <-
     observeEvent(input$confirm_delete_all_rows, {
       removeModal()
       RSQLite::dbExecute(conn$active_db, delete_all_query(conn$active_table))
-      
-      table_info$data <-
-        RSQLite::dbGetQuery(
-          conn$active_db,
-          data_fetch_query(
-            conn$active_table,
-            table_info$number_rows,
-            table_info$offset
+      withProgress(message = "Processing", expr =  {
+        table_info$data <-
+          RSQLite::dbGetQuery(
+            conn$active_db,
+            data_fetch_query(
+              conn$active_table,
+              table_info$number_rows,
+              table_info$offset
+            )
           )
-        )
+      })
       showNotification(ui =  "All rows deleted successfully.",
                        duration = 3,
                        type = "message")
@@ -473,15 +511,17 @@ mod_view_tables_server <-
           duration = 3,
           type = "message"
         )
-        table_info$data <-
-          RSQLite::dbGetQuery(
-            conn$active_db,
-            data_fetch_query(
-              conn$active_table,
-              table_info$number_rows,
-              table_info$offset
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows,
+                table_info$offset
+              )
             )
-          )
+        })
       },
       error = function(err) {
         showNotification(
@@ -516,21 +556,6 @@ mod_view_tables_server <-
         )
     })
     
-    # Refresh data when a query is executed affecting data.
-    
-    observeEvent(action_query$data_updated, {
-      tryCatch({
-        table_info$data <-
-          RSQLite::dbGetQuery(
-            conn$active_db,
-            data_fetch_query(
-              conn$active_table,
-              table_info$number_rows,
-              table_info$offset
-            )
-          )
-      })
-    })
   }
 
 ## To be copied in the UI

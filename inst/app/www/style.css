@@ -1,37 +1,185 @@
+@import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
+
+body, .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6, .main-header .logo {
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+body {
+    width: 100%;
+    color: black;
+    min-height: 110vh !important;
+}
+
+h1, h2, h3, .h1, .h2, .h3 {
+  color: #20639b;
+  font-weight: bold;
+}
+/*
+label {
+    margin: 0 0 10px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-left: 0;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: 400;
+    max-width: 100%;
+    margin-bottom: 5px;
+}
+*/
 .shiny-notification {
 	position: fixed;
 	top: 87%;
 	left: 33%;
 	right: 33%;
 	opacity: 1;
+	background-color: #ed553b;
+	color: white;
+	text-align: center;
 }
 
+.container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.btn {
+  margin-right: 10px;
+}
+
+/* Dashboard Body */
+
+.content-wrapper {
+  background-color: #f3f3f4;
+  min-height: 110vh !important;
+}
+
+/* Dashboard Sidebar */
+
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+  background-color: #233646;
+}
+
+.sidebar-menu .active {
+  Background: #f3f3f4;
+}
+
+.skin-blue .sidebar-menu>li.active>a, .sidebar-menu>li[class=""]>a, .skin-blue .sidebar-menu>li:hover>a {
+    color: black;
+    background: #f3f3f4;
+    border-left-color: #2ea4fe;
+}
+
+.skin-blue .sidebar-menu>li>.treeview-menu {
+    background: #222222;
+}
+
+.skin-blue .sidebar a {
+    color: white;
+}
+
+.skin-blue .treeview-menu>li>a {
+    color: #f3f3f4;
+}
+
+/* Dashboard Header */
+
+.skin-blue .main-header .navbar {
+    background-color: #173f5f;
+}
+
+.skin-blue .main-header .logo {
+    background-color: #173f5f;
+    color: #fff;
+}
+
+/* Navigation Bar(tabpanels) */
+
+.main-header .navbar {
+  height: 50px;
+}
+
+.main-header .logo {
+    height: 50px;
+    font-size: 30px;
+}
+
+.nav-tabs>li>a {
+    color: #20639b;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li:hover>a {
+    color: white;
+    background-color: #20639b;
+}
+
+.btn-default {
+    background-color: #20639b;
+    color: #ffffff;
+    border-color: #ddd;
+}
+
+.multicol .shiny-options-group{
+  -webkit-column-count: 5; /* Chrome, Safari, Opera */
+  -moz-column-count: 5;    /* Firefox */
+  column-count: 5;
+  -webkit-column-gap: 250px;
+  column-gap: 250px;
+  -moz-column-fill: auto;
+  -column-fill: auto;
+  /*column-rule: 4px double #ff00ff;*/
+  }
+
+.checkbox{
+  margin-top: 0px !important;
+  -webkit-margin-after: 0px !important; 
+  }
 
 /* mod_dashboard_structure */
 
-.shinyDirectories {
+.shinyDirectories#dashboard_structure-set_directory {
 	color: #fff;
-	padding: 9%;
-	background-color: #337ab7;
+	height: 50px;
+	background-color: #20639b;
 	border-color: #2e6da4;
+}
+
+.shinyDirectories#export_data-save_directory {
+	background-color: #20639b;
+  color: #ffffff;
+  border-color: #ddd;
 }
 
 #dashboard_structure-create_db {
 	color: #fff;
-	padding: 8.4%;
-	background-color: #337ab7;
+	height: 50px;
+	background-color: #20639b;
 	border-color: #2e6da4;
 }
 
+/* mod_import_new_tables */
+
+.shiny-text-output#import_tables-file_selected {
+  margin-left: 10px;
+  padding: 7px;
+}
+
+/* mod_export_data */
+
+.shiny-text-output#export_data-directory_selected {
+  margin-left: 40px;
+  padding: 7px;
+}
 
 /* mod_query */
 
 #query_results {
-	height: 500px;
 	overflow-y: scroll;
 	overflow-x: scroll;
 }
-
 
 /* mod_view_tables */
 

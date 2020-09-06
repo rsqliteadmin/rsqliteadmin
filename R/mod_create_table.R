@@ -13,40 +13,37 @@
 
 mod_create_table_ui <- function(id) {
   ns <- NS(id)
-  tabPanel(
-    title = "Create Table",
-    br(),
-    fluidRow(p(h2(
-      strong("Create a new Table")
-    ))),
-    fluidRow(
-      textInput(
-        inputId = ns("new_table_name"),
-        label = h4(strong("Enter Table Name"))
-      ),
-      DT::DTOutput(ns("display_new_table")),
-      column(width = 2,
-             actionButton(
-               inputId =  ns("add_column"),
-               label = "Add a New Column"
+  tabPanel(title = "Create Table",
+           column(
+             width = 12,
+             fluidRow(h2(
+               "Create a New Table"
              )),
-      column(
-        width = 3,
-        actionButton(inputId = ns("remove_columns"),
-                     label = "Remove Selected Columns")
-      ),
-      column(width = 2,
-             actionButton(
-               inputId = ns("reset_columns"),
-               label = "Reset Columns"
+             fluidRow(textInput(
+               inputId = ns("new_table_name"),
+               label = p("Enter New Table Name")
              )),
-      column(width = 2,
-             actionButton(
-               inputId = ns("create_new_table"),
-               label = "Create New Table"
-             ))
-    )
-  )
+             fluidRow(conditionalPanel(
+               condition = paste0("input['", ns("new_table_name"), "'] != ''"),
+               column(
+                 width = 12,
+                 fluidRow(DT::DTOutput(ns(
+                   "display_new_table"
+                 ))),
+                 fluidRow(
+                   actionButton(inputId =  ns("add_column"),
+                                label = "Add a New Column"),
+                   actionButton(inputId = ns("remove_columns"),
+                                label = "Remove Selected Columns"),
+                   actionButton(inputId = ns("reset_columns"),
+                                label = "Reset Columns"),
+                   actionButton(inputId = ns("create_new_table"),
+                                label = "Create New Table")
+                 )
+               )
+             )),
+             br()
+           ))
 }
 
 #' create_table Server Function
@@ -369,6 +366,29 @@ mod_create_table_server <- function(input, output, session, conn) {
         DT::DTOutput(ns("display_new_table_modal"))
       )
     )
+  })
+  
+  observeEvent(input$foreign_key, {
+    if (!is.null(conn$active_db)) {
+      updateSelectInput(
+        session = session,
+        inputId = "foreign_table_foreign_key",
+        choices = RSQLite::dbListTables(conn$active_db)
+      )
+    }
+  })
+  
+  observeEvent(input$foreign_table_foreign_key, {
+    if (input$foreign_table_foreign_key != "") {
+      updateSelectInput(
+        session = session,
+        inputId = "foreign_column_foreign_key",
+        choices = RSQLite::dbGetQuery(
+          conn$active_db,
+          table_structure_query(input$foreign_table_foreign_key)
+        )$name
+      )
+    }
   })
   
   observeEvent(input$confirm_column, {
