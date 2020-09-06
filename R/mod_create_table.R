@@ -549,3 +549,4 @@ mod_create_table_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_create_table_server, "create_table_ui_1")
+
