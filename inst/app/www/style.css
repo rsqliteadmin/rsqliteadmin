@@ -46,10 +46,6 @@ label {
   padding-right: 0;
 }
 
-.btn {
-  margin-right: 10px;
-}
-
 /* Dashboard Body */
 
 .content-wrapper {
@@ -104,7 +100,7 @@ label {
 
 .main-header .logo {
     height: 50px;
-    font-size: 30px;
+    font-size: 25px;
 }
 
 .nav-tabs>li>a {
@@ -134,27 +130,33 @@ label {
   }
 
 .checkbox{
-  margin-top: 0px !important;
-  -webkit-margin-after: 0px !important; 
+  margin-top: 0px ;
+  -webkit-margin-after: 0px ;
   }
+
+.shiny-input-checkboxgroup label ~ .shiny-options-group, .shiny-input-radiogroup label ~ .shiny-options-grou {
+  margin-top: 0;
+}
 
 /* mod_dashboard_structure */
 
 .shinyDirectories#dashboard_structure-set_directory {
-	color: #fff;
+	color: #ffffff;
 	height: 50px;
 	background-color: #20639b;
-	border-color: #2e6da4;
+	border-color: #20639b;
+  border-right-color: black;
 }
 
 .shinyDirectories#export_data-save_directory {
-	background-color: #20639b;
   color: #ffffff;
-  border-color: #ddd;
+	background-color: #20639b;
+  border-color: #20639b;
+  border-left-color: black;
 }
 
 #dashboard_structure-create_db {
-	color: #fff;
+	color: #ffffff;
 	height: 50px;
 	background-color: #20639b;
 	border-color: #2e6da4;
@@ -172,6 +174,12 @@ label {
 .shiny-text-output#export_data-directory_selected {
   margin-left: 40px;
   padding: 7px;
+}
+
+/* mod_create_table */
+
+#create_table-create_new_table {
+  float: right;
 }
 
 /* mod_query */

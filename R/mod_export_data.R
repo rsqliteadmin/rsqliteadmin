@@ -64,10 +64,11 @@ mod_export_data_ui <- function(id) {
       ),
       fluidRow(column(
         width = 12,
-        tags$div(align = "left",
-                 class = "multicol",
-        checkboxGroupInput(inputId = ns("selected_tables"),
-                           label = "Select Table(s) to Export.")
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(inputId = ns("selected_tables"),
+                             label = "Select Table(s) to Export.")
         )
       )),
       fluidRow(column(
@@ -84,10 +85,12 @@ mod_export_data_ui <- function(id) {
       )),
       fluidRow(column(
         width = 12,
-        tags$div(align = "left",
-                 class = "multicol",
-        checkboxGroupInput(inputId = ns("selected_columns"),
-                           label = "Select Columns to Export"))
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(inputId = ns("selected_columns"),
+                             label = "Select Columns to Export")
+        )
       )),
       fluidRow(column(
         width = 12,
@@ -239,8 +242,8 @@ mod_export_data_server <- function(input, output, session, conn) {
                        type = "error")
     else if (is.null(info$delimiter))
       showNotification(ui = "Please enter a valid separator.",
-                        duration = 10,
-                        type = "error")
+                       duration = 10,
+                       type = "error")
     else{
       tryCatch({
         data <- NULL
