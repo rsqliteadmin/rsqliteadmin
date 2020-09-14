@@ -314,6 +314,11 @@ mod_export_data_server <- function(input, output, session, conn) {
               if (nrow(data) < input$chunk_size)
                 break
             }
+            showNotification(ui = paste0("Table ",
+                                         i, 
+                                         " exported successfully."),
+                             duration = 3,
+                             type = "message")
           }
           else
             showNotification(
