@@ -15,6 +15,7 @@
 #' @importFrom tools file_path_sans_ext
 #' @importFrom RSQLite dbWriteTable
 #' @importFrom data.table fread
+#' @importFrom utils capture.output
 
 mod_import_tables_ui <- function(id) {
   ns <- NS(id)
@@ -272,7 +273,7 @@ mod_import_tables_server <- function(input, output, session, conn) {
           # Reference here: https://stackoverflow.com/a/16563900/
           withProgress(message = "Processing File", expr =  {
             fread_output <-
-              capture.output(data.table::fread(info$file_data$datapath[1], verbose = TRUE) %>% {
+              utils::capture.output(data.table::fread(info$file_data$datapath[1], verbose = TRUE) %>% {
                 NULL
               }) %>%
               .[grepl('%) sep=', .)]
