@@ -6,8 +6,9 @@
 #'
 #' @noRd
 #'
-#' @import shinyFiles
 #' @importFrom shiny NS
+#' @importFrom shinyFiles parseDirPath shinyDirChoose
+#' @importFrom shinyFiles getVolumes shinyDirButton
 #' @importFrom RSQLite dbGetQuery dbListTables
 #' @importFrom data.table fwrite
 

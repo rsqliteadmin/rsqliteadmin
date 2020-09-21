@@ -5,10 +5,11 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd
-#'
-#' @import DT
+#' 
 #' @import disk.frame
 #' @import shinyFiles
+#' @importFrom DT renderDT DTOutput
+#' @importFrom DT JS datatable
 #' @importFrom shiny NS
 #' @importFrom fs path_home
 #' @importFrom tools file_path_sans_ext

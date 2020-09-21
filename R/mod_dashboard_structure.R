@@ -7,8 +7,10 @@
 #' @noRd
 #'
 #' @importFrom shiny NS
-#' @import shinyFiles
-#' @import RSQLite
+#' @importFrom shinyFiles parseDirPath shinyDirChoose
+#' @importFrom shinyFiles getVolumes shinyDirButton
+#' @importFrom RSQLite dbConnect dbDisconnect
+#' @importFrom RSQLite dbListTables SQLite
 #' @import shinydashboard
 #' @importFrom fs path_home
 
@@ -38,10 +40,6 @@ mod_dashboard_structure_ui <- function(id) {
     shinydashboard::dashboardSidebar(shinydashboard::sidebarMenuOutput(ns("sidebar_ui"))),
     shinydashboard::dashboardBody(
       mod_manage_dashboard_body_ui("manage_dashboard_body")
-      # bootstraplib::bs_theme_new(bootswatch = "cerulean")
-      # tags$head(
-      #   tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-      # )
     )
   )
 }

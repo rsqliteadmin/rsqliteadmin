@@ -6,7 +6,8 @@
 #'
 #' @noRd
 #'
-#' @import RSQLite
+#' @importFrom RSQLite dbExecute dbGetQuery
+#' @importFrom RSQLite dbListTables
 #' @importFrom shiny NS
 
 mod_clone_tables_ui <- function(id) {
@@ -229,3 +230,4 @@ mod_clone_tables_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_clone_tables_server, "clone_tables_ui_1")
+
