@@ -11,7 +11,7 @@
 
 mod_manage_databases_ui <- function(id) {
   ns <- NS(id)
-  tabPanel(title = "Manage Databases",
+  tabPanel(title = "Delete Databases",
            br(),
            fluidRow(column(
              5,

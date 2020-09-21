@@ -8,6 +8,7 @@ body {
     width: 100%;
     color: black;
     min-height: 110vh !important;
+    overflow-x: auto;
 }
 
 h1, h2, h3, .h1, .h2, .h3 {
@@ -36,8 +37,6 @@ label {
 	left: 33%;
 	right: 33%;
 	opacity: 1;
-	background-color: #ed553b;
-	color: white;
 	text-align: center;
 }
 
@@ -67,6 +66,10 @@ label {
     color: black;
     background: #f3f3f4;
     border-left-color: #2ea4fe;
+}
+
+.skin-blue .treeview-menu>li.active>a, .skin-blue {
+  color: black;
 }
 
 .skin-blue .sidebar-menu>li>.treeview-menu {

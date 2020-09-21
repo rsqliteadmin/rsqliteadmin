@@ -21,54 +21,56 @@ mod_view_tables_ui <- function(id) {
   
   tabPanel(
     title = "View/Edit Tables",
-    br(),
-    fluidRow(
-      column(width = 1,
-             actionButton(
-               inputId = ns("header"), label = "Header"
-             )),
-      column(width = 1,
-             actionButton(
-               inputId = ns("footer"), label = "Footer"
-             )),
-      column(width = 2,
-             actionButton(
-               inputId = ns("fetch_all"), label = "Display All Rows"
-             )),
-      column(
-        width = 3,
-        actionButton(inputId = ns("fetch_previous"), label = "Display Previous Subset of Rows")
+    column(
+      width = 12,
+      fluidRow(column(width = 12,
+                      h2(textOutput(
+                        ns("heading")
+                      )))),
+      uiOutput(ns("fetch_ui")),
+      br(),
+      fluidRow(
+        column(width = 1,
+               actionButton(
+                 inputId = ns("header"), label = "Header"
+               )),
+        column(width = 3,
+               actionButton(
+                 inputId = ns("footer"), label = "Footer"
+               )),
+        column(
+          width = 6,
+          actionButton(inputId = ns("fetch_previous"), label = "Display Previous Subset of Rows"),
+          
+          actionButton(inputId = ns("fetch_next"), label = "Display Next Subset of Rows"),
+          
+          actionButton(inputId = ns("fetch_all"), label = "Display All Rows")
+        )
       ),
-      column(
-        width = 3,
-        actionButton(inputId = ns("fetch_next"), label = "Display Next Subset of Rows")
-      )
-    ),
-    br(),
-    uiOutput(ns("fetch_ui")),
-    br(),
-    fluidRow(column(
-      width = 11,
-      id = "display_table",
-      DT::DTOutput(ns("display_table"))
-    )),
-    br(),
-    fluidRow(
-      column(width = 2,
-             actionButton(
-               inputId = ns("insert_rows"), label = "Insert new rows"
-             )),
-      column(
-        width = 2,
-        actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows")
+      br(),
+      fluidRow(column(
+        width = 12,
+        id = "display_table",
+        DT::DTOutput(ns("display_table"))
+      )),
+      br(),
+      fluidRow(
+        column(width = 2,
+               actionButton(
+                 inputId = ns("insert_rows"), label = "Insert new rows"
+               )),
+        column(
+          width = 2,
+          actionButton(inputId = ns("delete_rows"), label = "Delete Selected Rows")
+        ),
+        column(width = 2,
+               actionButton(
+                 inputId = ns("delete_all_rows"), label = "Delete All Rows"
+               ))
       ),
-      column(width = 2,
-             actionButton(
-               inputId = ns("delete_all_rows"), label = "Delete All Rows"
-             ))
-    ),
-    br(),
-    br()
+      br(),
+      br()
+    )
   )
 }
 
@@ -101,6 +103,11 @@ mod_view_tables_server <-
       offset = 0
     )
     
+    output$heading <-
+      renderText({
+        paste0("Viewing  Table - ", conn$active_table)
+      })
+    
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
@@ -125,7 +132,7 @@ mod_view_tables_server <-
       })
     
     output$fetch_ui <- renderUI({
-      fluidPage(fluidRow(
+      fluidRow(
         column(
           width = 4,
           numericInput(
@@ -154,7 +161,7 @@ mod_view_tables_server <-
             label = "Confirm"
           )
         )
-      ))
+      )
     })
     
     observeEvent(input$confirm_change_rows_fetched, {
@@ -563,4 +570,3 @@ mod_view_tables_server <-
 
 ## To be copied in the server
 # callModule(mod_view_tables_server, "view_tables_ui_1")
-

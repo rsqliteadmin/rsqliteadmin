@@ -20,7 +20,7 @@ mod_query_ui <- function(id) {
     title = "Query",
     column(
       width = 12,
-      fluidRow(h2("Query Database")),
+      fluidRow(h2("Query from Database")),
       # shinyjqui to make it resizable
       fluidRow(shinyjqui::jqui_resizable(
         shinyAce::aceEditor(
