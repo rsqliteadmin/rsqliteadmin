@@ -25,7 +25,7 @@ mod_dashboard_structure_ui <- function(id) {
           id = ns("set_directory"),
           label = "Set database directory",
           title = "Select a folder",
-          icon = icon("cog", lib = "font-awesome")
+          icon = icon("home", lib = "font-awesome")
         )
       ),
       tags$li(
@@ -34,6 +34,14 @@ mod_dashboard_structure_ui <- function(id) {
           inputId =  ns("create_db"),
           label =  "Create a new database",
           icon = icon("plus-square", lib = "font-awesome")
+        )
+      ),
+      tags$li(
+        class = "dropdown",
+        actionButton(
+          inputId =  ns("delete_db"),
+          label =  "Delete Current Database",
+          icon = icon("trash", lib = "font-awesome")
         )
       )
     ),
@@ -52,7 +60,6 @@ mod_dashboard_structure_server <-
   function(input,
            output,
            session,
-           action,
            action_manage_tables,
            action_query,
            action_create_table,
@@ -301,9 +308,36 @@ mod_dashboard_structure_server <-
       }
     })
     
-    # Update database list when a database is deleted
+    # Delete a database
     
-    observeEvent(action$deleted_db, {
+    observeEvent(input$delete_db, {
+      if (is.null(conn$active_db)) {
+        showNotification(ui = "No database selected.",
+                         duration = 3,
+                         type = "error")
+      }
+      else{
+        showModal(modalDialog(
+          tagList(p(h4(
+            paste0("Are you sure you want to delete "), conn$db_name, "?"
+          ))),
+          title = "Confirm Delete Database",
+          footer = tagList(
+            actionButton(
+              inputId =  ns("confirm_delete"),
+              label =  "Delete"
+            ),
+            modalButton("Cancel")
+          )
+        ))
+      }
+    })
+    
+    observeEvent(input$confirm_delete, {
+      RSQLite::dbDisconnect(conn$active_db)
+      unlink(paste0(conn$directory, conn$db_name))
+      removeModal()
+      
       conn$db_list <- db_list(conn$directory)
       if (length(conn$db_list) == 0) {
         output$sidebar_ui <- shinydashboard::renderMenu({
@@ -320,6 +354,11 @@ mod_dashboard_structure_server <-
           return(shinydashboard::sidebarMenu(id = ns("sidebar_menu"), db_menu))
         })
       }
+      
+      showNotification(paste("The database",
+                             conn$db_name,
+                             "was deleted successfully!"),
+                       duration = 3)
     })
     
     # Update table list when a new table is created

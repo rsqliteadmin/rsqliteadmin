@@ -162,7 +162,19 @@ label {
 	color: #ffffff;
 	height: 50px;
 	background-color: #20639b;
+	border-color: #20639b;
+  border-right-color: black;
+}
+
+#dashboard_structure-delete_db {
+  color: #ffffff;
+	height: 50px;
+	background-color: #20639b;
 	border-color: #2e6da4;
+}
+
+#dashboard_structure-delete_db:hover {
+  background-color: #ea0000;
 }
 
 /* mod_import_new_tables */
