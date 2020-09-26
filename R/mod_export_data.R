@@ -15,7 +15,7 @@
 mod_export_data_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
-    title = "Export Data",
+    title = "Export Tables",
     column(
       width = 12,
       fluidRow(column(width = 12,
@@ -69,7 +69,7 @@ mod_export_data_ui <- function(id) {
           align = "left",
           class = "multicol",
           checkboxGroupInput(inputId = ns("selected_tables"),
-                             label = "Select Table(s) to Export.")
+                             label = "Select Table(s) to Export:")
         )
       )),
       fluidRow(column(

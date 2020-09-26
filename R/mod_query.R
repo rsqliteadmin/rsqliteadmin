@@ -20,28 +20,38 @@ mod_query_ui <- function(id) {
     title = "Query",
     column(
       width = 12,
-      fluidRow(h2("Query from Database")),
+      fluidRow(column(width = 12, h2(
+        "Query the Database"
+      ))),
       # shinyjqui to make it resizable
-      fluidRow(shinyjqui::jqui_resizable(
-        shinyAce::aceEditor(
-          outputId = ns("ace"),
-          placeholder = "Enter query here.",
-          mode = "sql",
-          height = "200px"
+      fluidRow(column(
+        width = 12,
+        shinyjqui::jqui_resizable(
+          shinyAce::aceEditor(
+            outputId = ns("ace"),
+            placeholder = "Enter query here.",
+            mode = "sql",
+            height = "200px"
+          )
         )
       )),
       fluidRow(
-        actionButton(inputId = ns("execute"),
-                     label = "Execute Query"),
-        actionButton(inputId = ns("recent_queries"),
-                     label = "Recent Queries"),
-        actionButton(inputId = ns("save_query"),
-                     label = "Save Query"),
-        actionButton(inputId = ns("saved_queries"),
-                     label = "Show Saved Queries")
+        column(
+          width = 12,
+          actionButton(inputId = ns("execute"),
+                       label = "Execute Query"),
+          actionButton(inputId = ns("recent_queries"),
+                       label = "Recent Queries"),
+          actionButton(inputId = ns("save_query"),
+                       label = "Save Query"),
+          actionButton(inputId = ns("saved_queries"),
+                       label = "Show Saved Queries")
+        )
       ),
       br(),
-      fluidRow(verbatimTextOutput(ns("display_error"))),
+      fluidRow(column(width = 12, verbatimTextOutput(
+        ns("display_error")
+      ))),
       br(),
       fluidRow(uiOutput(ns(
         "query_results_ui"
@@ -158,7 +168,7 @@ mod_query_server <- function(input, output, session, conn) {
   
   output$display_saved_queries <- DT::renderDT(expr = {
     DT::datatable(
-      data = info$saved_data[, c(-1, -2)],
+      data = info$saved_data[, c(-1,-2)],
       rownames = FALSE,
       selection = "single",
       plugins = "ellipsis",
@@ -173,7 +183,7 @@ mod_query_server <- function(input, output, session, conn) {
   
   output$display_recent_queries <- DT::renderDT(expr = {
     DT::datatable(
-      data = info$recent_data[, c(-1, -2)],
+      data = info$recent_data[, c(-1,-2)],
       rownames = FALSE,
       selection = "single",
       plugins = "ellipsis",

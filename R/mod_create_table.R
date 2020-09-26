@@ -13,30 +13,36 @@
 
 mod_create_table_ui <- function(id) {
   ns <- NS(id)
-  tabPanel(title = "Create Table",
+  tabPanel(title = "Create Tables",
            column(
              width = 12,
-             fluidRow(h2("Create a New Table")),
-             fluidRow(textInput(
-               inputId = ns("new_table_name"),
-               label = p("Enter New Table Name")
+             fluidRow(column(width = 12, h2(
+               "Create a New Table"
+             ))),
+             fluidRow(column(
+               width = 12, textInput(
+                 inputId = ns("new_table_name"),
+                 label = p("Enter New Table Name")
+               )
              )),
-             fluidRow(conditionalPanel(
-               condition = paste0("input['", ns("new_table_name"), "'] != ''"),
-               column(
-                 width = 12,
-                 fluidRow(DT::DTOutput(ns(
-                   "display_new_table"
-                 ))),
-                 fluidRow(
-                   actionButton(inputId =  ns("add_column"),
-                                label = "Add a New Column"),
-                   actionButton(inputId = ns("remove_columns"),
-                                label = "Remove Selected Columns"),
-                   actionButton(inputId = ns("reset_columns"),
-                                label = "Reset Columns"),
-                   actionButton(inputId = ns("create_new_table"),
-                                label = "Create New Table")
+             fluidRow(column(
+               width = 12, conditionalPanel(
+                 condition = paste0("input['", ns("new_table_name"), "'] != ''"),
+                 column(
+                   width = 12,
+                   fluidRow(DT::DTOutput(ns(
+                     "display_new_table"
+                   ))),
+                   fluidRow(
+                     actionButton(inputId =  ns("add_column"),
+                                  label = "Add a New Column"),
+                     actionButton(inputId = ns("remove_columns"),
+                                  label = "Remove Selected Columns"),
+                     actionButton(inputId = ns("reset_columns"),
+                                  label = "Reset Columns"),
+                     actionButton(inputId = ns("create_new_table"),
+                                  label = "Create New Table")
+                   )
                  )
                )
              )),
@@ -88,7 +94,7 @@ mod_create_table_server <- function(input, output, session, conn) {
   output$display_new_table_modal <-
     DT::renderDT(expr = {
       DT::datatable(
-        data = info$new_table_columns[, c(-1, -4:-10)],
+        data = info$new_table_columns[, c(-1,-4:-10)],
         rownames = FALSE,
         selection = "multiple"
       )
@@ -187,8 +193,7 @@ mod_create_table_server <- function(input, output, session, conn) {
           column(width = 9,
                  conditionalPanel(
                    condition = paste0("input['", ns("unique"), "'] == true"),
-                   fluidRow(
-                   column(
+                   fluidRow(column(
                      width = 12,
                      selectizeInput(
                        inputId = ns("on_conflict_unique"),
@@ -198,8 +203,8 @@ mod_create_table_server <- function(input, output, session, conn) {
                          placeholder = "Select an Option/ Leave Empty",
                          onInitialize = I('function() { this.setValue(""); }')
                        )
-                     ))
-                   )
+                     )
+                   ))
                  ))
         ),
         fluidRow(
@@ -210,8 +215,7 @@ mod_create_table_server <- function(input, output, session, conn) {
           column(width = 9,
                  conditionalPanel(
                    condition = paste0("input['", ns("not_null"), "'] == true"),
-                   fluidRow(
-                   column(
+                   fluidRow(column(
                      width = 12,
                      selectizeInput(
                        inputId = ns("on_conflict_not_null"),
@@ -233,8 +237,7 @@ mod_create_table_server <- function(input, output, session, conn) {
           column(width = 9,
                  conditionalPanel(
                    condition = paste0("input['", ns("default"), "'] == true"),
-                   fluidRow(
-                   column(
+                   fluidRow(column(
                      width = 12,
                      textInput(
                        inputId = ns("default_value_default"),
@@ -252,12 +255,13 @@ mod_create_table_server <- function(input, output, session, conn) {
           column(width = 9,
                  conditionalPanel(
                    condition = paste0("input['", ns("check_condition"), "'] == true"),
-                   fluidRow(
-                   column(width = 12,
-                          textInput(
-                            inputId = ns("specify_condition_check_condition"),
-                            label = "Specify Condition"
-                          )))
+                   fluidRow(column(
+                     width = 12,
+                     textInput(
+                       inputId = ns("specify_condition_check_condition"),
+                       label = "Specify Condition"
+                     )
+                   ))
                  ))
         ),
         fluidRow(
@@ -268,8 +272,7 @@ mod_create_table_server <- function(input, output, session, conn) {
           column(width = 9,
                  conditionalPanel(
                    condition = paste0("input['", ns("collate"), "'] == true"),
-                   fluidRow(
-                   column(
+                   fluidRow(column(
                      width = 12,
                      selectInput(
                        inputId = ns("collation_type_collate"),
@@ -382,13 +385,17 @@ mod_create_table_server <- function(input, output, session, conn) {
             )
           )
         ),
-        fluidRow(column(width = 12,
-        actionButton(inputId = ns("confirm_column"),
-                     label = "Confirm Column Details"))),
+        fluidRow(column(
+          width = 12,
+          actionButton(inputId = ns("confirm_column"),
+                       label = "Confirm Column Details")
+        )),
         br(),
         br(),
         fluidRow(column(width = 12,
-        DT::DTOutput(ns("display_new_table_modal"))))
+                        DT::DTOutput(
+                          ns("display_new_table_modal")
+                        )))
       )
     ))
   })
@@ -468,7 +475,7 @@ mod_create_table_server <- function(input, output, session, conn) {
       # rbind() messes with column names
       # Reference here: https://stackoverflow.com/q/5231540/
       
-      info$new_table_columns[nrow(info$new_table_columns) + 1, ] <-
+      info$new_table_columns[nrow(info$new_table_columns) + 1,] <-
         c(
           column_details_query,
           input$column_name,
@@ -562,7 +569,7 @@ mod_create_table_server <- function(input, output, session, conn) {
                        type = "error")
     else{
       info$new_table_columns <-
-        info$new_table_columns[-as.numeric(input$display_new_table_rows_selected), ]
+        info$new_table_columns[-as.numeric(input$display_new_table_rows_selected),]
     }
   })
   
@@ -574,3 +581,4 @@ mod_create_table_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_create_table_server, "create_table_ui_1")
+

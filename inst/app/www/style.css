@@ -8,29 +8,17 @@ body {
     width: 100%;
     color: black;
     min-height: 110vh !important;
-    overflow-x: auto;
 }
 
 h1, h2, h3, .h1, .h2, .h3 {
   color: #20639b;
   font-weight: bold;
 }
-/*
-label {
-    margin: 0 0 10px;
-    margin-top: 0;
-    margin-right: 0;
-    margin-left: 0;
-    display: block;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0;
-    margin-inline-end: 0;
-    font-weight: 400;
-    max-width: 100%;
-    margin-bottom: 5px;
+
+.wrapper {
+  overflow-x: scroll;
 }
-*/
+
 .shiny-notification {
 	position: fixed;
 	top: 87%;
@@ -135,6 +123,7 @@ label {
 .checkbox{
   margin-top: 0px ;
   -webkit-margin-after: 0px ;
+  padding: 4px;
   }
 
 .shiny-input-checkboxgroup label ~ .shiny-options-group, .shiny-input-radiogroup label ~ .shiny-options-grou {
