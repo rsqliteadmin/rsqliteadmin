@@ -49,4 +49,7 @@ BugReports: https://github.com/rsqliteadmin/rsqliteadmin/issues
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
