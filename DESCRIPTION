@@ -42,7 +42,8 @@ Imports:
     shinyjqui,
     shinydashboard,
     disk.frame,
-    data.table
+    data.table,
+    magrittr
 RoxygenNote: 7.1.1
 URL: https://github.com/rsqliteadmin/rsqliteadmin
 BugReports: https://github.com/rsqliteadmin/rsqliteadmin/issues
