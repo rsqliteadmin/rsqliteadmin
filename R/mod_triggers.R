@@ -202,3 +202,4 @@ mod_triggers_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_triggers_server, "triggers_ui_1")
+

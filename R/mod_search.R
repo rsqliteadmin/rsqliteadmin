@@ -197,3 +197,4 @@ mod_search_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_search_server, "search_ui_1")
+
