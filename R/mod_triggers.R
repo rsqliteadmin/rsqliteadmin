@@ -14,15 +14,22 @@
 mod_triggers_ui <- function(id) {
   ns <- NS(id)
   tabPanel(title = "Triggers",
-           br(),
-           fluidRow(DT::DTOutput(ns(
-             "display_triggers"
-           ))),
-           fluidRow(
-             actionButton(inputId = ns("create_trigger"),
-                          label = "Create Trigger"),
-             actionButton(inputId = ns("delete_triggers"),
-                          label = "Delete Selected Triggers")
+           column(
+             width = 12,
+             fluidRow(column(width = 12,
+                             h2(textOutput(
+                               ns("heading")
+                             )))),
+             fluidRow(column(width = 12, DT::DTOutput(
+               ns("display_triggers")
+             ))),
+             fluidRow(column(
+               width = 12,
+               actionButton(inputId = ns("create_trigger"),
+                            label = "Create Trigger"),
+               actionButton(inputId = ns("delete_triggers"),
+                            label = "Delete Selected Triggers")
+             ))
            ))
 }
 
@@ -36,6 +43,11 @@ mod_triggers_server <- function(input, output, session, conn) {
   # info$data - stores trigger data fetched from query
   
   info <- reactiveValues(data = NULL)
+  
+  output$heading <-
+    renderText({
+      paste0("Triggers - ", conn$active_table)
+    })
   
   output$display_triggers <-
     DT::renderDT(expr = {
@@ -53,36 +65,58 @@ mod_triggers_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$create_trigger, {
-    showModal(
-      modalDialog(
-        size = "l",
-        easyClose = TRUE,
-        textInput(inputId = ns("trigger_name"),
-                  label = "Name"),
-        selectInput(
-          inputId = ns("trigger_when"),
-          label = "When",
-          choices = c("BEFORE", "AFTER")
-        ),
-        selectInput(
-          inputId = ns("trigger_action"),
-          label = "Action",
-          choices = c("DELETE", "INSERT", "UPDATE")
-        ),
-        textInput(
-          inputId = ns("trigger_pre_condition"),
-          label = "Pre-Condition(Optional)"
-        ),
-        shinyAce::aceEditor(
-          outputId = ns("trigger_logic"),
-          placeholder = "Trigger Logic",
-          mode = "sql",
-          height = "100px"
-        ),
-        actionButton(inputId = ns("trigger_confirm"),
-                     label = "Confirm")
+    showModal(modalDialog(
+      size = "l",
+      title = "Create New Trigger",
+      easyClose = TRUE,
+      column(
+        width = 12,
+        fluidRow(column(
+          width = 12,
+          textInput(inputId = ns("trigger_name"),
+                    label = "Name")
+        )),
+        fluidRow(column(
+          width = 12,
+          selectInput(
+            inputId = ns("trigger_when"),
+            label = "When",
+            choices = c("BEFORE", "AFTER")
+          )
+        )),
+        fluidRow(column(
+          width = 12,
+          selectInput(
+            inputId = ns("trigger_action"),
+            label = "Action",
+            choices = c("DELETE", "INSERT", "UPDATE")
+          )
+        )),
+        fluidRow(column(
+          width = 12,
+          textInput(
+            inputId = ns("trigger_pre_condition"),
+            label = "Pre-Condition(Optional)"
+          )
+        )),
+        fluidRow(column(
+          width = 12,
+          shinyAce::aceEditor(
+            outputId = ns("trigger_logic"),
+            placeholder = "Trigger Logic",
+            mode = "sql",
+            height = "100px"
+          )
+        )),
+        fluidRow(column(
+          width = 12,
+          actionButton(inputId = ns("trigger_confirm"),
+                       label = "Confirm")
+        )),
+        br(),
+        br()
       )
-    )
+    ))
   })
   
   observeEvent(input$trigger_confirm, {

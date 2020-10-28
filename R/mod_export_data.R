@@ -6,15 +6,16 @@
 #'
 #' @noRd
 #'
-#' @import shinyFiles
 #' @importFrom shiny NS
+#' @importFrom shinyFiles parseDirPath shinyDirChoose
+#' @importFrom shinyFiles getVolumes shinyDirButton
 #' @importFrom RSQLite dbGetQuery dbListTables
 #' @importFrom data.table fwrite
 
 mod_export_data_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
-    title = "Export Data",
+    title = "Export Tables",
     column(
       width = 12,
       fluidRow(column(width = 12,
@@ -64,10 +65,11 @@ mod_export_data_ui <- function(id) {
       ),
       fluidRow(column(
         width = 12,
-        tags$div(align = "left",
-                 class = "multicol",
-        checkboxGroupInput(inputId = ns("selected_tables"),
-                           label = "Select Table(s) to Export.")
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(inputId = ns("selected_tables"),
+                             label = "Select Table(s) to Export:")
         )
       )),
       fluidRow(column(
@@ -84,10 +86,12 @@ mod_export_data_ui <- function(id) {
       )),
       fluidRow(column(
         width = 12,
-        tags$div(align = "left",
-                 class = "multicol",
-        checkboxGroupInput(inputId = ns("selected_columns"),
-                           label = "Select Columns to Export"))
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(inputId = ns("selected_columns"),
+                             label = "Select Columns to Export")
+        )
       )),
       fluidRow(column(
         width = 12,
@@ -239,8 +243,8 @@ mod_export_data_server <- function(input, output, session, conn) {
                        type = "error")
     else if (is.null(info$delimiter))
       showNotification(ui = "Please enter a valid separator.",
-                        duration = 10,
-                        type = "error")
+                       duration = 10,
+                       type = "error")
     else{
       tryCatch({
         data <- NULL
@@ -311,6 +315,11 @@ mod_export_data_server <- function(input, output, session, conn) {
               if (nrow(data) < input$chunk_size)
                 break
             }
+            showNotification(ui = paste0("Table ",
+                                         i, 
+                                         " exported successfully."),
+                             duration = 3,
+                             type = "message")
           }
           else
             showNotification(

@@ -1,0 +1,32 @@
+---
+title: "RSQLiteAdmin Vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rsqliteadmin}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Setup
+
+For RSQLiteAdmin to work, you should use the latest version of R (or at least later than version 3.5.0). Download R for
+[Windows](https://cran.r-project.org/bin/windows/base/) or [Mac](https://cran.r-project.org/bin/macosx/).
+
+To install and run RSQLiteAdmin, enter the following commands in your R console: 
+```{r, eval = FALSE, echo = TRUE}
+# install the package
+install.packages('rsqliteadmin')
+# load the package  
+library(rsqliteadmin)
+# run the app
+run_app()
+```
+
+

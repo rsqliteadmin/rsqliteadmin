@@ -5,16 +5,19 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd
-#'
-#' @import DT
+#' 
 #' @import disk.frame
 #' @import shinyFiles
+#' @importFrom DT renderDT DTOutput
+#' @importFrom DT JS datatable
 #' @importFrom shiny NS
 #' @importFrom fs path_home
 #' @importFrom tools file_path_sans_ext
 #' @importFrom RSQLite dbWriteTable
 #' @importFrom data.table fread
-
+#' @importFrom utils capture.output globalVariables
+#' @importFrom magrittr %<>% 
+ 
 mod_import_tables_ui <- function(id) {
   ns <- NS(id)
   
@@ -40,12 +43,12 @@ mod_import_tables_ui <- function(id) {
                verbatimTextOutput(ns("file_selected")))
       ),
       fluidRow(column(
-        width = 4,
+        width = 3,
         textInput(inputId = ns("delimiter"),
                   label = "Separator")
-      )),
-      fluidRow(column(
-        width = 12,
+      ),
+      column(
+        width = 9,
         selectInput(
           inputId = ns("file_list"),
           label = "Edit Properties of:",
@@ -136,18 +139,21 @@ mod_import_tables_server <- function(input, output, session, conn) {
                         "display_header"
                       ))),
                fluidRow(column(width = 12,
+                               br(),
                                fluidRow(
-                                 column(width = 2,
-                                        radioButtons(
-                                          inputId = ns("import_type"),
-                                          label = h3("Import from file:"),
-                                          choices = c(
-                                            "All Columns",
-                                            "Columns Selected in Table",
-                                            "Columns from List",
-                                            "Columns by Name"
-                                          )
-                                        ))
+                                 column(
+                                   width = 12,
+                                   radioButtons(
+                                     inputId = ns("import_type"),
+                                     label = "Import from file:",
+                                     choices = c(
+                                       "All Columns",
+                                       "Columns Selected in Table",
+                                       "Columns from List",
+                                       "Columns by Name"
+                                     )
+                                   )
+                                 )
                                )))
              )
            ))
@@ -228,6 +234,10 @@ mod_import_tables_server <- function(input, output, session, conn) {
     })
   })
   
+  # Not declaring this causes a NOTE in R CMD Check. Do not remove.
+  # Reference here: https://community.rstudio.com/t/how-to-solve-no-visible-binding-for-global-variable-note/28887
+  utils::globalVariables(c("."))
+  
   observeEvent(info$file_data, {
     if (!is.null(info$file_data)) {
       tryCatch({
@@ -268,7 +278,7 @@ mod_import_tables_server <- function(input, output, session, conn) {
           # Reference here: https://stackoverflow.com/a/16563900/
           withProgress(message = "Processing File", expr =  {
             fread_output <-
-              capture.output(data.table::fread(info$file_data$datapath[1], verbose = TRUE) %>% {
+              utils::capture.output(data.table::fread(info$file_data$datapath[1], verbose = TRUE) %>% {
                 NULL
               }) %>%
               .[grepl('%) sep=', .)]
@@ -401,17 +411,20 @@ mod_import_tables_server <- function(input, output, session, conn) {
         type = "error"
       )
     else {
-      showModal(modalDialog(
-        size = "l",
-        checkboxGroupInput(
-          inputId = ns("checkbox_columns"),
-          label = "Select columns to import",
-          choices = colnames(info$header_data),
-          selected = info$checkbox_selected_columns[[input$file_list]]
-        ),
-        actionButton(inputId = ns("select_all"),
-                     label = "Select/Deselect All")
-      ))
+      showModal(
+        modalDialog(
+          size = "l",
+          title = "Select Columns to Import",
+          checkboxGroupInput(
+            inputId = ns("checkbox_columns"),
+            label = "Select columns to import",
+            choices = colnames(info$header_data),
+            selected = info$checkbox_selected_columns[[input$file_list]]
+          ),
+          actionButton(inputId = ns("select_all"),
+                       label = "Select/Deselect All")
+        )
+      )
     }
   })
   
@@ -447,19 +460,22 @@ mod_import_tables_server <- function(input, output, session, conn) {
         type = "error"
       )
     else {
-      showModal(modalDialog(
-        size = "l",
-        textInput(
-          inputId = ns("specify_columns"),
-          label = "Specify Column Names separated by a comma.",
-          placeholder = "col1, col2, col3, col4",
-          value = info$specify_columns[[input$file_list]]
-        ),
-        actionButton(
-          inputId = ns("confirm_specify_columns"),
-          label = "Confirm"
+      showModal(
+        modalDialog(
+          size = "l",
+          title = "Specify Column Names",
+          textInput(
+            inputId = ns("specify_columns"),
+            label = "Specify Column Names separated by a comma.",
+            placeholder = "col1, col2, col3, col4",
+            value = info$specify_columns[[input$file_list]]
+          ),
+          actionButton(
+            inputId = ns("confirm_specify_columns"),
+            label = "Confirm"
+          )
         )
-      ))
+      )
     }
   })
   

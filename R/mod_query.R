@@ -16,40 +16,49 @@
 
 mod_query_ui <- function(id) {
   ns <- NS(id)
-  tabPanel(title = "Query",
-           br(),
-           column(
-             width = 12,
-             fluidRow(h2(
-               "Query Database"
-             )),
-             # shinyjqui to make it resizable
-             fluidRow(shinyjqui::jqui_resizable(
-               shinyAce::aceEditor(
-                 outputId = ns("ace"),
-                 placeholder = "Enter query here.",
-                 mode = "sql",
-                 height = "200px"
-               )
-             )),
-             fluidRow(
-               actionButton(inputId = ns("execute"),
-                            label = "Execute Query"),
-               actionButton(inputId = ns("save_query"),
-                            label = "Save Query"),
-               actionButton(inputId = ns("saved_queries"),
-                            label = "Saved Queries"),
-               actionButton(inputId = ns("recent_queries"),
-                            label = "Recent Queries"),
-             ),
-             br(),
-             fluidRow(verbatimTextOutput(ns("display_error"))),
-             br(),
-             fluidRow(uiOutput(ns(
-               "query_results_ui"
-             ))),
-             br()
-           ))
+  tabPanel(
+    title = "Query",
+    column(
+      width = 12,
+      fluidRow(column(width = 12, h2(
+        "Query the Database"
+      ))),
+      # shinyjqui to make it resizable
+      fluidRow(column(
+        width = 12,
+        shinyjqui::jqui_resizable(
+          shinyAce::aceEditor(
+            outputId = ns("ace"),
+            placeholder = "Enter query here.",
+            mode = "sql",
+            height = "200px"
+          )
+        )
+      )),
+      fluidRow(
+        column(
+          width = 12,
+          actionButton(inputId = ns("execute"),
+                       label = "Execute Query"),
+          actionButton(inputId = ns("recent_queries"),
+                       label = "Recent Queries"),
+          actionButton(inputId = ns("save_query"),
+                       label = "Save Query"),
+          actionButton(inputId = ns("saved_queries"),
+                       label = "Show Saved Queries")
+        )
+      ),
+      br(),
+      fluidRow(column(width = 12, verbatimTextOutput(
+        ns("display_error")
+      ))),
+      br(),
+      fluidRow(uiOutput(ns(
+        "query_results_ui"
+      ))),
+      br()
+    )
+  )
 }
 
 #' query Server Function
@@ -104,8 +113,9 @@ mod_query_server <- function(input, output, session, conn) {
       width = 12,
       id = "query_results",
       conditionalPanel(condition = !is.null(info$data),
-                       fluidRow(DT::DTOutput(
-                         ns("query_results")
+                       fluidRow(column(
+                         width = 12,
+                         DT::DTOutput(ns("query_results"))
                        )))
     )
   })
@@ -189,18 +199,21 @@ mod_query_server <- function(input, output, session, conn) {
   observeEvent(input$recent_queries, {
     info$recent_data <- RSQLite::dbGetQuery(conn_recent_db,
                                             recent_data_fetch_query())
-    showModal(modalDialog(
-      size = "l",
-      DT::DTOutput(ns("display_recent_queries")),
-      shinyAce::aceEditor(
-        outputId = ns("ace_recent"),
-        placeholder = "",
-        mode = "sql",
-        height = "200px"
-      ),
-      actionButton(inputId = ns("execute_recent"),
-                   label = "Execute Query")
-    ))
+    showModal(
+      modalDialog(
+        size = "l",
+        title = "Recent Queries",
+        DT::DTOutput(ns("display_recent_queries")),
+        shinyAce::aceEditor(
+          outputId = ns("ace_recent"),
+          placeholder = "",
+          mode = "sql",
+          height = "200px"
+        ),
+        actionButton(inputId = ns("execute_recent"),
+                     label = "Execute Query")
+      )
+    )
   })
   
   observeEvent(input$display_recent_queries_rows_selected, {
@@ -263,6 +276,7 @@ mod_query_server <- function(input, output, session, conn) {
     showModal(
       modalDialog(
         size = "l",
+        title = "Saved Queries",
         DT::DTOutput(ns("display_saved_queries")),
         shinyAce::aceEditor(
           outputId = ns("ace_save"),
@@ -300,6 +314,7 @@ mod_query_server <- function(input, output, session, conn) {
   observeEvent(input$save_query, {
     showModal(modalDialog(
       easyClose = TRUE,
+      title = "Save Query",
       textInput(inputId = ns("save_query_name"),
                 label = "Enter Query Name(optional)"),
       actionButton(inputId = ns("confirm_save"),

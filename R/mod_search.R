@@ -12,52 +12,76 @@ mod_search_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     title = "Search",
-    br(),
-    fluidRow(
-      textInput(inputId = ns("search_string"),
-                label = "Search:"),
-      checkboxGroupInput(
-        inputId = ns("search_columns"),
-        label = "Select columns to search in:",
-        choices = NULL
-      ),
-      checkboxGroupInput(
-        inputId = ns("display_columns"),
-        label = "Select columns to display:",
-        choices = NULL
-      )
-    ),
-    fluidRow(
-      column(width = 3,
-             radioButtons(
-               inputId = ns("search_type"),
-               label = "",
-               choices = c(
-                 "Use SQLite Style Wildcard Characters",
-                 "Use UNIX Style Wildcard Characters",
-                 "Use Regex"
-               )
-             )),
-      column(
-        width = 4,
-        conditionalPanel(
-          condition = paste0(
-            "input['",
-            ns("search_type"),
-            "'] == 'Use SQLite Style Wildcard Characters'"
-          ),
-          checkboxInput(inputId = ns("escape_characters"),
-                        label = "Escape % and _ characters.")
+    column(
+      width = 12,
+      fluidRow(column(width = 12,
+                      h2(textOutput(
+                        ns("heading")
+                      )))),
+      fluidRow(column(
+        width = 12,
+        textInput(inputId = ns("search_string"),
+                  label = "Search:")
+      )),
+      fluidRow(column(
+        width = 12,
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(
+            inputId = ns("search_columns"),
+            label = "Select columns to search in:",
+            choices = NULL
+          )
         )
-      )
-    ),
-    fluidRow(actionButton(
-      inputId = ns("search_button"),
-      label = "Search"
-    )),
-    fluidRow(uiOutput(ns(
-      "search_results_ui"
-    )))
+      )),
+      fluidRow(column(
+        width = 12,
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(
+            inputId = ns("display_columns"),
+            label = "Select columns to display:",
+            choices = NULL
+          )
+        )
+      )),
+      fluidRow(
+        column(width = 3,
+               radioButtons(
+                 inputId = ns("search_type"),
+                 label = NULL,
+                 choices = c(
+                   "Use SQLite Style Wildcard Characters",
+                   "Use UNIX Style Wildcard Characters",
+                   "Use Regex"
+                 )
+               )),
+        column(
+          width = 9,
+          conditionalPanel(
+            condition = paste0(
+              "input['",
+              ns("search_type"),
+              "'] == 'Use SQLite Style Wildcard Characters'"
+            ),
+            checkboxInput(inputId = ns("escape_characters"),
+                          label = "Escape % and _ characters.")
+          )
+        )
+      ),
+      fluidRow(column(
+        width = 12,
+        actionButton(inputId = ns("search_button"),
+                     label = "Search")
+      )),
+      fluidRow(column(width = 12, uiOutput(
+        ns("search_results_ui")
+      ))),
+      br(),
+      br()
+    )
   )
 }
 
@@ -69,6 +93,11 @@ mod_search_server <- function(input, output, session, conn) {
   ns <- session$ns
   
   info <- reactiveValues(data = NULL)
+  
+  output$heading <-
+    renderText({
+      paste0("Search - ", conn$active_table)
+    })
   
   output$search_results_ui <- renderUI({
     column(

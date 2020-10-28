@@ -6,7 +6,8 @@
 #'
 #' @noRd
 #'
-#' @import RSQLite
+#' @importFrom RSQLite dbExecute dbGetQuery
+#' @importFrom RSQLite dbListTables
 #' @importFrom shiny NS
 
 mod_clone_tables_ui <- function(id) {
@@ -14,22 +15,57 @@ mod_clone_tables_ui <- function(id) {
   
   tabPanel(
     title = "Clone Tables",
-    br(),
-    checkboxGroupInput(inputId = ns("selected_tables"),
-                       label = "Select table(s) to clone"),
-    selectInput(
-      inputId = ns("table_list"),
-      label = "Edit Properties of: ",
-      choices = NULL
-    ),
-    textInput(inputId = ns("new_table_name"),
-              label = "New Table Name"),
-    checkboxGroupInput(inputId = ns("selected_columns"),
-                       label = "Select Columns to clone"),
-    checkboxInput(inputId = ns("include_data"),
-                  label = "Include Data"),
-    actionButton(inputId = ns("clone"),
-                 label = "Clone")
+    column(
+      width = 12,
+      fluidRow(column(width = 12,
+                      h2("Clone Tables"))),
+      fluidRow(column(
+        width = 12,
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(
+            inputId = ns("selected_tables"),
+            label = "Select table(s) to clone",
+            choices = NULL
+          )
+        )
+      )),
+      fluidRow(column(
+        width = 12,
+        selectInput(
+          inputId = ns("table_list"),
+          label = "Edit Properties of: ",
+          choices = NULL
+        )
+      )),
+      fluidRow(column(
+        width = 12,
+        textInput(inputId = ns("new_table_name"),
+                  label = "New Table Name")
+      )),
+      fluidRow(column(
+        width = 12,
+        tags$div(
+          align = "left",
+          class = "multicol",
+          checkboxGroupInput(inputId = ns("selected_columns"),
+                             label = "Select Columns to clone")
+        )
+      )),
+      fluidRow(column(
+        width = 12,
+        checkboxInput(inputId = ns("include_data"),
+                      label = "Include Data")
+      )),
+      fluidRow(column(
+        width = 12,
+        actionButton(inputId = ns("clone"),
+                     label = "Clone")
+      )),
+      br(),
+      br()
+    )
   )
 }
 

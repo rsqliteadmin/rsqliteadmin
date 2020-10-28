@@ -16,32 +16,31 @@
 
 mod_table_structure_ui <- function(id) {
   ns <- NS(id)
-  tabPanel(
-    title = "Structure",
-    fluidRow(p(h2(
-      strong(textOutput(ns(
-        "current_table_structure"
-      )))
-    ))),
-    fluidRow(DT::DTOutput(ns(
-      "display_table_structure"
-    ))),
-    column(width = 2,
-           actionButton(
-             inputId = ns("add_column_current_table"),
-             label = "Add a New Column"
-           )),
-    column(width = 2,
-           actionButton(
-             inputId = ns("rename_table"),
-             label = "Rename Table"
-           )),
-    column(
-      width = 2,
-      actionButton(inputId = ns("drop_table"),
-                   label = "Drop Current Table")
-    )
-  )
+  tabPanel(title = "Structure",
+           column(
+             width = 12,
+             fluidRow(column(width = 12, h2(textOutput(
+               ns("heading")
+             )))),
+             fluidRow(column(width = 12, DT::DTOutput(
+               ns("display_table_structure")
+             ))),
+             fluidRow(
+               column(
+                 width = 12,
+                 actionButton(
+                   inputId = ns("add_column_current_table"),
+                   label = "Add a New Column"
+                 ),
+                 actionButton(inputId = ns("rename_table"),
+                              label = "Rename Table"),
+                 actionButton(inputId = ns("drop_table"),
+                              label = "Drop Current Table")
+               )
+             ),
+             br(),
+             br()
+           ))
 }
 
 #' table_structure Server Function
@@ -86,9 +85,9 @@ mod_table_structure_server <-
         )
       })
     
-    output$current_table_structure <-
+    output$heading <-
       renderText({
-        paste0(conn$active_table, " - Table Structure")
+        paste0("Table Structure - ", conn$active_table)
       })
     
     observeEvent(conn$active_table, {
@@ -222,37 +221,41 @@ mod_table_structure_server <-
     })
     
     observeEvent(input$add_column_current_table, {
-      showModal(
-        modalDialog(
-          size = "l",
-          column(width = 6,
-                 textInput(
-                   inputId = ns("column_name_current_table"),
-                   label = "Column Name"
-                 )),
-          column(
-            width = 6,
-            selectInput(
-              inputId = ns("data_type_current_table"),
-              label = "Data Type",
-              choices = c(
-                "BIGINT",
-                "BLOB",
-                "BOOLEAN",
-                "CHAR",
-                "DATE",
-                "DATETIME",
-                "DECIMAL",
-                "DOUBLE",
-                "INTEGER",
-                "INT",
-                "NONE",
-                "NUMERIC",
-                "REAL",
-                "STRING",
-                "TEXT",
-                "TIME",
-                "VARCHAR"
+      showModal(modalDialog(
+        size = "l",
+        title = "Add New Column",
+        column(
+          width = 12,
+          fluidRow(
+            column(width = 6,
+                   textInput(
+                     inputId = ns("column_name_current_table"),
+                     label = "Column Name"
+                   )),
+            column(
+              width = 6,
+              selectInput(
+                inputId = ns("data_type_current_table"),
+                label = "Data Type",
+                choices = c(
+                  "BIGINT",
+                  "BLOB",
+                  "BOOLEAN",
+                  "CHAR",
+                  "DATE",
+                  "DATETIME",
+                  "DECIMAL",
+                  "DOUBLE",
+                  "INTEGER",
+                  "INT",
+                  "NONE",
+                  "NUMERIC",
+                  "REAL",
+                  "STRING",
+                  "TEXT",
+                  "TIME",
+                  "VARCHAR"
+                )
               )
             )
           ),
@@ -265,8 +268,8 @@ mod_table_structure_server <-
             column(width = 9,
                    conditionalPanel(
                      condition = paste0("input['", ns("not_null_current_table"), "'] == true"),
-                     column(
-                       width = 6,
+                     fluidRow(column(
+                       width = 12,
                        selectizeInput(
                          inputId = ns("on_conflict_not_null_current_table"),
                          label = "On Conflict",
@@ -276,7 +279,7 @@ mod_table_structure_server <-
                            onInitialize = I('function() { this.setValue(""); }')
                          )
                        )
-                     )
+                     ))
                    ))
           ),
           fluidRow(
@@ -288,13 +291,13 @@ mod_table_structure_server <-
             column(width = 9,
                    conditionalPanel(
                      condition = paste0("input['", ns("default_current_table"), "'] == true"),
-                     column(
-                       width = 6,
+                     fluidRow(column(
+                       width = 12,
                        textInput(
                          inputId = ns("default_value_default_current_table"),
                          label = "Specify Default Value"
                        )
-                     )
+                     ))
                    ))
           ),
           fluidRow(
@@ -311,12 +314,13 @@ mod_table_structure_server <-
                        "input['",
                        ns("check_condition_current_table"),
                        "'] == true"
-                     ),
-                     column(width = 6,
-                            textInput(
-                              inputId = ns("specify_condition_check_condition_current_table"),
-                              label = "Specify Condition"
-                            ))
+                     ), fluidRow(column(
+                       width = 12,
+                       textInput(
+                         inputId = ns("specify_condition_check_condition_current_table"),
+                         label = "Specify Condition"
+                       )
+                     ))
                    ))
           ),
           fluidRow(
@@ -328,14 +332,14 @@ mod_table_structure_server <-
             column(width = 9,
                    conditionalPanel(
                      condition = paste0("input['", ns("collate_current_table"), "'] == true"),
-                     column(
-                       width = 6,
+                     fluidRow(column(
+                       width = 12,
                        selectInput(
                          inputId = ns("collation_type_collate_current_table"),
                          label = "Collation Type",
                          choices = c("RTRIM", "NOCASE", "BINARY")
                        )
-                     )
+                     ))
                    ))
           ),
           fluidRow(
@@ -345,77 +349,88 @@ mod_table_structure_server <-
                      label = "Foreign Key"
                    )),
             column(
-              width = 6,
+              width = 9,
               conditionalPanel(
                 condition = paste0("input['", ns("foreign_key_current_table"), "'] == true"),
-                column(
-                  width = 6,
-                  selectInput(
-                    inputId = ns("foreign_table_foreign_key_current_table"),
-                    label = "Select Foreign Table",
-                    choices = NULL,
-                  )
-                ),
-                column(
-                  width = 6,
-                  selectInput(
-                    inputId = ns("foreign_column_foreign_key_current_table"),
-                    label = "Select Foreign Column",
-                    choices = NULL
-                  )
-                ),
-                selectizeInput(
-                  inputId = ns("on_update_foreign_key_current_table"),
-                  label = "ON UPDATE",
-                  choices = c("NO ACTION",
-                              "SET NULL",
-                              "SET DEFAULT",
-                              "CASCADE",
-                              "RESTRICT"),
-                  options = list(
-                    placeholder = "Select an Option/ Leave Empty",
-                    onInitialize = I('function() { this.setValue(""); }')
-                  )
-                ),
-                selectizeInput(
-                  inputId = ns("on_delete_foreign_key_current_table"),
-                  label = "ON DELETE",
-                  choices = c("NO ACTION",
-                              "SET NULL",
-                              "SET DEFAULT",
-                              "CASCADE",
-                              "RESTRICT"),
-                  options = list(
-                    placeholder = "Select an Option/ Leave Empty",
-                    onInitialize = I('function() { this.setValue(""); }')
-                  )
-                ),
-                selectizeInput(
-                  inputId = ns("match_foreign_key_current_table"),
-                  label = "MATCH",
-                  choices = c("SIMPLE", "PARTIAL", "FULL"),
-                  options = list(
-                    placeholder = "Select an Option/ Leave Empty",
-                    onInitialize = I('function() { this.setValue(""); }')
-                  )
-                ),
-                
-                p(h5(strong(
-                  "Deferred Foreign Key: "
-                ))),
-                column(
-                  width = 12,
-                  selectizeInput(
-                    inputId = ns("defer_first_foreign_key_current_table"),
-                    choices = c("DEFERRABLE", "NON DEFERRABLE"),
-                    label = NULL,
-                    options = list(
-                      placeholder = "Select an Option/ Leave Empty",
-                      onInitialize = I('function() { this.setValue(""); }')
+                fluidRow(
+                  column(
+                    width = 6,
+                    selectInput(
+                      inputId = ns("foreign_table_foreign_key_current_table"),
+                      label = "Select Foreign Table",
+                      choices = NULL,
+                    )
+                  ),
+                  column(
+                    width = 6,
+                    selectInput(
+                      inputId = ns("foreign_column_foreign_key_current_table"),
+                      label = "Select Foreign Column",
+                      choices = NULL
                     )
                   )
                 ),
-                column(
+                fluidRow(
+                  column(
+                    width = 6,
+                    selectizeInput(
+                      inputId = ns("on_update_foreign_key_current_table"),
+                      label = "ON UPDATE",
+                      choices = c("NO ACTION",
+                                  "SET NULL",
+                                  "SET DEFAULT",
+                                  "CASCADE",
+                                  "RESTRICT"),
+                      options = list(
+                        placeholder = "Select an Option/ Leave Empty",
+                        onInitialize = I('function() { this.setValue(""); }')
+                      )
+                    )
+                  ),
+                  column(
+                    width = 6,
+                    selectizeInput(
+                      inputId = ns("on_delete_foreign_key_current_table"),
+                      label = "ON DELETE",
+                      choices = c("NO ACTION",
+                                  "SET NULL",
+                                  "SET DEFAULT",
+                                  "CASCADE",
+                                  "RESTRICT"),
+                      options = list(
+                        placeholder = "Select an Option/ Leave Empty",
+                        onInitialize = I('function() { this.setValue(""); }')
+                      )
+                    )
+                  )
+                ),
+                fluidRow(
+                  column(
+                    width = 6,
+                    selectizeInput(
+                      inputId = ns("match_foreign_key_current_table"),
+                      label = "MATCH",
+                      choices = c("SIMPLE", "PARTIAL", "FULL"),
+                      options = list(
+                        placeholder = "Select an Option/ Leave Empty",
+                        onInitialize = I('function() { this.setValue(""); }')
+                      )
+                    )
+                  ),
+                  column(
+                    width = 6,
+                    selectizeInput(
+                      inputId = ns("defer_first_foreign_key_current_table"),
+                      choices = c("DEFERRABLE", "NON DEFERRABLE"),
+                      label = "Deferred Foreign Key: ",
+                      options = list(
+                        placeholder = "Select an Option/ Leave Empty",
+                        onInitialize = I('function() { this.setValue(""); }')
+                      )
+                    )
+                  )
+                ),
+                fluidRow(column(
                   width = 12,
                   selectizeInput(
                     inputId = ns("defer_second_foreign_key_current_table"),
@@ -426,16 +441,19 @@ mod_table_structure_server <-
                       onInitialize = I('function() { this.setValue(""); }')
                     )
                   )
-                )
+                ))
               )
             )
           ),
-          actionButton(
-            inputId = ns("confirm_column_current_table"),
-            label = "Confirm Column Details"
-          )
+          fluidRow(column(
+            width = 12,
+            actionButton(
+              inputId = ns("confirm_column_current_table"),
+              label = "Confirm Column Details"
+            )
+          ))
         )
-      )
+      ))
     })
     
     observeEvent(input$confirm_column_current_table, {
