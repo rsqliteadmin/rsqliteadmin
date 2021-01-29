@@ -5,7 +5,7 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd
-#' 
+#'
 #' @import disk.frame
 #' @import shinyFiles
 #' @importFrom DT renderDT DTOutput
@@ -15,9 +15,9 @@
 #' @importFrom tools file_path_sans_ext
 #' @importFrom RSQLite dbWriteTable
 #' @importFrom data.table fread
-#' @importFrom utils capture.output globalVariables
-#' @importFrom magrittr %<>% 
- 
+#' @importFrom utils capture.output
+#' @importFrom magrittr %>%
+
 mod_import_tables_ui <- function(id) {
   ns <- NS(id)
   
@@ -234,9 +234,10 @@ mod_import_tables_server <- function(input, output, session, conn) {
     })
   })
   
-  # Not declaring this causes a NOTE in R CMD Check. Do not remove.
-  # Reference here: https://community.rstudio.com/t/how-to-solve-no-visible-binding-for-global-variable-note/28887
-  utils::globalVariables(c("."))
+  # Not declaring this causes a NOTE in R CMD Check because of the
+  # function observeEvent(info$file_data, {...} ). Do not remove.
+  # Reference here: https://stackoverflow.com/a/48750330/
+  . = NULL
   
   observeEvent(info$file_data, {
     if (!is.null(info$file_data)) {
