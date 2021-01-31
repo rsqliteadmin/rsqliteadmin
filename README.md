@@ -12,18 +12,27 @@ RSQLiteAdmin is a comprehensive GUI tool written in R Shiny to explore, manage a
 3. Viewing/Editing data within tables.
 4. Querying and Searching a database.
 
-This package was developed as a part of the Google Summer of Code 2020 program. Special Thanks to all the mentors for supporting the development throughout the program. 
-
 ## Installation
 
 Install the package via:
 ```
+install.packages("rsqliteadmin")
+```
+
+Install the development version via:
+```
 devtools::install_github("https://github.com/rsqliteadmin/rsqliteadmin")
 ```
+
+## Running 
+
 Use this commmand to run the app:
 ```
 rsqliteadmin::run_rsqliteadmin()
 ```
+
+Note: This package was developed as a part of the Google Summer of Code 2020 program.
+
 ## Mentors
 
 [Vijay Barve](vijay.barve@gmail.com)
