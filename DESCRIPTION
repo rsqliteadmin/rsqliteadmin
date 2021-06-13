@@ -1,8 +1,8 @@
 Package: rsqliteadmin
 Title: A GUI to Manage SQLite Databases
 Description: A comprehensive tool written in R Shiny to explore, manage and update SQLite Databases.
-Version: 1.0.0
-Date: 2021-01-20
+Version: 1.0.1
+Date: 2021-06-13
 Authors@R: c(
     person(
         "Vijay", "Barve",
