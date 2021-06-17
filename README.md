@@ -1,5 +1,5 @@
 <!-- badges: start -->
-[![R build status](https://github.com/divyansh997/rsqliteadmin/workflows/R-CMD-check/badge.svg)](https://github.com/divyansh997/rsqliteadmin/actions)
+[![R-CMD-check](https://github.com/rsqliteadmin/rsqliteadmin/workflows/R-CMD-check/badge.svg)](https://github.com/rsqliteadmin/rsqliteadmin/actions)
 <!-- badges: end -->
 
 # RSQLiteAdmin
