@@ -63,15 +63,18 @@ mod_export_data_ui <- function(id) {
           )
         )
       ),
+      hr(),
       fluidRow(column(
         width = 12,
         tags$div(
           align = "left",
           class = "multicol",
+          checkboxInput(ns("selectAllDeselectAll"), label ="Select All/None" , value = FALSE),
           checkboxGroupInput(inputId = ns("selected_tables"),
                              label = "Select Table(s) to Export:")
         )
       )),
+      hr(),
       fluidRow(column(
         width = 12,
         selectInput(
@@ -115,14 +118,14 @@ mod_export_data_ui <- function(id) {
 
 mod_export_data_server <- function(input, output, session, conn) {
   ns <- session$ns
-  
+
   # info$file_name_list - List of file names whom data will be exported to,
   #                       default for each file is the corresponding table name.
   # info$column_list - For each table, the columns that have to be exported.
   # info$include_column_names - For each table, specifies if column names are to
   #                             be included in the exported data.
   #
-  
+
   info <- reactiveValues(
     file_name_list = list(),
     column_list = list(),
@@ -130,27 +133,28 @@ mod_export_data_server <- function(input, output, session, conn) {
     delimiter = NULL,
     save_directory = NULL
   )
-  
+
   roots = c(
     shinyFiles::getVolumes()(),
     "Current Working Directory" = '.',
     "Home" = fs::path_home()
   )
-  
+
   shinyFiles::shinyDirChoose(input = input,
                              id = "save_directory",
                              roots = roots)
-  
+
   output$directory_selected <- renderText({
     return(info$save_directory)
   })
-  
-  observeEvent(list(conn$active_db, conn$input_sidebar_menu), {
+
+  observeEvent(list(conn$active_db, conn$input_sidebar_menu, input$selectAllDeselectAll), {
     if (!is.null(conn$active_db)) {
       updateCheckboxGroupInput(
         session = session,
         inputId = "selected_tables",
-        choices = RSQLite::dbListTables(conn$active_db)
+        choices = RSQLite::dbListTables(conn$active_db),
+        selected = if(!is.null(input$selectAllDeselectAll) && input$selectAllDeselectAll) RSQLite::dbListTables(conn$active_db)
       )
       for (i in RSQLite::dbListTables(conn$active_db)) {
         info$file_name_list[[i]] = i
@@ -160,14 +164,14 @@ mod_export_data_server <- function(input, output, session, conn) {
       }
     }
   })
-  
+
   observeEvent(input$save_directory, {
     path <-
       shinyFiles::parseDirPath(roots = roots, input$save_directory)
     if (!(identical(path, character(0))))
       info$save_directory <- paste0(path, "/")
   })
-  
+
   observeEvent(input$selected_tables, {
     updateSelectInput(
       session = session,
@@ -175,7 +179,7 @@ mod_export_data_server <- function(input, output, session, conn) {
       choices = input$selected_tables
     )
   })
-  
+
   observeEvent(input$table_list, {
     updateTextInput(
       session = session,
@@ -196,23 +200,23 @@ mod_export_data_server <- function(input, output, session, conn) {
       value = info$include_column_names[[input$table_list]]
     )
   })
-  
+
   observeEvent(input$file_name, {
     info$file_name_list[[input$table_list]] <- input$file_name
   })
-  
+
   observeEvent(input$selected_columns, {
     if (!is.null(input$table_list)) {
       info$column_list[[input$table_list]] <- input$selected_columns
     }
-    
+
   }, ignoreNULL = FALSE)
-  
+
   observeEvent(input$include_column_names, {
     info$include_column_names[[input$table_list]] <-
       input$include_column_names
   })
-  
+
   observeEvent(input$delimiter, {
     tryCatch({
       # To parse delimiters of the form "\t", "\n", "\r" - these
@@ -235,7 +239,7 @@ mod_export_data_server <- function(input, output, session, conn) {
       )
     })
   })
-  
+
   observeEvent(input$export, {
     if (is.null(info$save_directory))
       showNotification(ui = "Please select a directory where files are to be saved.",
@@ -316,7 +320,7 @@ mod_export_data_server <- function(input, output, session, conn) {
                 break
             }
             showNotification(ui = paste0("Table ",
-                                         i, 
+                                         i,
                                          " exported successfully."),
                              duration = 3,
                              type = "message")
