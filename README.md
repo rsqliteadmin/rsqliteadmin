@@ -35,13 +35,13 @@ Note: This package was developed as a part of the Google Summer of Code 2020 pro
 
 ## Mentors
 
-[Vijay Barve](vijay.barve@gmail.com)
+[Vijay Barve](https://github.com/vijaybarve)
 
-[Thiloshon Nagarajah](thiloshon@gmail.com)
+[Thiloshon Nagarajah](https://github.com/thiloshon)
 
-[Narayani Barve](narayani.ku@gmail.com)
+[Narayani Barve](https://github.com/narayanibarve)
 
-[Marlon E. Cobos](manubio13@gmail.com)
+[Marlon E. Cobos](https://github.com/marlonecobos)
 
 ## Student Developer 
 
