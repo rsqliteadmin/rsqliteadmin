@@ -84,13 +84,6 @@ mod_export_data_ui <- function(id) {
         width = 12, textInput(inputId = ns("file_name"),
                               label = "File Name")
       )),
-      fluidRow(column(
-        width = 12,
-        tags$div(
-          checkboxInput(inputId = ns("select_all_columns"),
-                        label = "Include All Columns", 
-                        value = FALSE))
-      )), 
       fluidRow(
         column(
           width = 6,
@@ -99,18 +92,11 @@ mod_export_data_ui <- function(id) {
                                label = "Select Columns to Export"))
         ),
         column(
-          width = 3,
+          width = 6,
           tags$div(
-            checkboxInput(inputId = ns("include_all_columns"),
-                          label = "Include All Columns", 
-                          value = FALSE),
+            actionButton(inputId = ns("include_all_columns"),
+                         label = "Exclude All Columns"),
           )),
-        column(
-          width = 3,
-          checkboxInput(inputId = ns("exclude_all_columns"),
-                        label = "Exclude All Columns", 
-                        value = FALSE)
-        )
       ),
       fluidRow(column(
         width = 12,
@@ -218,39 +204,38 @@ mod_export_data_server <- function(input, output, session, conn) {
   })
   
   observeEvent(input$include_all_columns, {
-    if (input$include_all_columns) {
-      updateCheckboxInput(
-        session = session,
-        inputId = "exclude_all_columns",
-        value = FALSE
-      )
-      if (!is.null(input$table_list)) {
+    if (!is.null(input$table_list)) {
+      all_columns <- info$column_list[[input$table_list]]
+      
+      if (length(input$selected_columns) != length(all_columns)) {
         updateCheckboxGroupInput(
           session = session,
           inputId = "selected_columns",
-          selected = info$column_list[[input$table_list]]
+          choices = all_columns, 
+          selected = all_columns
         )
-      }
-    }
-  })
-  
-  observeEvent(input$exclude_all_columns, {
-    if (input$exclude_all_columns) {
-      updateCheckboxInput(
-        session = session,
-        inputId = "include_all_columns",
-        value = FALSE
-      )
-      if (!is.null(input$table_list)) {
+        updateActionButton(
+          session = session, 
+          inputId = "include_all_columns",
+          label = "Exclude All Columns"
+        )
+      } else {
         updateCheckboxGroupInput(
           session = session,
           inputId = "selected_columns",
-          choices = info$column_list[[input$table_list]], 
+          choices = all_columns, 
           selected = NULL
         )
+        updateActionButton(
+          session = session, 
+          inputId = "include_all_columns",
+          label = "Include All Columns"
+        )
       }
     }
+
   })
+  
   
   observeEvent(input$file_name, {
     info$file_name_list[[input$table_list]] <- input$file_name
