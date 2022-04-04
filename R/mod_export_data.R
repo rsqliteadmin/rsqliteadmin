@@ -202,7 +202,7 @@ mod_export_data_server <- function(input, output, session, conn) {
     )
   })
 
-  observe({
+  observeEvent(input$selectall, {
     if (!is.null(input$selectall) && input$selectall > 0) {
       if (input$selectall %% 2 != 0) {
         updateCheckboxGroupInput(
