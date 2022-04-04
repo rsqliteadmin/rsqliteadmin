@@ -65,6 +65,12 @@ mod_export_data_ui <- function(id) {
       ),
       fluidRow(column(
         width = 12,
+        actionButton(ns("select_deselectall"), 
+                     label = "Select_Deselect all"),
+      )),
+      br(),
+      fluidRow(column(
+        width = 12,
         tags$div(
           align = "left",
           class = "multicol",
@@ -84,6 +90,12 @@ mod_export_data_ui <- function(id) {
         width = 12, textInput(inputId = ns("file_name"),
                               label = "File Name")
       )),
+      fluidRow(column(
+        width = 12,
+        actionButton(ns("select_all"), 
+                     label = "Select/Deselect all"),
+      )),
+      br(),
       fluidRow(column(
         width = 12,
         tags$div(
@@ -182,23 +194,62 @@ mod_export_data_server <- function(input, output, session, conn) {
       inputId = "file_name",
       value = info$file_name_list[[input$table_list]]
     )
-    if (!is.null(conn$active_db))
-      updateCheckboxGroupInput(
-        session = session,
-        inputId = "selected_columns",
-        choices = RSQLite::dbGetQuery(conn$active_db,
-                                      table_structure_query(input$table_list))$name,
-        selected = info$column_list[[input$table_list]]
-      )
-    updateCheckboxInput(
+  if (!is.null(conn$active_db))
+    updateCheckboxGroupInput(
       session = session,
-      inputId = "include_column_names",
-      value = info$include_column_names[[input$table_list]]
+      inputId = "selected_columns",
+      choices = RSQLite::dbGetQuery(conn$active_db,
+                                    table_structure_query(input$table_list))$name,
+      selected = info$column_list[[input$table_list]]
     )
+  updateCheckboxInput(
+    session = session,
+    inputId = "include_column_names",
+    value = info$include_column_names[[input$table_list]]
+  )
+  })
+  
+  observeEvent(input$select_deselectall, {
+    if (!is.null(input$select_deselectall) && input$select_deselectall > 0) {
+      if (input$select_deselectall %% 2 != 0) {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_tables",
+          choices = RSQLite::dbListTables(conn$active_db),
+          selected = RSQLite::dbListTables(conn$active_db)
+        )}
+    else {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_tables",
+          choices = RSQLite::dbListTables(conn$active_db)
+     )}
+    }
   })
   
   observeEvent(input$file_name, {
     info$file_name_list[[input$table_list]] <- input$file_name
+  })
+  
+  observeEvent(input$select_all, {
+    if (!is.null(input$select_all) && input$select_all > 0) {
+      if (input$select_all %% 2 != 0) {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_columns",
+          choices = RSQLite::dbGetQuery(conn$active_db,
+                                        table_structure_query(input$table_list))$name,
+          selected = RSQLite::dbGetQuery(conn$active_db,
+                                         table_structure_query(input$table_list))$name,
+        )}
+    else {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_columns",
+          choices = RSQLite::dbGetQuery(conn$active_db,
+                                        table_structure_query(input$table_list))$name
+     )}
+    }
   })
   
   observeEvent(input$selected_columns, {
@@ -208,7 +259,7 @@ mod_export_data_server <- function(input, output, session, conn) {
     
   }, ignoreNULL = FALSE)
   
-  observeEvent(input$include_column_names, {
+   observeEvent(input$include_column_names, {
     info$include_column_names[[input$table_list]] <-
       input$include_column_names
   })
