@@ -86,18 +86,20 @@ mod_export_data_ui <- function(id) {
       )),
       fluidRow(
         column(
-          width = 6,
+          width = 12,
           tags$div(
             checkboxGroupInput(inputId = ns("selected_columns"),
                                label = "Select Columns to Export"))
         ),
+      ),
+      fluidRow(
         column(
           width = 6,
           tags$div(
             actionButton(inputId = ns("include_all_columns"),
-                         label = "Exclude All Columns"),
+                         label = "Include All Columns"),
           )),
-      ),
+      ), 
       fluidRow(column(
         width = 12,
         checkboxInput(
@@ -214,22 +216,12 @@ mod_export_data_server <- function(input, output, session, conn) {
           choices = all_columns, 
           selected = all_columns
         )
-        updateActionButton(
-          session = session, 
-          inputId = "include_all_columns",
-          label = "Exclude All Columns"
-        )
       } else {
         updateCheckboxGroupInput(
           session = session,
           inputId = "selected_columns",
           choices = all_columns, 
           selected = NULL
-        )
-        updateActionButton(
-          session = session, 
-          inputId = "include_all_columns",
-          label = "Include All Columns"
         )
       }
     }
