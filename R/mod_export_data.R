@@ -66,7 +66,7 @@ mod_export_data_ui <- function(id) {
       fluidRow(column(
         width = 12,
         actionButton(ns("select_deselectall"), 
-                     label = "Select_Deselect all"),
+                     label = "Select/Deselect Tables"),
       )),
       br(),
       fluidRow(column(
@@ -93,7 +93,7 @@ mod_export_data_ui <- function(id) {
       fluidRow(column(
         width = 12,
         actionButton(ns("select_all"), 
-                     label = "Select/Deselect all"),
+                     label = "Select/Deselect Columns"),
       )),
       br(),
       fluidRow(column(
@@ -215,8 +215,8 @@ mod_export_data_server <- function(input, output, session, conn) {
         updateCheckboxGroupInput(
           session = session,
           inputId = "selected_tables",
-          choices = RSQLite::dbListTables(conn$active_db),
-          selected = RSQLite::dbListTables(conn$active_db)
+          choices = RSQLite::dbListTables(conn$active_db), selected = RSQLite::dbListTables(conn$active_db),
+          inline = FALSE
         )}
     else {
         updateCheckboxGroupInput(
@@ -241,6 +241,7 @@ mod_export_data_server <- function(input, output, session, conn) {
                                         table_structure_query(input$table_list))$name,
           selected = RSQLite::dbGetQuery(conn$active_db,
                                          table_structure_query(input$table_list))$name,
+          inline = FALSE
         )}
     else {
         updateCheckboxGroupInput(
