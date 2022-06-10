@@ -1,4 +1,3 @@
-
 #' export_data UI Function
 #'
 #' @description A shiny Module.
@@ -377,3 +376,4 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
+
