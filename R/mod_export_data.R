@@ -74,6 +74,11 @@ mod_export_data_ui <- function(id) {
       )),
       fluidRow(column(
         width = 12,
+        actionButton(ns("select_deselect_all_tables_to_export"), label = "Select/Deselect all"),
+      )),
+      br(),
+      fluidRow(column(
+        width = 12,
         selectInput(
           inputId = ns("table_list"),
           label = "Edit Properties of: ",
@@ -195,6 +200,27 @@ mod_export_data_server <- function(input, output, session, conn) {
       inputId = "include_column_names",
       value = info$include_column_names[[input$table_list]]
     )
+  })
+
+  observeEvent(input$select_deselect_all_tables_to_export, {
+    if (!is.null(input$select_deselect_all_tables_to_export) && input$select_deselect_all_tables_to_export > 0) {
+      if (input$select_deselect_all_tables_to_export %% 2 != 0) {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_tables",
+          choices = RSQLite::dbListTables(conn$active_db),
+          selected = RSQLite::dbListTables(conn$active_db)
+        )
+
+      } else {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_tables",
+          choices = RSQLite::dbListTables(conn$active_db)
+        )
+
+      }
+    }
   })
   
   observeEvent(input$file_name, {
