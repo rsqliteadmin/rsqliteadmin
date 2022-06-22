@@ -20,9 +20,9 @@ mod_manage_dashboard_body_ui <- function(id) {
 mod_manage_dashboard_body_server <-
   function(input, output, session, conn) {
     ns <- session$ns
-    
+
     # conn$state tells us what has been selected
-    
+
     output$body_ui <- renderUI({
       if (identical(conn$state, "Database"))
         return(
@@ -40,7 +40,8 @@ mod_manage_dashboard_body_server <-
             mod_view_tables_ui("view_tables"),
             mod_table_structure_ui("table_structure"),
             mod_triggers_ui("triggers"),
-            mod_search_ui("search")
+            mod_search_ui("search"),
+            mod_summary_ui("summary")
           )
         )
       else
