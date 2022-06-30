@@ -25,7 +25,9 @@ mod_summary_ui <- function(id) {
                              "heading"
                            ))),
                            br(),
+                           uiOutput(ns("fetch_ui")),
                            DT::DTOutput(ns("anushka")))
+
                   )))
 
 }
@@ -43,13 +45,10 @@ mod_summary_server <-
     ns <- session$ns
 
     table_info <- reactiveValues(
-      column_names = NULL,
       data = NULL,
       total_rows = NULL,
-      edit_info = NULL,
-      page = NULL,
-      number_rows = 1000,
-      offset = 0
+      number_rows_to_summarize = 3000,
+      offset_for_summary = 0
     )
 
     output$heading <-
@@ -57,19 +56,163 @@ mod_summary_server <-
         paste0("Showing Summary of ", conn$active_table)
       })
 
+    output$fetch_ui <- renderUI({
+      fluidRow(
+        column(
+          width = 4,
+          numericInput(
+            inputId = ns("change_rows_summarized"),
+            label = "Change number of rows to summarize:",
+            value =  ifelse(table_info$total_rows <= 3000,
+                            table_info$total_rows,
+                            3000 ),
+            min = 0
+          ),
+          actionButton(
+            inputId = ns("confirm_change_rows_summarized"),
+            label = "Confirm"
+          ),
+          actionButton(
+            inputId = ns("summarize_all"),
+            label = "Summarize All"
+          )
+        ),
+
+        column(
+          width = 4,
+          numericInput(
+            inputId = ns("summary_offset"),
+            label = "Summarize from row number: ",
+            value = 1,
+            min = 1
+          ),
+
+          actionButton(
+            inputId = ns("confirm_summary_offset"),
+            label = "Confirm"
+          )
+        )
+      )
+    })
+
+    observeEvent(input$summarize_all, {
+      updateNumericInput(session, "change_rows_summarized", value = table_info$total_rows)
+      tryCatch({
+        table_info$number_rows_to_summarize = table_info$total_rows
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows_to_summarize,
+                table_info$offset_for_summary
+              )
+            )
+        })
+      },
+      error = function(err) {
+        showNotification(ui =  "Please specify a value first.",
+                         duration = 3,
+                         type = "error")
+      })
+    })
+
+    observeEvent(input$confirm_change_rows_summarized, {
+      tryCatch({
+        table_info$number_rows_to_summarize = input$change_rows_summarized
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows_to_summarize,
+                table_info$offset_for_summary
+              )
+            )
+        })
+      },
+      error = function(err) {
+        showNotification(ui =  "Please specify a value first.",
+                         duration = 3,
+                         type = "error")
+      })
+    })
+
+    # Offset is one less than the row number to be displayed from.
+
+    observeEvent(input$confirm_summary_offset, {
+      tryCatch({
+        table_info$offset_for_summary = input$summary_offset - 1
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows_to_summarize,
+                table_info$offset_for_summary
+              )
+            )
+        })
+      },
+      error = function(err) {
+        showNotification(ui =  "Please specify a value first.",
+                         duration = 3,
+                         type = "error")
+      })
+    })
+
+    observeEvent(conn$active_table, {
+      if (conn$active_table != "") {
+        table_info$number_rows_to_summarize = 3000
+        table_info$offset_for_summary = 0
+        withProgress(message = "Processing", expr =  {
+          table_info$data <-
+            RSQLite::dbGetQuery(
+              conn$active_db,
+              data_fetch_query(
+                conn$active_table,
+                table_info$number_rows_to_summarize,
+                table_info$offset_for_summary
+              )
+            )
+        })
+        table_info$total_rows <-
+          as.integer(RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table)))
+      }
+      else{
+        withProgress(message = "Processing", expr =  {
+          table_info$data <- NULL
+        })
+      }
+    })
+
     output$anushka <- DT::renderDT({
-      data <- RSQLite::dbGetQuery(conn$active_db,
-                                  data_fetch_query(conn$active_table,
-                                                   3000,
-                                                   0))
       DT::datatable(
-        data.frame(
-          unclass(summary(data)),
+        head(data.frame(
+          unclass(summary(table_info$data)),
           row.names = NULL,
           check.names = FALSE,
           stringsAsFactors = FALSE
-        ),
-        options = list(paging = FALSE, scroller = TRUE, scrollX = T)
+        ), -1),
+        options = list(
+          paging = FALSE,
+          scroller = TRUE,
+          scrollX = T,
+          language = list(
+            infoPostFix = paste0(
+              "<br>Summarizing ",
+              ifelse(table_info$number_rows_to_summarize <= table_info$total_rows,
+                     table_info$number_rows_to_summarize,
+                     table_info$total_rows ),
+              " rows out of total ",
+              table_info$total_rows,
+              " rows"
+            )
+          )
+        )
       )
     })
   }
