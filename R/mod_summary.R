@@ -26,7 +26,7 @@ mod_summary_ui <- function(id) {
                            ))),
                            br(),
                            uiOutput(ns("fetch_ui")),
-                           DT::DTOutput(ns("anushka")))
+                           DT::DTOutput(ns("summary_table")))
 
                   )))
 
@@ -189,7 +189,7 @@ mod_summary_server <-
       }
     })
 
-    output$anushka <- DT::renderDT({
+    output$summary_table <- DT::renderDT({
       DT::datatable(
         head(data.frame(
           unclass(summary(table_info$data)),
