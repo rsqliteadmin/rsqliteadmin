@@ -12,6 +12,7 @@
 #' @importFrom DT datatable
 #' @importFrom RSQLite dbGetQuery
 #' @importFrom RSQLite dbExecute
+#' @import datamods shiny
 
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
@@ -48,11 +49,18 @@ mod_view_tables_ui <- function(id) {
         )
       ),
       br(),
-      fluidRow(column(
-        width = 12,
+      fluidRow(
+        column(
+          width = 3,
+          id = "display_table",
+          filter_data_ui(ns("filtering"))
+        ),
+        column(
+        width = 9,
         id = "display_table",
         DT::DTOutput(ns("display_table"))
-      )),
+        )
+      ),
       br(),
       fluidRow(
         column(width = 2,
@@ -103,6 +111,20 @@ mod_view_tables_server <-
       offset = 0
     )
 
+    data <- reactive(table_info$data)
+
+    res_filter <- filter_data_server(
+    id = "filtering",
+    data = data,
+    name = reactive(conn$active_table),
+    vars = reactive(NULL),
+    drop_ids = TRUE,
+    widget_char = "picker",
+    widget_num = "range",
+    widget_date = "slider",
+    label_na = "Missing",
+  )
+
     output$heading <-
       renderText({
         paste0("Viewing  Table - ", conn$active_table)
@@ -111,8 +133,9 @@ mod_view_tables_server <-
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
-          data = table_info$data[,-c(1), drop = FALSE],
+          data = res_filter$filtered(),
           editable = "cell",
+          filter = "top",
           rownames = FALSE,
           selection = "multiple",
           options = list(

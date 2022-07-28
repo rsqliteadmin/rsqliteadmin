@@ -25,8 +25,20 @@ mod_summary_ui <- function(id) {
                              "heading"
                            ))),
                            br(),
-                           uiOutput(ns("fetch_ui")),
-                           DT::DTOutput(ns("summary_table")))
+                           uiOutput(ns("fetch_ui"))),
+                    br(),
+                    br(),
+                  fluidRow(
+                    br(),
+                    column(
+                      width = 3,
+                      filter_data_ui(ns("filtering"), max_height = "500px")
+                    ),
+                    column(
+                      width = 9,
+                      DT::DTOutput(ns("summary_table")))
+                    )
+
 
                   )))
 
@@ -50,6 +62,20 @@ mod_summary_server <-
       number_rows_to_summarize = 3000,
       offset_for_summary = 0
     )
+
+    data <- reactive(table_info$data)
+
+    res_filter <- filter_data_server(
+    id = "filtering",
+    data = data,
+    name = reactive(conn$active_table),
+    vars = reactive(NULL),
+    drop_ids = TRUE,
+    widget_char = "picker",
+    widget_num = "range",
+    widget_date = "slider",
+    label_na = "Missing",
+  )
 
     output$heading <-
       renderText({
@@ -192,7 +218,7 @@ mod_summary_server <-
     output$summary_table <- DT::renderDT({
       DT::datatable(
         head(data.frame(
-          unclass(summary(table_info$data)),
+          unclass(summary(res_filter$filtered())),
           row.names = NULL,
           check.names = FALSE,
           stringsAsFactors = FALSE
