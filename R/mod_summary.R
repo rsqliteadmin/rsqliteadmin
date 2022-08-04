@@ -32,7 +32,7 @@ mod_summary_ui <- function(id) {
                     br(),
                     column(
                       width = 3,
-                      filter_data_ui(ns("filtering"), max_height = "500px")
+                      filter_data_ui(ns("filtering"), show_nrow = FALSE, max_height = "500px")
                     ),
                     column(
                       width = 9,

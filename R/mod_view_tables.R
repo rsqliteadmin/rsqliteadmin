@@ -53,7 +53,7 @@ mod_view_tables_ui <- function(id) {
         column(
           width = 3,
           id = "display_table",
-          filter_data_ui(ns("filtering"))
+          filter_data_ui(ns("filtering"), show_nrow = FALSE)
         ),
         column(
         width = 9,
