@@ -15,10 +15,10 @@
 
 mod_view_tables_ui <- function(id) {
   ns <- NS(id)
-
+  
   # Header - Display rows from the start.
   # Footer - Display rows from the end.
-
+  
   tabPanel(
     title = "View/Edit Tables",
     column(
@@ -41,9 +41,9 @@ mod_view_tables_ui <- function(id) {
         column(
           width = 6,
           actionButton(inputId = ns("fetch_previous"), label = "Display Previous Subset of Rows"),
-
+          
           actionButton(inputId = ns("fetch_next"), label = "Display Next Subset of Rows"),
-
+          
           actionButton(inputId = ns("fetch_all"), label = "Display All Rows")
         )
       ),
@@ -86,13 +86,13 @@ mod_view_tables_server <-
            action_manage_tables,
            action_query) {
     ns <- session$ns
-
+    
     # tableinfo - stores all the info about currently active table.
     # tableinfo$column_names - column names of the currently active table.
     # table_info$data - data fetched from sqlite db for the currently active table.
     # tableinfo$edit_info - data about the cell edited
     # tableinfo$page - page starting info about the table
-
+    
     table_info <- reactiveValues(
       column_names = NULL,
       data = NULL,
@@ -102,12 +102,12 @@ mod_view_tables_server <-
       number_rows = 1000,
       offset = 0
     )
-
+    
     output$heading <-
       renderText({
         paste0("Viewing  Table - ", conn$active_table)
       })
-
+    
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
@@ -121,7 +121,7 @@ mod_view_tables_server <-
             language = list(
               infoPostFix = paste0(
                 "<br>Displaying ",
-                ifelse(table_info$number_rows <= table_info$total_rows,
+                 ifelse(table_info$number_rows <= table_info$total_rows,
                        table_info$number_rows,
                        table_info$total_rows ),
                 " rows out of total ",
@@ -132,7 +132,7 @@ mod_view_tables_server <-
           )
         )
       })
-
+    
     output$fetch_ui <- renderUI({
       fluidRow(
         column(
@@ -150,7 +150,7 @@ mod_view_tables_server <-
             label = "Confirm"
           )
         ),
-
+        
         column(
           width = 4,
           numericInput(
@@ -159,7 +159,7 @@ mod_view_tables_server <-
             value = 1,
             min = 1
           ),
-
+          
           actionButton(
             inputId = ns("confirm_fetch_offset"),
             label = "Confirm"
@@ -167,7 +167,7 @@ mod_view_tables_server <-
         )
       )
     })
-
+    
     observeEvent(input$confirm_change_rows_fetched, {
       tryCatch({
         table_info$number_rows = input$change_rows_fetched
@@ -189,9 +189,9 @@ mod_view_tables_server <-
                          type = "error")
       })
     })
-
+    
     # Offset is one less than the row number to be displayed from.
-
+    
     observeEvent(input$confirm_fetch_offset, {
       tryCatch({
         table_info$offset = input$fetch_offset - 1
@@ -213,7 +213,7 @@ mod_view_tables_server <-
                          type = "error")
       })
     })
-
+    
     observeEvent(input$header, {
       table_info$offset <- 0
       withProgress(message = "Processing", expr =  {
@@ -229,7 +229,7 @@ mod_view_tables_server <-
                          inputId = "fetch_offset",
                          value = 1)
     })
-
+    
     observeEvent(input$footer, {
       table_info$offset <- table_info$total_rows - table_info$number_rows
       updateNumericInput(session = session,
@@ -247,7 +247,7 @@ mod_view_tables_server <-
           )
       })
     })
-
+    
     observeEvent(input$fetch_previous, {
       table_info$offset = max(table_info$offset - table_info$number_rows, 0)
       updateNumericInput(session = session,
@@ -265,11 +265,11 @@ mod_view_tables_server <-
           )
       })
     })
-
+    
     # If  current offset is greater than total_rows-number_rows
     # than we should display from the offset as it is the part
     # of last subset anyway.
-
+    
     observeEvent(input$fetch_next, {
       if (table_info$offset < table_info$total_rows - table_info$number_rows)
         table_info$offset = min(
@@ -291,7 +291,7 @@ mod_view_tables_server <-
           )
       })
     })
-
+    
     observeEvent(input$fetch_all, {
       table_info$offset <- 0
       updateNumericInput(session = session,
@@ -307,9 +307,9 @@ mod_view_tables_server <-
           )
       })
     })
-
+    
     # Fetch data for active table.
-
+    
     observeEvent(conn$active_table, {
       if (conn$active_table != "") {
         table_info$column_names <-
@@ -325,7 +325,7 @@ mod_view_tables_server <-
               )
             )
         })
-
+        
         table_info$total_rows <-
           as.integer(RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table)))
       }
@@ -335,12 +335,12 @@ mod_view_tables_server <-
         })
       }
     })
-
+    
     # Edit table cells.
     # Reference here - https://stackoverflow.com/q/13638377/
     # Reference here - https://stackoverflow.com/q/38316013/
-
-
+    
+    
     observeEvent(input$display_table_cell_edit, {
       table_info$page <- input$display_table_rows_current[1] - 1
       table_info$edit_info = input$display_table_cell_edit
@@ -355,7 +355,7 @@ mod_view_tables_server <-
               table_info$data$row_id[table_info$edit_info$row]
             )
           )
-
+          
           table_info$data[table_info$edit_info$row, table_info$edit_info$col +
                             2] <- table_info$edit_info$value
         },
@@ -379,9 +379,9 @@ mod_view_tables_server <-
         }
       )
     })
-
+    
     # Delete user selected rows.
-
+    
     observeEvent(input$delete_rows, {
       if (is.null(input$display_table_rows_selected)) {
         showNotification(ui =  "No rows selected.",
@@ -404,12 +404,12 @@ mod_view_tables_server <-
         ))
       }
     })
-
+    
     observeEvent(input$confirm_delete_selected_rows, {
       removeModal()
       table_info$page <- input$display_table_rows_current[1] - 1
       info <- input$display_table_rows_selected
-
+      
       for (i in info) {
         RSQLite::dbExecute(conn$active_db,
                            delete_query(conn$active_table,
@@ -430,9 +430,9 @@ mod_view_tables_server <-
                        duration = 3,
                        type = "message")
     })
-
+    
     # Delete all rows from the active table.
-
+    
     observeEvent(input$delete_all_rows, {
       if (conn$active_table != "") {
         showModal(modalDialog(
@@ -454,7 +454,7 @@ mod_view_tables_server <-
                          duration = 3,
                          type = "error")
     })
-
+    
     observeEvent(input$confirm_delete_all_rows, {
       removeModal()
       RSQLite::dbExecute(conn$active_db, delete_all_query(conn$active_table))
@@ -473,11 +473,11 @@ mod_view_tables_server <-
                        duration = 3,
                        type = "message")
     })
-
+    
     # Insert row into the active table.
-
+    
     # When insert row button on the main panel is clicked.
-
+    
     observeEvent(input$insert_rows, {
       if (conn$active_table != "") {
         showModal(modalDialog(easyClose = TRUE,
@@ -503,18 +503,18 @@ mod_view_tables_server <-
                          duration = 3,
                          type = "error")
     })
-
+    
     # When the insert row button inside modal dialog box is clicked.
-
+    
     observeEvent(input$insert_row_button, {
       tryCatch({
         table_info$page <- input$display_table_rows_current[1] - 1
         values <- vector(length = nrow(table_info$column_names))
-
+        
         for (i in seq_len(table_info$column_names)) {
           values[i] <- input[[paste0("col", i)]]
         }
-
+        
         RSQLite::dbExecute(conn$active_db,
                            insert_query(conn$active_table, values))
         showNotification(
@@ -542,9 +542,9 @@ mod_view_tables_server <-
         )
       })
     })
-
+    
     # UI for modal box when insert row button on main panel is clicked.
-
+    
     output$insert_row_ui <- renderUI({
       number_of_columns <- nrow(table_info$column_names)
       lapply(1:number_of_columns, function(i) {
@@ -552,9 +552,9 @@ mod_view_tables_server <-
                   label = h4(strong(table_info$column_names[i, 1])))
       })
     })
-
+    
     # Refresh data when column names are changed.
-
+    
     observeEvent(action_manage_tables$column_renamed, {
       table_info$data <-
         RSQLite::dbGetQuery(
@@ -566,7 +566,7 @@ mod_view_tables_server <-
           )
         )
     })
-
+    
   }
 
 ## To be copied in the UI
