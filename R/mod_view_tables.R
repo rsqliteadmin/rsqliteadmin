@@ -121,7 +121,9 @@ mod_view_tables_server <-
             language = list(
               infoPostFix = paste0(
                 "<br>Displaying ",
-                table_info$number_rows,
+                 ifelse(table_info$number_rows <= table_info$total_rows,
+                       table_info$number_rows,
+                       table_info$total_rows ),
                 " rows out of total ",
                 table_info$total_rows,
                 " rows"
@@ -138,7 +140,9 @@ mod_view_tables_server <-
           numericInput(
             inputId = ns("change_rows_fetched"),
             label = "Change number of rows displayed:",
-            value = 1000,
+            value =  ifelse(table_info$total_rows <= 1000,
+                            table_info$total_rows,
+                          1000 ),
             min = 0
           ),
           actionButton(
