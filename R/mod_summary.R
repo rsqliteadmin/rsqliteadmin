@@ -16,7 +16,7 @@
 
 mod_summary_ui <- function(id) {
   ns <- NS(id)
-
+  
   tabPanel(title = "Summary",
            column(width = 12,
                   fluidRow(
@@ -28,20 +28,23 @@ mod_summary_ui <- function(id) {
                            uiOutput(ns("fetch_ui"))),
                     br(),
                     br(),
-                  fluidRow(
-                    br(),
-                    column(
-                      width = 3,
-                      filter_data_ui(ns("filtering"), show_nrow = FALSE, max_height = "500px")
-                    ),
-                    column(
-                      width = 9,
-                      DT::DTOutput(ns("summary_table")))
+                    fluidRow(
+                      br(),
+                      column(
+                        width = 3,
+                        filter_data_ui(
+                          ns("filtering"),
+                          show_nrow = FALSE,
+                          max_height = "500px"
+                        )
+                      ),
+                      column(width = 9,
+                             DT::DTOutput(ns("summary_table")))
                     )
-
-
+                    
+                    
                   )))
-
+  
 }
 
 #' summary Server Function
@@ -55,33 +58,33 @@ mod_summary_server <-
            session,
            conn) {
     ns <- session$ns
-
+    
     table_info <- reactiveValues(
       data = NULL,
       total_rows = NULL,
       number_rows_to_summarize = 3000,
       offset_for_summary = 0
     )
-
+    
     data <- reactive(table_info$data)
-
+    
     res_filter <- filter_data_server(
-    id = "filtering",
-    data = data,
-    name = reactive(conn$active_table),
-    vars = reactive(NULL),
-    drop_ids = TRUE,
-    widget_char = "picker",
-    widget_num = "range",
-    widget_date = "slider",
-    label_na = "Missing",
-  )
-
+      id = "filtering",
+      data = data,
+      name = reactive(conn$active_table),
+      vars = reactive(NULL),
+      drop_ids = TRUE,
+      widget_char = "picker",
+      widget_num = "range",
+      widget_date = "slider",
+      label_na = "Missing",
+    )
+    
     output$heading <-
       renderText({
         paste0("Showing Summary of ", conn$active_table)
       })
-
+    
     output$fetch_ui <- renderUI({
       fluidRow(
         column(
@@ -91,19 +94,17 @@ mod_summary_server <-
             label = "Change number of rows to summarize:",
             value =  ifelse(table_info$total_rows <= 3000,
                             table_info$total_rows,
-                            3000 ),
+                            3000),
             min = 0
           ),
           actionButton(
             inputId = ns("confirm_change_rows_summarized"),
             label = "Confirm"
           ),
-          actionButton(
-            inputId = ns("summarize_all"),
-            label = "Summarize All"
-          )
+          actionButton(inputId = ns("summarize_all"),
+                       label = "Summarize All")
         ),
-
+        
         column(
           width = 4,
           numericInput(
@@ -112,7 +113,7 @@ mod_summary_server <-
             value = 1,
             min = 1
           ),
-
+          
           actionButton(
             inputId = ns("confirm_summary_offset"),
             label = "Confirm"
@@ -120,7 +121,7 @@ mod_summary_server <-
         )
       )
     })
-
+    
     observeEvent(input$summarize_all, {
       updateNumericInput(session, "change_rows_summarized", value = table_info$total_rows)
       tryCatch({
@@ -143,7 +144,7 @@ mod_summary_server <-
                          type = "error")
       })
     })
-
+    
     observeEvent(input$confirm_change_rows_summarized, {
       tryCatch({
         table_info$number_rows_to_summarize = input$change_rows_summarized
@@ -165,9 +166,9 @@ mod_summary_server <-
                          type = "error")
       })
     })
-
+    
     # Offset is one less than the row number to be displayed from.
-
+    
     observeEvent(input$confirm_summary_offset, {
       tryCatch({
         table_info$offset_for_summary = input$summary_offset - 1
@@ -189,7 +190,7 @@ mod_summary_server <-
                          type = "error")
       })
     })
-
+    
     observeEvent(conn$active_table, {
       if (conn$active_table != "") {
         table_info$number_rows_to_summarize = 3000
@@ -214,15 +215,18 @@ mod_summary_server <-
         })
       }
     })
-
+    
     output$summary_table <- DT::renderDT({
       DT::datatable(
-        head(data.frame(
-          unclass(summary(res_filter$filtered())),
-          row.names = NULL,
-          check.names = FALSE,
-          stringsAsFactors = FALSE
-        ), -1),
+        head(
+          data.frame(
+            unclass(summary(res_filter$filtered())),
+            row.names = NULL,
+            check.names = FALSE,
+            stringsAsFactors = FALSE
+          ),
+          -1
+        ),
         options = list(
           paging = FALSE,
           scroller = TRUE,
@@ -230,9 +234,11 @@ mod_summary_server <-
           language = list(
             infoPostFix = paste0(
               "<br>Summarizing ",
-              ifelse(table_info$number_rows_to_summarize <= table_info$total_rows,
-                     table_info$number_rows_to_summarize,
-                     table_info$total_rows ),
+              ifelse(
+                table_info$number_rows_to_summarize <= table_info$total_rows,
+                table_info$number_rows_to_summarize,
+                table_info$total_rows
+              ),
               " rows out of total ",
               table_info$total_rows,
               " rows"

@@ -111,7 +111,7 @@ mod_view_tables_server <-
     output$display_table <-
       DT::renderDT(expr = {
         DT::datatable(
-          data = table_info$data[,-c(1), drop = FALSE],
+          data = table_info$data[, -c(1), drop = FALSE],
           editable = "cell",
           rownames = FALSE,
           selection = "multiple",
@@ -121,9 +121,11 @@ mod_view_tables_server <-
             language = list(
               infoPostFix = paste0(
                 "<br>Displaying ",
-                 ifelse(table_info$number_rows <= table_info$total_rows,
-                       table_info$number_rows,
-                       table_info$total_rows ),
+                ifelse(
+                  table_info$number_rows <= table_info$total_rows,
+                  table_info$number_rows,
+                  table_info$total_rows
+                ),
                 " rows out of total ",
                 table_info$total_rows,
                 " rows"
@@ -142,7 +144,7 @@ mod_view_tables_server <-
             label = "Change number of rows displayed:",
             value =  ifelse(table_info$total_rows <= 1000,
                             table_info$total_rows,
-                          1000 ),
+                            1000),
             min = 0
           ),
           actionButton(
@@ -574,4 +576,3 @@ mod_view_tables_server <-
 
 ## To be copied in the server
 # callModule(mod_view_tables_server, "view_tables_ui_1")
-
