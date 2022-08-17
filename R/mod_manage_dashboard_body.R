@@ -41,10 +41,13 @@ mod_manage_dashboard_body_server <-
             mod_table_structure_ui("table_structure"),
             mod_triggers_ui("triggers"),
             mod_search_ui("search")
+            mod_summary_ui("summary")
           )
         )
       else
-        return(p("No Database Selected. Set a database directory to View/Create Databases."))
+        return(p(
+          "No Database Selected. Set a database directory to View/Create Databases."
+        ))
     })
   }
 
@@ -53,4 +56,3 @@ mod_manage_dashboard_body_server <-
 
 ## To be copied in the server
 # callModule(mod_manage_dashboard_body_server, "manage_dashboard_body_ui_1")
-
