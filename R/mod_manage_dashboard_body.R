@@ -20,9 +20,9 @@ mod_manage_dashboard_body_ui <- function(id) {
 mod_manage_dashboard_body_server <-
   function(input, output, session, conn) {
     ns <- session$ns
-
+  
     # conn$state tells us what has been selected
-
+  
     output$body_ui <- renderUI({
       if (identical(conn$state, "Database"))
         return(
