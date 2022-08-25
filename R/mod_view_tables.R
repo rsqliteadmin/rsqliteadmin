@@ -57,7 +57,7 @@ mod_view_tables_ui <- function(id) {
         ),
         column(
         width = 9,
-        id = "display_table",
+        id = "filter_table",
         DT::DTOutput(ns("display_table"))
         )
       ),
@@ -111,11 +111,10 @@ mod_view_tables_server <-
       offset = 0
     )
     
-    data <- reactive(table_info$data)
 
     res_filter <- filter_data_server(
     id = "filtering",
-    data = data,
+    data = reactive(table_info$data),
     name = reactive(conn$active_table),
     vars = reactive(NULL),
     drop_ids = TRUE,
