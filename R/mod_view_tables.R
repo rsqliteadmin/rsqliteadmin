@@ -113,16 +113,17 @@ mod_view_tables_server <-
     
 
     res_filter <- filter_data_server(
-    id = "filtering",
-    data = reactive(table_info$data),
-    name = reactive(conn$active_table),
-    vars = reactive(NULL),
-    drop_ids = TRUE,
-    widget_char = "picker",
-    widget_num = "range",
-    widget_date = "slider",
-    label_na = "Missing",
-  )
+      id = "filtering",
+      data = reactive(table_info$data),
+      name = reactive(conn$active_table),
+      vars = reactive(NULL),
+      drop_ids = TRUE,
+      widget_char = "picker",
+      widget_num = "range",
+      widget_date = "slider",
+      label_na = "Missing",
+    )
+  
     output$heading <-
       renderText({
         paste0("Viewing  Table - ", conn$active_table)
@@ -141,7 +142,7 @@ mod_view_tables_server <-
             language = list(
               infoPostFix = paste0(
                 "<br>Displaying ",
-                ifelse(table_info$number_rows <= table_info$total_rows,
+                 ifelse(table_info$number_rows <= table_info$total_rows,
                        table_info$number_rows,
                        table_info$total_rows ),
                 " rows out of total ",
