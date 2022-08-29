@@ -114,12 +114,10 @@ mod_view_tables_server <-
     vars <- reactive({
       var <- vector()
       for(column_name in names(table_info$data)){
-        print(column_name)
         unique_values_number <- length(unique(table_info$data[[column_name]]))
         if(unique_values_number <= 500){
           var <- append(var, column_name)
         }
-        print(unique_values_number)
       }
       as.list(var)
     })
