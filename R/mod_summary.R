@@ -64,11 +64,22 @@ mod_summary_server <-
       offset_for_summary = 0
     )
     
+    vars <- reactive({
+      var <- vector()
+      for(column_name in names(table_info$data)){
+        unique_values_number <- length(unique(table_info$data[[column_name]]))
+        if(unique_values_number <= 500){
+          var <- append(var, column_name)
+        }
+      }
+      as.list(var)
+    })
+    
     res_filter <- filter_data_server(
       id = "filtering",
       data = reactive(table_info$data),
       name = reactive(conn$active_table),
-      vars = reactive(NULL),
+      vars = vars,
       drop_ids = TRUE,
       widget_char = "picker",
       widget_num = "range",
