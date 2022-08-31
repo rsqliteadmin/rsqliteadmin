@@ -44,7 +44,9 @@ Imports:
     disk.frame,
     data.table,
     magrittr,
-    datamods
+    datamods,
+    dplyr,
+    plotly
 RoxygenNote: 7.2.1
 URL: https://github.com/rsqliteadmin/rsqliteadmin
 BugReports: https://github.com/rsqliteadmin/rsqliteadmin/issues
