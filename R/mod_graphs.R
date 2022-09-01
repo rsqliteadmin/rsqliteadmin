@@ -51,21 +51,16 @@ mod_graphs_server <- function(input, output, session, conn) {
   ns <- session$ns
   
   table_info <- reactiveValues(
-    column_names = NULL,
-    data = NULL,
     total_rows = NULL,
-    edit_info = NULL,
-    page = NULL,
     number_rows = 1000,
     offset = 0,
     raw_df = NULL,
-    not_numeric = NULL,
-    df = NULL
+    not_numeric = NULL
   )
   
-  observeEvent(table_info$data, {
+  observeEvent(table_info$raw_df, {
     if(!is.null(table_info$raw_df)){
-      df <- table_info$df
+      df <- table_info$raw_df
       # Control the value, min, max, and step.
       # Step size is 2 when input value is even; 1 when value is odd.
       updateSliderInput(session, inputId="sampleSize", "Plot sample size (n)",
@@ -137,11 +132,8 @@ mod_graphs_server <- function(input, output, session, conn) {
               table_info$offset
             )
           )
-        # data <- mtcars
-        table_info$data <- data
         table_info$raw_df <- data
         table_info$not_numeric <- sapply(names(table_info$raw_df), function(x) !is.numeric(table_info$raw_df[[x]]))
-        table_info$df <- data
       })
     },
     error = function(err) {
@@ -166,11 +158,8 @@ mod_graphs_server <- function(input, output, session, conn) {
               table_info$offset
             )
           )
-        # data <- mtcars
-        table_info$data <- data
         table_info$raw_df <- data
         table_info$not_numeric <- sapply(names(table_info$raw_df), function(x) !is.numeric(table_info$raw_df[[x]]))
-        table_info$df <- data
       })
     },
     error = function(err) {
@@ -192,11 +181,8 @@ mod_graphs_server <- function(input, output, session, conn) {
               table_info$offset
             )
           )
-        # data <- mtcars
-        table_info$data <- data
         table_info$raw_df <- data
         table_info$not_numeric <- sapply(names(table_info$raw_df), function(x) !is.numeric(table_info$raw_df[[x]]))
-        table_info$df <- data
       })
       table_info$total_rows <-
         as.integer(RSQLite::dbGetQuery(conn$active_db, total_rows_query(conn$active_table)))
