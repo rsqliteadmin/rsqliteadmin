@@ -33,6 +33,7 @@ mod_graphs_ui <- function(id) {
                numericInput(ns("sampleSeed"), "Sample seed", value = 1),
                selectInput(ns("x_axis"), "X- Axis", c()),
                selectInput(ns("y_axis"), "y_axis", c()),
+               selectInput(ns("types_of_charts"), "Type Of Chart", c()),
                
                #only allow non-numeric variables for color
                selectInput(ns("color"), "Color", c())
@@ -74,6 +75,7 @@ mod_graphs_server <- function(input, output, session, conn) {
                         selected = names(df)[[2]])
       updateSelectInput(session, inputId = "color", 
                         choices = c("None", names(df)[table_info$not_numeric]))
+      
     }
   })
   
@@ -216,11 +218,37 @@ mod_graphs_server <- function(input, output, session, conn) {
   # * 0: both non-numeric variables
   # * -1: only one variable provided
   plot_type <- reactive({
-    if (input$y_axis != "None")
-      is.numeric(table_info$raw_df[[input$x_axis]]) + is.numeric(table_info$raw_df[[input$y_axis]])
-    else
-      -1
+    if(!is.null(table_info$raw_df) && !is.null(input$y_axis)){
+      if ( input$y_axis != "None")
+        is.numeric(table_info$raw_df[[input$x_axis]]) + is.numeric(table_info$raw_df[[input$y_axis]])
+      else
+        -1
+    }else
+      -2
   })
+  
+  observeEvent(plot_type(),{
+    if(!is.null(table_info$raw_df)){
+      if(plot_type() == 2){
+        updateSelectInput(session, inputId = "types_of_charts",
+                          choices = c("scatter"))
+      }
+      else if(plot_type() == 1){
+        updateSelectInput(session, inputId = "types_of_charts",
+                          choices = c("box", "bar"))
+      }
+      else if(plot_type() == -1){
+        updateSelectInput(session, inputId = "types_of_charts",
+                          choices = c("heatmap"))
+      }
+      else if(plot_type() == -1){
+        updateSelectInput(session, inputId = "types_of_charts",
+                          choices = c("bar", "pie"))
+      }
+    }
+
+  },  ignoreNULL = TRUE,
+  ignoreInit = TRUE,)
   
   # Create plot
   output$plot <- renderPlotly({
@@ -242,7 +270,7 @@ mod_graphs_server <- function(input, output, session, conn) {
           height=500,
           y = as.formula(paste0("~",input$y_axis)),
           x = as.formula(paste0("~",input$x_axis)),
-          type = "box",
+          type = input$types_of_charts,
           showlegend = F,
           boxpoints = "all",
           color = if(input$color== "None") NULL else as.formula(paste0("~",input$color))
@@ -261,25 +289,30 @@ mod_graphs_server <- function(input, output, session, conn) {
           ) %>%
           layout(margin = list(l=120))
         
-      } else {
+      } else if(plot_type() == -1) {
         # only one variable: bar plot
         temp_df <- reactive(df()[, c(input$x_axis), drop = FALSE] %>%
                               group_by(across()) %>%
                               summarise(count = n())
         )
-        plot_ly(data=temp_df(), height=500) %>%
-          add_trace(x = as.formula(paste0("~",input$x_axis)),
-                    y= ~count,
-                    type = 'bar'
-          )  %>%
-          layout(
-            xaxis = list(
-              title = input$x_axis
-            ),
-            yaxis = list(
-              title = "Freq"
+        if(input$types_of_charts == "bar"){
+          plot_ly(data=temp_df(), height=500) %>%
+            add_trace(x = ~family,
+                      y= ~count,
+                      type = "bar"
+            )  %>%
+            layout(
+              xaxis = list(
+                title = input$x_axis
+              ),
+              yaxis = list(
+                title = "Freq"
+              )
             )
-          )
+        }else if(input$types_of_charts == "pie") {
+          plot_ly(data=temp_df(), labels = ~family,
+                  values = ~count, type = 'pie', height=500)
+        }
       } 
     }
   })
