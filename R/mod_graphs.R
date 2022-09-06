@@ -237,7 +237,7 @@ mod_graphs_server <- function(input, output, session, conn) {
         updateSelectInput(session, inputId = "types_of_charts",
                           choices = c("box", "bar"))
       }
-      else if(plot_type() == -1){
+      else if(plot_type() == 0){
         updateSelectInput(session, inputId = "types_of_charts",
                           choices = c("heatmap"))
       }
