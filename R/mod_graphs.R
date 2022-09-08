@@ -73,8 +73,6 @@ mod_graphs_server <- function(input, output, session, conn) {
                         choices = c("None",
                                     names(df)),
                         selected = names(df)[[2]])
-      updateSelectInput(session, inputId = "color", 
-                        choices = c("None", names(df)[table_info$not_numeric]))
       
     }
   })
@@ -92,7 +90,7 @@ mod_graphs_server <- function(input, output, session, conn) {
         width = 4,
         numericInput(
           inputId = ns("change_rows_fetched"),
-          label = "Change number of rows displayed:",
+          label = "Number of rows to Plot:",
           value =  ifelse(table_info$total_rows <= 1000,
                           table_info$total_rows,
                           1000 ),
@@ -108,7 +106,7 @@ mod_graphs_server <- function(input, output, session, conn) {
         width = 4,
         numericInput(
           inputId = ns("fetch_offset"),
-          label = "Display from row number: ",
+          label = "Plot from row number: ",
           value = 1,
           min = 1
         ),
@@ -232,18 +230,26 @@ mod_graphs_server <- function(input, output, session, conn) {
       if(plot_type() == 2){
         updateSelectInput(session, inputId = "types_of_charts",
                           choices = c("scatter"))
+        updateSelectInput(session, inputId = "color", 
+                          choices = c("None", names(table_info$raw_df)[table_info$not_numeric]))
       }
       else if(plot_type() == 1){
         updateSelectInput(session, inputId = "types_of_charts",
                           choices = c("box", "bar"))
+        updateSelectInput(session, inputId = "color", 
+                          choices = c("None"))
       }
       else if(plot_type() == 0){
         updateSelectInput(session, inputId = "types_of_charts",
                           choices = c("heatmap"))
+        updateSelectInput(session, inputId = "color", 
+                          choices = c("None"))
       }
       else if(plot_type() == -1){
         updateSelectInput(session, inputId = "types_of_charts",
                           choices = c("bar", "pie"))
+        updateSelectInput(session, inputId = "color", 
+                          choices = c("None"))
       }
     }
 
