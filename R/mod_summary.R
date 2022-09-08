@@ -222,8 +222,9 @@ mod_summary_server <-
         })
       }
     })
-    
+  
     output$summary_table <- DT::renderDT({
+      rows_after_filter <- nrow(res_filter$filtered())
       DT::datatable(
         head(
           data.frame(
@@ -241,8 +242,8 @@ mod_summary_server <-
             infoPostFix = paste0(
               "<br>Summarizing ",
               ifelse(
-                table_info$number_rows_to_summarize <= table_info$total_rows,
-                table_info$number_rows_to_summarize,
+                rows_after_filter <= table_info$total_rows,
+                rows_after_filter,
                 table_info$total_rows
               ),
               " rows out of total ",
