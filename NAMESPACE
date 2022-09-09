@@ -2,6 +2,7 @@
 
 export(run_rsqliteadmin)
 import(RSQLite)
+import(datamods)
 import(disk.frame)
 import(shiny)
 import(shinyFiles)

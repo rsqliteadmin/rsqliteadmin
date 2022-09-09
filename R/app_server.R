@@ -36,6 +36,8 @@ app_server <- function(input, output, session) {
   callModule(mod_triggers_server, "triggers", conn)
   callModule(mod_export_data_server, "export_data", conn)
   callModule(mod_search_server, "search", conn)
+  callModule(mod_summary_server, "summary",  conn)
+
   action_clone_tables <- callModule(mod_clone_tables_server, "clone_tables", conn)
   action_import_tables <-
     callModule(mod_import_tables_server, "import_tables", conn)
