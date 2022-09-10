@@ -324,9 +324,3 @@ mod_graphs_server <- function(input, output, session, conn) {
   })
   
 }
-
-## To be copied in the UI
-# mod_graphs_ui("graphs_1")
-
-## To be copied in the server
-# mod_graphs_server("graphs_1")
