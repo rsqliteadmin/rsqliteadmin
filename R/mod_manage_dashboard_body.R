@@ -41,7 +41,8 @@ mod_manage_dashboard_body_server <-
             mod_table_structure_ui("table_structure"),
             mod_triggers_ui("triggers"),
             mod_search_ui("search"),
-            mod_summary_ui("summary")
+            mod_summary_ui("summary"),
+            mod_graphs_ui("graphs")
           )
         )
       else
