@@ -31,7 +31,7 @@ Use this commmand to run the app:
 rsqliteadmin::run_rsqliteadmin()
 ```
 
-Note: This package was developed as a part of the Google Summer of Code 2020 program.
+Note: This package was developed as a part of the Google Summer of Code 2020 & 2022 program.
 
 ## Mentors
 
@@ -43,7 +43,9 @@ Note: This package was developed as a part of the Google Summer of Code 2020 pro
 
 [Marlon E. Cobos](manubio13@gmail.com)
 
+[Divyansh Chawla](https://www.linkedin.com/in/divyansh-chawla/)
+
 ## Student Developer 
 
-[Divyansh Chawla](https://www.linkedin.com/in/divyansh-chawla/)
+[Anushka Gupta](https://www.linkedin.com/in/imanushka/)
 
