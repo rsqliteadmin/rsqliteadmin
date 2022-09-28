@@ -89,15 +89,22 @@ mod_export_data_ui <- function(id) {
         width = 12, textInput(inputId = ns("file_name"),
                               label = "File Name")
       )),
-      fluidRow(column(
-        width = 12,
-        tags$div(
-          align = "left",
-          class = "multicol",
-          checkboxGroupInput(inputId = ns("selected_columns"),
-                             label = "Select Columns to Export")
-        )
-      )),
+      fluidRow(
+        column(
+          width = 12,
+          tags$div(
+            checkboxGroupInput(inputId = ns("selected_columns"),
+                               label = "Select Columns to Export"))
+        ),
+      ),
+      fluidRow(
+        column(
+          width = 6,
+          tags$div(
+            actionButton(inputId = ns("include_all_columns"),
+                         label = "Include All Columns"),
+          )),
+      ), 
       fluidRow(column(
         width = 12,
         checkboxInput(
@@ -123,14 +130,16 @@ mod_export_data_server <- function(input, output, session, conn) {
   
   # info$file_name_list - List of file names whom data will be exported to,
   #                       default for each file is the corresponding table name.
-  # info$column_list - For each table, the columns that have to be exported.
+  # info$column_list - all columns in each table 
+  # info$export_column_list - For each table, the columns that have to be exported.
   # info$include_column_names - For each table, specifies if column names are to
   #                             be included in the exported data.
   #
   
   info <- reactiveValues(
     file_name_list = list(),
-    column_list = list(),
+    column_list = list(), 
+    export_column_list = list(),
     include_column_names = list(),
     delimiter = NULL,
     save_directory = NULL
@@ -161,6 +170,7 @@ mod_export_data_server <- function(input, output, session, conn) {
         info$file_name_list[[i]] = i
         info$column_list[[i]] = RSQLite::dbGetQuery(conn$active_db,
                                                     table_structure_query(i))$name
+        info$export_column_list <- info$column_list
         info$include_column_names[[i]] = TRUE
       }
     }
@@ -187,14 +197,12 @@ mod_export_data_server <- function(input, output, session, conn) {
       inputId = "file_name",
       value = info$file_name_list[[input$table_list]]
     )
-    if (!is.null(conn$active_db))
-      updateCheckboxGroupInput(
-        session = session,
-        inputId = "selected_columns",
-        choices = RSQLite::dbGetQuery(conn$active_db,
-                                      table_structure_query(input$table_list))$name,
-        selected = info$column_list[[input$table_list]]
-      )
+    updateCheckboxGroupInput(
+      session = session,
+      inputId = "selected_columns",
+      choices = info$column_list[[input$table_list]],
+      selected = info$export_column_list[[input$table_list]]
+    )
     updateCheckboxInput(
       session = session,
       inputId = "include_column_names",
@@ -223,13 +231,37 @@ mod_export_data_server <- function(input, output, session, conn) {
     }
   })
   
+  observeEvent(input$include_all_columns, {
+    if (!is.null(input$table_list)) {
+      all_columns <- info$column_list[[input$table_list]]
+      
+      if (length(input$selected_columns) != length(all_columns)) {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_columns",
+          choices = all_columns, 
+          selected = all_columns
+        )
+      } else {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_columns",
+          choices = all_columns, 
+          selected = NULL
+        )
+      }
+    }
+
+  })
+  
+  
   observeEvent(input$file_name, {
     info$file_name_list[[input$table_list]] <- input$file_name
   })
   
   observeEvent(input$selected_columns, {
     if (!is.null(input$table_list)) {
-      info$column_list[[input$table_list]] <- input$selected_columns
+      info$export_column_list[[input$table_list]] <- input$selected_columns
     }
     
   }, ignoreNULL = FALSE)
@@ -283,14 +315,14 @@ mod_export_data_server <- function(input, output, session, conn) {
           extension <- "txt"
         for (i in input$selected_tables) {
           offset <- 0
-          if (!is.null(info$column_list[[i]]))
+          if (!is.null(info$export_column_list[[i]]))
           {
             data <- RSQLite::dbGetQuery(
               conn$active_db,
               export_data_fetch_query(i,
                                       input$chunk_size,
                                       offset,
-                                      info$column_list[[i]])
+                                      info$export_column_list[[i]])
             )
             file_path <-
               paste0(info$save_directory,
@@ -328,7 +360,7 @@ mod_export_data_server <- function(input, output, session, conn) {
                 export_data_fetch_query(i,
                                         input$chunk_size,
                                         offset,
-                                        info$column_list[[i]])
+                                        info$export_column_list[[i]])
               )
               data.table::fwrite(
                 x = data,
@@ -376,4 +408,3 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
-
