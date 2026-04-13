@@ -206,3 +206,14 @@ h1, h2, h3, .h1, .h2, .h3 {
 	overflow-y: scroll;
 	overflow-x: scroll;
 }
+/* ## Improved button UI */
+.btn {
+	border-radius: 8px;
+	padding: 8px 16px;
+	font-weight: 500;
+	transition: 0.3s ease;
+}
+.btn:hover {
+	opacity: 0.85;
+}
+	
