@@ -206,3 +206,40 @@ h1, h2, h3, .h1, .h2, .h3 {
 	overflow-y: scroll;
 	overflow-x: scroll;
 }
+
+/* Keep tab content area white */
+.tab-content {
+  background-color: #ffffff;
+  min-height: 100vh;
+  padding-bottom: 30px;
+}
+
+
+/* Keep Clone Tables content visible when the table list grows */
+.content-wrapper {
+  min-height: 100vh !important;
+  height: auto !important;
+}
+
+
+/* Keep the main content area white */
+.content-wrapper {
+  background-color: #ffffff !important;
+  min-height: 100vh !important;
+  height: auto !important;
+}
+
+/* Keep Query results visible */
+#query_results {
+  background-color: #ffffff !important;
+  position: relative;
+  z-index: 10;
+}
+
+#query_results .dataTables_wrapper {
+  background-color: #ffffff !important;
+}
+
+#query_results table {
+  background-color: #ffffff !important;
+}

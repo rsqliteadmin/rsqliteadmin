@@ -41,13 +41,12 @@ Imports:
     shinyAce,
     shinyjqui,
     shinydashboard,
-    disk.frame,
     data.table,
     magrittr,
     datamods,
     dplyr,
     plotly
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.3
 URL: https://github.com/rsqliteadmin/rsqliteadmin
 BugReports: https://github.com/rsqliteadmin/rsqliteadmin/issues
 License: GPL-3
